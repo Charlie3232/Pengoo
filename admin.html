@@ -965,8 +965,10 @@ window.deleteUserAccount = (uid, label) => {
     showToast('不能在後台刪除目前登入的管理員帳號', true);
     return;
   }
+  if(!confirm(`確定刪除 ${label}？\n會刪除 Firestore 的用戶資料、配對與聊天紀錄。`)) return;
   document.getElementById('detailModal').classList.remove('show');
-  openPwModal('刪除此用戶資料？', `將刪除 ${label} 的 Firestore 資料、配對與聊天紀錄。請輸入管理密碼。`, async () => {
+
+  (async () => {
     try{
       const matchesSnap = await getDocs(collection(db,'matches'));
       for(const matchDoc of matchesSnap.docs){
@@ -1003,7 +1005,7 @@ window.deleteUserAccount = (uid, label) => {
       console.error(e);
       showToast('刪除失敗，請確認 Firestore 規則允許管理員刪除', true);
     }
-  });
+  })();
 };
 
 // ── 所有用戶 ──
