@@ -947,7 +947,9 @@ window.showDetail = async (uid) => {
       </div>
     `;
     document.getElementById('detailContent').innerHTML = html;
-    document.getElementById('deleteUserBtn').addEventListener('click', () => deleteUserAccount(uid, d.nickname || d.email || uid));
+    const deleteBtn = document.getElementById('deleteUserBtn');
+    deleteBtn.dataset.deleteUser = uid;
+    deleteBtn.dataset.deleteLabel = d.nickname || d.email || uid;
     document.getElementById('detailModal').classList.add('show');
   } catch(e){ console.error(e); }
 };
@@ -1007,6 +1009,14 @@ window.deleteUserAccount = (uid, label) => {
     }
   })();
 };
+
+document.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-delete-user]');
+  if(!btn) return;
+  event.preventDefault();
+  event.stopPropagation();
+  deleteUserAccount(btn.dataset.deleteUser, btn.dataset.deleteLabel || btn.dataset.deleteUser);
+});
 
 // ── 所有用戶 ──
 let allUsersCache = [];
