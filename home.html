@@ -462,6 +462,11 @@ const homeTimeout = setTimeout(()=>{
 }, 5000);
 
 function renderHomeState(data){
+  if(data.deleted || data.adminDeleted){
+    window.location.href = 'profile.html';
+    return;
+  }
+
   document.getElementById('greeting').textContent = `${data.nickname||'你'}，你好 👋`;
 
   const unread=data.unreadCount||0;
