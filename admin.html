@@ -133,6 +133,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#2A2A2E;min-heigh
 .detail-actions{display:grid;gap:0.5rem;margin-top:0.9rem;}
 .detail-delete-btn{position:relative;z-index:2;height:42px;border:0;border-radius:12px;background:#7F1D1D;color:white;font-size:0.78rem;font-weight:900;font-family:inherit;cursor:pointer;pointer-events:auto;touch-action:manipulation;}
 .detail-delete-btn:active{transform:scale(0.98);}
+.detail-delete-btn.confirming{background:#B91C1C;box-shadow:0 0 0 3px rgba(185,28,28,0.18);}
 .detail-warn{font-size:0.68rem;line-height:1.55;color:rgba(255,255,255,0.42);}
 
 /* 拒絕彈窗 */
@@ -974,6 +975,22 @@ window.deleteUserAccountFromButton = (button, event) => {
     showToast('找不到要刪除的用戶 UID', true);
     return;
   }
+  if(button.dataset.confirmDelete !== 'yes'){
+    button.dataset.confirmDelete = 'yes';
+    button.classList.add('confirming');
+    button.textContent = '再點一次確認刪除';
+    showToast('再點一次紅色按鈕才會刪除');
+    clearTimeout(button._confirmTimer);
+    button._confirmTimer = setTimeout(() => {
+      button.dataset.confirmDelete = '';
+      button.classList.remove('confirming');
+      button.textContent = '刪除此用戶資料';
+    }, 4200);
+    return;
+  }
+  clearTimeout(button._confirmTimer);
+  button.disabled = true;
+  button.textContent = '刪除中...';
   deleteUserAccount(uid, button.dataset.deleteLabel || uid);
 };
 
@@ -983,7 +1000,6 @@ window.deleteUserAccount = (uid, label) => {
     showToast('不能在後台刪除目前登入的管理員帳號', true);
     return;
   }
-  if(!confirm(`確定刪除 ${label}？\n會刪除 Firestore 的用戶資料、配對與聊天紀錄。`)) return;
   deletingUserUid = uid;
   document.getElementById('detailModal').classList.remove('show');
 
@@ -1034,7 +1050,7 @@ document.addEventListener('click', (event) => {
   if(!btn) return;
   event.preventDefault();
   event.stopPropagation();
-  deleteUserAccount(btn.dataset.deleteUser, btn.dataset.deleteLabel || btn.dataset.deleteUser);
+  deleteUserAccountFromButton(btn, event);
 });
 
 // ── 所有用戶 ──
