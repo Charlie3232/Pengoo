@@ -600,18 +600,25 @@ async function renderReviewSnapshot(snap){
   const list = document.getElementById('reviewList');
   try{
     const allSnap = await getDocs(collection(db,'users'));
+    const activeUsers = allSnap.docs
+      .map(d => d.data())
+      .filter(data => !data.deleted && !data.adminDeleted);
+    const reviewDocs = snap.docs.filter(d => {
+      const data = d.data();
+      return !data.deleted && !data.adminDeleted;
+    });
 
-    document.getElementById('pendingCount').textContent = snap.size;
-    document.getElementById('totalCount').textContent = allSnap.size;
-    document.getElementById('pendingBadge').textContent = snap.size + ' 待審核';
+    document.getElementById('pendingCount').textContent = reviewDocs.length;
+    document.getElementById('totalCount').textContent = activeUsers.length;
+    document.getElementById('pendingBadge').textContent = reviewDocs.length + ' 待審核';
 
-    if(snap.empty){
+    if(reviewDocs.length === 0){
       list.innerHTML = '<div class="empty">🎉 沒有待審核的用戶</div>';
       return;
     }
 
     list.innerHTML = '';
-    snap.forEach(d => {
+    reviewDocs.forEach(d => {
       const data = d.data();
       const uid = d.id;
 
@@ -988,11 +995,25 @@ window.deleteUserAccountFromButton = (button, event) => {
     }, 4200);
     return;
   }
+  if(uid === currentUser?.uid){
+    showToast('不能在後台刪除目前登入的管理員帳號', true);
+    button.dataset.confirmDelete = '';
+    button.classList.remove('confirming');
+    button.textContent = '刪除此用戶資料';
+    return;
+  }
   clearTimeout(button._confirmTimer);
   button.disabled = true;
   button.textContent = '刪除中...';
   deleteUserAccount(uid, button.dataset.deleteLabel || uid);
 };
+
+function withTimeout(promise, ms, message){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+  ]);
+}
 
 window.deleteUserAccount = (uid, label) => {
   if(deletingUserUid === uid) return;
@@ -1002,21 +1023,36 @@ window.deleteUserAccount = (uid, label) => {
   }
   deletingUserUid = uid;
   document.getElementById('detailModal').classList.remove('show');
+  allUsersCache = allUsersCache.filter(user => user.uid !== uid);
+  renderAllUsers();
+  showToast('正在刪除此用戶...');
 
   (async () => {
     try{
-      await deleteDoc(doc(db,'users',uid));
-
-      allUsersCache = allUsersCache.filter(user => user.uid !== uid);
-      document.getElementById('detailModal').classList.remove('show');
-      renderAllUsers();
+      await withTimeout(deleteDoc(doc(db,'users',uid)), 8000, 'delete user timeout');
       showToast('✓ 已刪除此用戶');
       loadReviewList();
-
       cleanupDeletedUserData(uid);
     } catch(e){
       console.error(e);
-      showToast('刪除失敗，請確認 Firestore 規則允許管理員刪除', true);
+      try{
+        await withTimeout(updateDoc(doc(db,'users',uid), {
+          adminDeleted: true,
+          deleted: true,
+          deletedAt: serverTimestamp(),
+          pendingReview: false,
+          selfieApproved: false,
+          rejected: true,
+          updatedAt: serverTimestamp()
+        }), 8000, 'soft delete timeout');
+        showToast('已先隱藏此用戶，完整刪除需調整 Firebase 規則');
+        loadReviewList();
+        cleanupDeletedUserData(uid);
+      } catch(fallbackError){
+        console.error(fallbackError);
+        showToast('刪除失敗，請確認 Firebase 規則允許 delete 或 update', true);
+        openAllUsers();
+      }
     } finally {
       deletingUserUid = '';
     }
@@ -1078,7 +1114,9 @@ window.openAllUsers = async () => {
 
   try{
     const snap = await getDocs(collection(db,'users'));
-    allUsersCache = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    allUsersCache = snap.docs
+      .map(d => ({ uid: d.id, ...d.data() }))
+      .filter(d => !d.deleted && !d.adminDeleted);
     renderAllUsers();
   } catch(e){
     listEl.innerHTML = '<div class="empty">載入失敗</div>';
