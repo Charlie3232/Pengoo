@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 月老信箱</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;overflow:hidden;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A2A2E;display:flex;justify-content:center;overflow:hidden;}
+.wrap{width:100%;max-width:390px;height:100vh;background:#F5F0EE;position:relative;display:flex;flex-direction:column;overflow:hidden;}
+.top{height:64px;flex-shrink:0;background:#F5F0EE;padding:0.8rem 1.15rem 0.55rem;display:flex;align-items:center;justify-content:space-between;}
+.eyebrow{font-size:0.62rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.16rem;}
+.title{font-size:1.25rem;font-weight:900;color:#3A2A2E;line-height:1.2;}
+.top-actions{display:flex;align-items:center;gap:0.45rem;}
+.notify-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.notify-btn.active{background:#6B2D3E;color:white;border-color:#6B2D3E;}
+.back-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#6B2D3E;font-size:1.15rem;font-weight:900;display:none;align-items:center;justify-content:center;cursor:pointer;}
+.body{flex:1;min-height:0;padding:0 1.15rem 5.7rem;overflow:hidden;}
+.view{height:100%;display:none;}
+.view.active{display:block;}
+.letter-stack{height:100%;overflow-y:auto;display:grid;align-content:start;justify-items:start;gap:0.76rem;padding-bottom:0.8rem;}
+.letter-card{position:relative;width:calc(100% - 18px);background:white;border:1px solid rgba(184,205,217,0.3);border-radius:18px;padding:0.82rem 0.86rem 0.82rem 0.95rem;box-shadow:0 8px 20px rgba(58,42,46,0.035);overflow:hidden;cursor:pointer;}
+.letter-card:nth-child(even){justify-self:end;}
+.letter-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:rgba(184,205,217,0.42);}
+.letter-card.unread{box-shadow:0 16px 30px rgba(58,42,46,0.09);border-color:rgba(232,180,188,0.56);transform:translateY(-1px);}
+.letter-card.unread::before{background:#6B2D3E;}
+.letter-main{display:flex;align-items:flex-start;gap:0.72rem;}
+.avatar{width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,#B8CDD9,#E8B4BC);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;font-weight:900;flex-shrink:0;overflow:hidden;}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.letter-info{flex:1;min-width:0;}
+.letter-top{display:flex;align-items:center;justify-content:space-between;gap:0.55rem;margin-bottom:0.18rem;}
+.name{font-size:0.88rem;font-weight:900;color:rgba(58,42,46,0.52);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.unread .name{color:#111;}
+.time{font-size:0.62rem;font-weight:850;color:rgba(58,42,46,0.34);flex-shrink:0;}
+.score{font-size:0.62rem;font-weight:900;color:#6B2D3E;background:rgba(232,180,188,0.18);border-radius:99px;padding:0.14rem 0.42rem;margin-bottom:0.32rem;display:inline-block;}
+.last{font-size:0.72rem;line-height:1.48;color:rgba(58,42,46,0.42);font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.unread .last{color:#111;font-weight:900;}
+.letter-card.empty-thread{box-shadow:0 16px 30px rgba(58,42,46,0.09);border-color:rgba(232,180,188,0.48);}
+.letter-card.empty-thread::before{background:#6B2D3E;}
+.letter-card.empty-thread .name,
+.letter-card.empty-thread .last{color:#111;font-weight:900;}
+.letter-actions{display:flex;justify-content:flex-end;margin-top:0.58rem;}
+.delete-chat-btn{height:28px;border-radius:99px;border:1px solid rgba(184,205,217,0.42);background:rgba(255,255,255,0.72);color:rgba(58,42,46,0.48);font-family:inherit;font-size:0.66rem;font-weight:900;padding:0 0.62rem;cursor:pointer;}
+.delete-chat-btn:active{transform:scale(0.96);}
+.unread-badge{position:absolute;right:0.82rem;bottom:0.78rem;min-width:22px;height:22px;border-radius:99px;background:#111;color:white;font-size:0.68rem;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 0.38rem;box-shadow:0 8px 18px rgba(17,17,17,0.18);}
+.empty-card{height:100%;display:flex;flex-direction:column;justify-content:center;background:white;border:1px solid rgba(184,205,217,0.32);border-radius:22px;padding:1.35rem 1.1rem;text-align:center;box-shadow:0 12px 28px rgba(58,42,46,0.045);}
+.empty-mark{width:82px;height:82px;border-radius:28px;background:linear-gradient(135deg,rgba(232,180,188,0.28),rgba(184,205,217,0.28));display:flex;align-items:center;justify-content:center;margin:0 auto 0.9rem;font-size:2rem;color:#6B2D3E;}
+.empty-title{font-size:1.08rem;font-weight:900;color:#3A2A2E;margin-bottom:0.45rem;}
+.empty-text{font-size:0.76rem;line-height:1.7;color:rgba(58,42,46,0.56);font-weight:700;margin-bottom:1rem;}
+.check-list{display:grid;gap:0.5rem;text-align:left;}
+.check{display:flex;align-items:center;gap:0.55rem;background:rgba(184,205,217,0.12);border-radius:13px;padding:0.62rem 0.7rem;font-size:0.74rem;font-weight:850;color:rgba(58,42,46,0.64);}
+.check-dot{width:22px;height:22px;border-radius:50%;background:#1D6B3E;color:white;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;}
+.check.pending .check-dot{background:rgba(184,205,217,0.65);}
+.chat-shell{height:100%;display:flex;flex-direction:column;background:#F5F0EE;}
+.chat-head{background:white;border:1px solid rgba(184,205,217,0.3);border-radius:18px;padding:0.75rem 0.82rem;display:flex;align-items:center;gap:0.68rem;margin-bottom:0.75rem;flex-shrink:0;cursor:pointer;}
+.chat-head .avatar{width:42px;height:42px;}
+.chat-name{font-size:0.92rem;font-weight:900;color:#3A2A2E;}
+.chat-sub{font-size:0.66rem;font-weight:850;color:#6B2D3E;margin-top:0.12rem;}
+.messages{flex:1;min-height:0;display:flex;flex-direction:column;gap:0.55rem;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:5.25rem;scroll-padding-bottom:5.25rem;}
+.ice-card{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:20px;padding:0.86rem;box-shadow:0 10px 24px rgba(58,42,46,0.05);margin-bottom:0.12rem;}
+.thread{display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.68rem;}
+.thread .avatar{width:46px;height:46px;border-radius:16px;}
+.redline{height:3px;width:58px;background:#C8545A;border-radius:99px;position:relative;}
+.redline::before,.redline::after{content:'';position:absolute;width:8px;height:8px;border-radius:50%;background:#C8545A;top:50%;transform:translateY(-50%);}
+.redline::before{left:-2px;}
+.redline::after{right:-2px;}
+.ice-title{font-size:0.93rem;font-weight:900;text-align:center;color:#3A2A2E;margin-bottom:0.28rem;}
+.ice-copy{font-size:0.72rem;line-height:1.58;color:rgba(58,42,46,0.58);font-weight:750;text-align:center;margin-bottom:0.68rem;}
+.reason-list{display:grid;gap:0.42rem;margin-bottom:0.68rem;}
+.reason-item{display:flex;align-items:flex-start;gap:0.46rem;background:rgba(184,205,217,0.13);border-radius:13px;padding:0.52rem 0.58rem;font-size:0.69rem;font-weight:850;line-height:1.4;color:rgba(58,42,46,0.66);}
+.reason-dot{width:18px;height:18px;border-radius:50%;background:#1D6B3E;color:white;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:900;flex-shrink:0;}
+.starter-label{font-size:0.72rem;font-weight:900;color:#6B2D3E;margin-bottom:0.36rem;}
+.starter{border:1px solid rgba(232,180,188,0.38);background:rgba(232,180,188,0.13);border-radius:14px;padding:0.58rem 0.64rem;font-size:0.71rem;font-weight:850;line-height:1.45;color:#6B2D3E;}
+.msg-group{max-width:78%;display:flex;flex-direction:column;gap:0.16rem;}
+.msg-group.me{align-self:flex-end;align-items:flex-end;}
+.msg-group.other{align-self:flex-start;align-items:flex-start;}
+.bubble{padding:0.62rem 0.72rem;border-radius:16px;font-size:0.75rem;line-height:1.55;font-weight:700;word-break:break-word;}
+.msg-group.other .bubble{background:white;color:rgba(58,42,46,0.72);border-bottom-left-radius:6px;}
+.msg-group.me .bubble{background:#6B2D3E;color:white;border-bottom-right-radius:6px;}
+.msg-meta{font-size:0.58rem;font-weight:850;color:rgba(58,42,46,0.34);padding:0 0.18rem;}
+.unread-line{display:flex;align-items:center;gap:0.55rem;margin:0.15rem 0;color:#7A9BB5;font-size:0.64rem;font-weight:900;}
+.unread-line::before,.unread-line::after{content:'';height:1px;background:rgba(184,205,217,0.42);flex:1;}
+.input-row{position:fixed;left:50%;bottom:4.85rem;transform:translateX(-50%);width:100%;max-width:390px;padding:0.55rem 1.15rem 0.65rem;background:linear-gradient(180deg,rgba(245,240,238,0),#F5F0EE 30%,#F5F0EE);display:none;gap:0.55rem;z-index:32;}
+.input-row.active{display:flex;}
+.input{height:44px;border-radius:14px;border:1.5px solid rgba(184,205,217,0.45);background:white;flex:1;padding:0 0.82rem;font-size:0.8rem;color:#3A2A2E;font-weight:750;}
+.input.sending{opacity:0.72;}
+.send{width:48px;height:44px;border-radius:14px;border:0;background:#6B2D3E;color:white;font-size:0.82rem;font-weight:900;cursor:pointer;}
+.send:disabled{opacity:0.62;cursor:not-allowed;}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:white;border-top:0.5px solid rgba(184,205,217,0.3);padding:0.5rem 0 1rem;display:flex;z-index:30;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;}
+.nav-icon{font-size:1.3rem;}
+.nav-lbl{font-size:0.6rem;font-weight:700;color:rgba(58,42,46,0.4);}
+.nav-item.active .nav-lbl{color:#6B2D3E;}
+.nav-badge{position:relative;}
+.badge{position:absolute;top:-5px;right:-10px;min-width:17px;height:17px;border-radius:99px;background:#111;color:white;font-size:0.55rem;font-weight:900;display:none;align-items:center;justify-content:center;padding:0 0.25rem;}
+.toast{position:fixed;top:5rem;left:50%;transform:translateX(-50%);background:#3A2A2E;color:white;padding:0.6rem 1.1rem;border-radius:99px;font-size:0.76rem;font-weight:800;z-index:200;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.notify-card{position:fixed;top:4.65rem;left:50%;transform:translate(-50%,-10px);width:calc(100% - 2rem);max-width:360px;background:#111;color:white;border-radius:18px;padding:0.78rem 0.86rem;z-index:210;box-shadow:0 18px 36px rgba(17,17,17,0.18);opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease;}
+.notify-card.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
+.notify-title{font-size:0.78rem;font-weight:900;margin-bottom:0.18rem;}
+.notify-text{font-size:0.72rem;line-height:1.45;font-weight:760;color:rgba(255,255,255,0.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.profile-sheet{position:fixed;inset:0;background:rgba(58,42,46,0.32);z-index:220;display:none;align-items:flex-end;justify-content:center;}
+.profile-sheet.show{display:flex;}
+.profile-panel{width:100%;max-width:390px;max-height:84vh;background:white;border-radius:22px 22px 0 0;padding:0.95rem 1.05rem calc(1.1rem + env(safe-area-inset-bottom));overflow-y:auto;}
+.profile-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;}
+.profile-title{font-size:1rem;font-weight:900;color:#3A2A2E;}
+.profile-close{width:32px;height:32px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;}
+.profile-photos{display:flex;gap:0.45rem;overflow-x:auto;margin-bottom:0.78rem;padding-bottom:0.1rem;}
+.profile-photo{width:86px;height:116px;border-radius:14px;object-fit:cover;background:rgba(184,205,217,0.14);border:1px solid rgba(184,205,217,0.32);flex-shrink:0;}
+.profile-block{border-radius:15px;background:rgba(184,205,217,0.1);padding:0.75rem;margin-bottom:0.62rem;}
+.profile-k{font-size:0.62rem;font-weight:900;color:#7A9BB5;letter-spacing:0.08em;margin-bottom:0.24rem;}
+.profile-v{font-size:0.76rem;line-height:1.58;font-weight:760;color:rgba(58,42,46,0.68);}
+.profile-tags{display:flex;flex-wrap:wrap;gap:0.36rem;}
+.profile-tag{font-size:0.66rem;font-weight:850;color:#6B2D3E;background:rgba(232,180,188,0.18);border:1px solid rgba(232,180,188,0.28);border-radius:99px;padding:0.22rem 0.5rem;}
+.safety-actions{display:grid;grid-template-columns:1fr 1fr;gap:0.55rem;margin-top:0.2rem;}
+.safety-btn{height:42px;border-radius:13px;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:0.74rem;font-weight:900;font-family:inherit;}
+.safety-btn.danger{border-color:rgba(185,28,28,0.2);background:#FEE2E2;color:#B91C1C;}
+.safety-btn.full{grid-column:1 / -1;}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="notify-card" id="notifyCard">
+  <div class="notify-title" id="notifyTitle">新訊息</div>
+  <div class="notify-text" id="notifyText"></div>
+</div>
+<div class="profile-sheet" id="profileSheet"></div>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">PENGOO CHAT</div>
+      <h1 class="title" id="pageTitle">月老信箱</h1>
+    </div>
+    <div class="top-actions">
+      <button class="notify-btn" id="notifyBtn" type="button" aria-label="開啟通知">🔔</button>
+      <button class="back-btn" id="backBtn">‹</button>
+    </div>
+  </header>
+
+  <main class="body">
+    <section class="view active" id="viewInbox">
+      <div class="letter-stack" id="chatList"></div>
+    </section>
+
+    <section class="view" id="viewEmpty">
+      <div class="empty-card">
+        <div class="empty-mark">✉</div>
+        <div class="empty-title">紅線還在路上</div>
+        <div class="empty-text">不是沒有人，而是 Pengoo 還在等雙方都達到足夠契合。新的月老信件會出現在這裡。</div>
+        <div class="check-list">
+          <div class="check"><div class="check-dot">✓</div><div>已完成測驗</div></div>
+          <div class="check"><div class="check-dot">✓</div><div>等待雙向配對中</div></div>
+          <div class="check pending"><div class="check-dot">○</div><div>有新紅線時會收到月老信件</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="viewChat">
+      <div class="chat-shell">
+        <div class="chat-head" id="chatHead"></div>
+        <div class="messages" id="messages"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="input-row" id="inputRow">
+    <input class="input" id="messageInput" placeholder="傳送訊息"/>
+    <button class="send" id="sendBtn">送出</button>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-item" data-page="home"><div class="nav-icon">🏠</div><div class="nav-lbl">主頁</div></div>
+    <div class="nav-item" data-page="match"><div class="nav-icon">💕</div><div class="nav-lbl">配對</div></div>
+    <div class="nav-item active" data-page="chat"><div class="nav-badge"><div class="nav-icon">💬</div><div class="badge" id="chatBadge">0</div></div><div class="nav-lbl">聊天</div></div>
+    <div class="nav-item" data-page="my"><div class="nav-icon">👤</div><div class="nav-lbl">我的</div></div>
+  </nav>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc,
+  serverTimestamp, increment, query, orderBy, onSnapshot, arrayUnion
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { resolveDevUser } from './dev-impersonation.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+let currentData = null;
+let chatItems = [];
+let activeChat = null;
+let unsubscribeMessages = null;
+let unsubscribeInboxNotifications = null;
+let inboxNotificationReady = false;
+let notifyTimer = null;
+let pendingOpenMatchId = new URLSearchParams(location.search).get('match') || '';
+
+const pageTitle = document.getElementById('pageTitle');
+const backBtn = document.getElementById('backBtn');
+const chatList = document.getElementById('chatList');
+const chatHead = document.getElementById('chatHead');
+const messagesEl = document.getElementById('messages');
+const inputRow = document.getElementById('inputRow');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const chatBadge = document.getElementById('chatBadge');
+const toast = document.getElementById('toast');
+const notifyBtn = document.getElementById('notifyBtn');
+const notifyCard = document.getElementById('notifyCard');
+const notifyTitle = document.getElementById('notifyTitle');
+const notifyText = document.getElementById('notifyText');
+const profileSheet = document.getElementById('profileSheet');
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+function canUseSystemNotifications(){
+  return 'Notification' in window &&
+    (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+}
+
+function updateNotifyButton(){
+  const granted = canUseSystemNotifications() && Notification.permission === 'granted';
+  notifyBtn.classList.toggle('active', granted);
+  notifyBtn.title = granted ? '通知已開啟' : '開啟聊天通知';
+}
+
+async function requestNotificationPermission(){
+  if(!canUseSystemNotifications()){
+    showToast('目前網址不支援系統通知');
+    return;
+  }
+  if(Notification.permission === 'default'){
+    await Notification.requestPermission();
+  }
+  updateNotifyButton();
+  showToast(Notification.permission === 'granted' ? '聊天通知已開啟' : '尚未開啟通知權限');
+}
+
+function showInAppNotification(title, text){
+  notifyTitle.textContent = title;
+  notifyText.textContent = text;
+  notifyCard.classList.add('show');
+  clearTimeout(notifyTimer);
+  notifyTimer = setTimeout(() => notifyCard.classList.remove('show'), 3600);
+}
+
+function showSystemNotification(title, text){
+  if(!canUseSystemNotifications() || Notification.permission !== 'granted') return;
+  const notification = new Notification(title, {
+    body: text,
+    tag: 'pengoo-chat',
+    silent: false
+  });
+  notification.onclick = () => {
+    window.focus();
+    notification.close();
+  };
+}
+
+function notifyNewMessage(senderName, text){
+  const title = `${senderName || 'Pengoo 用戶'} 傳來新訊息`;
+  const body = text || '你收到一則新的月老信件';
+  showInAppNotification(title, body);
+  showSystemNotification(title, body);
+}
+
+function showView(name){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  const inChat = name === 'viewChat';
+  inputRow.classList.toggle('active', inChat);
+  backBtn.style.display = inChat ? 'flex' : 'none';
+  pageTitle.textContent = inChat ? '對話' : '月老信箱';
+}
+
+function escapeHtml(value=''){
+  return String(value)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+
+function navTo(page){
+  const pageMap = { home:'home.html', match:'match.html', chat:'chat.html', my:'my.html' };
+  if(pageMap[page] && page !== 'chat') window.PengooTransition?.go(pageMap[page]) || (window.location.href = pageMap[page]);
+}
+
+document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => navTo(item.dataset.page)));
+notifyBtn.addEventListener('click', requestNotificationPermission);
+notifyCard.addEventListener('click', () => {
+  notifyCard.classList.remove('show');
+  if(activeChat) return;
+  loadInbox();
+});
+profileSheet.addEventListener('click', event => {
+  if(event.target === profileSheet) closeProfileSheet();
+});
+backBtn.addEventListener('click', () => {
+  if(unsubscribeMessages) unsubscribeMessages();
+  activeChat = null;
+  loadInbox();
+});
+
+function getOtherUid(match){
+  return (match.users || []).find(uid => uid !== currentUser.uid);
+}
+
+function getPairId(uidA, uidB){
+  return [uidA, uidB].sort().join('_');
+}
+
+function formatTime(value){
+  if(!value?.toDate) return '';
+  const date = value.toDate();
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+  return sameDay ? `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}` : '昨天';
+}
+
+function formatMessageTime(value){
+  if(!value?.toDate) return '剛剛';
+  const date = value.toDate();
+  return `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+
+function getDisplayScore(item){
+  const score = currentUser.uid === item.match.userA ? item.match.displayForA : item.match.displayForB;
+  return score || '--';
+}
+
+function getSharedTags(other){
+  const mine = Array.isArray(currentData?.tags) ? currentData.tags : [];
+  const theirs = Array.isArray(other?.tags) ? other.tags : [];
+  return mine.filter(tag => theirs.includes(tag)).slice(0, 3);
+}
+
+function getProfilePhoto(userData){
+  const thumbs = Array.isArray(userData?.photoThumbs) ? userData.photoThumbs.filter(Boolean) : [];
+  const photos = Array.isArray(userData?.photos) ? userData.photos.filter(Boolean) : [];
+  return thumbs[0] || photos[0] || '';
+}
+
+function avatarHtml(userData, fallback='P'){
+  const photo = getProfilePhoto(userData);
+  if(photo) return `<div class="avatar"><img src="${escapeHtml(photo)}" alt="${escapeHtml(userData?.nickname || '頭像')}" loading="lazy"></div>`;
+  return `<div class="avatar">${escapeHtml((userData?.nickname || fallback).slice(0,1))}</div>`;
+}
+
+function getPurposeLabel(purpose){
+  const labels = {
+    serious: '認真交往',
+    casual: '先相處看看',
+    open: '順其自然'
+  };
+  return labels[purpose] || '尚未設定';
+}
+
+function openProfileSheet(item){
+  const other = item.other || {};
+  const photos = Array.isArray(other.photos) ? other.photos.filter(Boolean).slice(0, 6) : [];
+  const thumbs = Array.isArray(other.photoThumbs) ? other.photoThumbs.filter(Boolean).slice(0, 6) : photos;
+  const sharedTags = getSharedTags(other);
+  const allTags = Array.isArray(other.tags) ? other.tags.slice(0, 6) : [];
+  const photoHtml = photos.length
+    ? photos.map((url, index) => `<img class="profile-photo" src="${escapeHtml(thumbs[index] || url)}" alt="${escapeHtml(other.nickname || '照片')}" loading="lazy">`).join('')
+    : '<div class="profile-photo"></div><div class="profile-photo"></div>';
+  const meta = [
+    other.age ? `${other.age} 歲` : '',
+    other.city || '',
+    other.job || '',
+    other.height ? `${other.height} cm` : '',
+    getPurposeLabel(other.purpose)
+  ].filter(Boolean).join('｜');
+
+  profileSheet.innerHTML = `
+    <div class="profile-panel">
+      <div class="profile-head">
+        <div class="profile-title">${escapeHtml(other.nickname || 'Pengoo 用戶')}</div>
+        <button class="profile-close" type="button">×</button>
+      </div>
+      <div class="profile-photos">${photoHtml}</div>
+      <div class="profile-block">
+        <div class="profile-k">基本資料</div>
+        <div class="profile-v">${escapeHtml(meta || '等待更多資料')}</div>
+      </div>
+      <div class="profile-block">
+        <div class="profile-k">自我介紹</div>
+        <div class="profile-v">${escapeHtml(other.bio || '這個人還保留一點神秘感。')}</div>
+      </div>
+      <div class="profile-block">
+        <div class="profile-k">為什麼配對</div>
+        <div class="profile-v">你們目前有 ${escapeHtml(getDisplayScore(item))}% 契合，已達到 Pengoo 的月老牽線門檻。</div>
+      </div>
+      <div class="profile-block">
+        <div class="profile-k">共同標籤</div>
+        <div class="profile-tags">${sharedTags.length ? sharedTags.map(tag => `<span class="profile-tag">${escapeHtml(tag)}</span>`).join('') : '<span class="profile-tag">目前沒有共同標籤</span>'}</div>
+      </div>
+      <div class="profile-block">
+        <div class="profile-k">個人標籤</div>
+        <div class="profile-tags">${allTags.length ? allTags.map(tag => `<span class="profile-tag">${escapeHtml(tag)}</span>`).join('') : '<span class="profile-tag">尚未設定</span>'}</div>
+      </div>
+      <div class="safety-actions">
+        <button class="safety-btn full" id="deleteChatBtn" type="button">刪除這段對話</button>
+        <button class="safety-btn" id="reportUserBtn" type="button">檢舉</button>
+        <button class="safety-btn danger" id="blockUserBtn" type="button">封鎖</button>
+      </div>
+    </div>
+  `;
+  profileSheet.classList.add('show');
+  profileSheet.querySelector('.profile-close').addEventListener('click', closeProfileSheet);
+  profileSheet.querySelector('#deleteChatBtn').addEventListener('click', () => deleteConversation(item));
+  profileSheet.querySelector('#reportUserBtn').addEventListener('click', () => reportUser(item));
+  profileSheet.querySelector('#blockUserBtn').addEventListener('click', () => blockUser(item));
+}
+
+function closeProfileSheet(){
+  profileSheet.classList.remove('show');
+}
+
+async function reportUser(item){
+  const reason = prompt('請簡短描述檢舉原因');
+  if(!reason || !reason.trim()) return;
+  try{
+    await addDoc(collection(db, 'reports'), {
+      reporterUid: currentUser.uid,
+      reportedUid: item.otherUid,
+      matchId: item.id,
+      reason: reason.trim().slice(0, 300),
+      status: 'open',
+      createdAt: serverTimestamp()
+    });
+    showToast('已送出檢舉');
+    closeProfileSheet();
+  } catch(e){
+    console.error(e);
+    showToast('檢舉失敗，請再試一次');
+  }
+}
+
+async function blockUser(item){
+  if(!confirm(`確定封鎖 ${item.other?.nickname || '這位用戶'}？封鎖後配對頁會排除對方。`)) return;
+  try{
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      blocked: arrayUnion(item.otherUid),
+      updatedAt: serverTimestamp()
+    });
+    currentData.blocked = Array.from(new Set([...(Array.isArray(currentData.blocked) ? currentData.blocked : []), item.otherUid]));
+    chatItems = chatItems.filter(chat => chat.otherUid !== item.otherUid);
+    if(unsubscribeMessages) unsubscribeMessages();
+    closeProfileSheet();
+    activeChat = null;
+    showToast('已封鎖');
+    await loadInbox();
+  } catch(e){
+    console.error(e);
+    showToast('封鎖失敗，請再試一次');
+  }
+}
+
+async function deleteConversation(item){
+  const name = item.other?.nickname || '這位用戶';
+  if(!confirm(`要刪除和 ${name} 的對話嗎？\n這只會從你的月老信箱移除，對方不會被刪除。`)) return;
+
+  try{
+    await updateDoc(doc(db, 'matches', item.id), {
+      hiddenBy: arrayUnion(currentUser.uid),
+      [`unreadBy.${currentUser.uid}`]: 0,
+      updatedAt: serverTimestamp()
+    });
+
+    if(item.unread > 0){
+      const nextUnread = Math.max(0, (currentData.unreadCount || 0) - item.unread);
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        unreadCount: nextUnread,
+        updatedAt: serverTimestamp()
+      });
+      currentData.unreadCount = nextUnread;
+      item.unread = 0;
+    }
+
+    if(activeChat?.id === item.id){
+      if(unsubscribeMessages) unsubscribeMessages();
+      activeChat = null;
+      closeProfileSheet();
+      showView('viewInbox');
+    }
+
+    chatItems = chatItems.filter(chat => chat.id !== item.id);
+    renderInbox();
+    showToast('已從信箱刪除');
+  } catch(e){
+    console.error(e);
+    showToast('刪除失敗，請再試一次');
+  }
+}
+
+function scrollMessagesToBottom(){
+  requestAnimationFrame(() => {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    requestAnimationFrame(() => {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    });
+  });
+}
+
+function renderIcebreaker(item){
+  const sharedTags = getSharedTags(item.other);
+  const score = getDisplayScore(item) || '--';
+  const tagText = sharedTags.length ? `共同標籤：${sharedTags.join('、')}` : '你們的測驗契合度達到可以牽線的標準';
+  const starter = sharedTags.length
+    ? `我看到我們都選了「${sharedTags[0]}」，你平常也很喜歡這個嗎？`
+    : '我看到月老把我們牽在一起，想先從你的日常聊起。';
+
+  const card = document.createElement('div');
+  card.className = 'ice-card';
+  card.innerHTML = `
+    <div class="thread">
+      ${avatarHtml(currentData, '你')}
+      <div class="redline"></div>
+      ${avatarHtml(item.other)}
+    </div>
+    <div class="ice-title">月老覺得你們可以聊聊</div>
+    <div class="ice-copy">你們目前有 ${score}% 契合，先用一個自然的開場慢慢認識就好。</div>
+    <div class="reason-list">
+      <div class="reason-item"><div class="reason-dot">✓</div><div>雙方都通過審核並完成測驗</div></div>
+      <div class="reason-item"><div class="reason-dot">✓</div><div>契合度達到 Pengoo 的牽線門檻</div></div>
+      <div class="reason-item"><div class="reason-dot">✓</div><div>${escapeHtml(tagText)}</div></div>
+    </div>
+    <div class="starter-label">可以這樣開場</div>
+    <div class="starter">${escapeHtml(starter)}</div>
+  `;
+  messagesEl.appendChild(card);
+}
+
+async function loadInbox(){
+  showView('viewInbox');
+  chatList.innerHTML = '';
+  chatItems = [];
+
+  try{
+    await repairMissingMatchDocs();
+    const matchesSnap = await getDocs(collection(db, 'matches'));
+    const items = [];
+
+    for(const matchDoc of matchesSnap.docs){
+      const match = matchDoc.data();
+      if(!Array.isArray(match.users) || !match.users.includes(currentUser.uid)) continue;
+
+      const otherUid = getOtherUid(match);
+      if(!otherUid) continue;
+      const hiddenBy = Array.isArray(match.hiddenBy) ? match.hiddenBy : [];
+      if(hiddenBy.includes(currentUser.uid)) continue;
+      const blocked = Array.isArray(currentData.blocked) ? currentData.blocked : [];
+      if(blocked.includes(otherUid)) continue;
+      const userSnap = await getDoc(doc(db, 'users', otherUid));
+      if(!userSnap.exists()) continue;
+
+      const other = userSnap.data();
+      let unread = match.unreadBy?.[currentUser.uid] || 0;
+      if(match.lastSenderUid === currentUser.uid && unread > 0){
+        await clearStaleUnread(matchDoc.id, unread);
+        unread = 0;
+      }
+      items.push({
+        id: matchDoc.id,
+        match,
+        otherUid,
+        other,
+        unread
+      });
+    }
+
+    items.sort((a,b) => {
+      const at = a.match.lastMessageAt?.toMillis ? a.match.lastMessageAt.toMillis() : 0;
+      const bt = b.match.lastMessageAt?.toMillis ? b.match.lastMessageAt.toMillis() : 0;
+      return bt - at;
+    });
+
+    chatItems = items;
+    renderInbox();
+  } catch(e){
+    console.error(e);
+    showToast('信箱載入失敗，請再試一次');
+  }
+}
+
+async function clearStaleUnread(matchId, staleUnread){
+  try{
+    await updateDoc(doc(db, 'matches', matchId), {
+      [`unreadBy.${currentUser.uid}`]: 0,
+      updatedAt: serverTimestamp()
+    });
+    const nextUnread = Math.max(0, (currentData.unreadCount || 0) - staleUnread);
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      unreadCount: nextUnread,
+      updatedAt: serverTimestamp()
+    });
+    currentData.unreadCount = nextUnread;
+  } catch(e){
+    console.error(e);
+  }
+}
+
+async function repairMissingMatchDocs(){
+  const actionsSnap = await getDocs(collection(db, 'matchActions'));
+  const myLikes = [];
+  const actionMap = new Map();
+
+  actionsSnap.forEach(actionDoc => {
+    const data = actionDoc.data();
+    if(!data.actorUid || !data.targetUid || data.action !== 'like') return;
+    actionMap.set(`${data.actorUid}_${data.targetUid}`, data);
+    if(data.actorUid === currentUser.uid){
+      myLikes.push(data);
+    }
+  });
+
+  for(const myAction of myLikes){
+    const otherUid = myAction.targetUid;
+    const reverse = actionMap.get(`${otherUid}_${currentUser.uid}`);
+    if(!reverse) continue;
+
+    const pairId = getPairId(currentUser.uid, otherUid);
+    const matchRef = doc(db, 'matches', pairId);
+    const matchSnap = await getDoc(matchRef);
+    const existingMatch = matchSnap.exists() ? matchSnap.data() : null;
+    const hasValidUsers = Array.isArray(existingMatch?.users) &&
+      existingMatch.users.includes(currentUser.uid) &&
+      existingMatch.users.includes(otherUid);
+    if(existingMatch && hasValidUsers) continue;
+
+    await setDoc(matchRef, {
+      users: [currentUser.uid, otherUid].sort(),
+      userA: currentUser.uid,
+      userB: otherUid,
+      scoreForA: myAction.scoreForActor || myAction.displayPercent || 0,
+      scoreForB: reverse.scoreForActor || reverse.displayPercent || 0,
+      displayForA: myAction.displayPercent || myAction.scoreForActor || 0,
+      displayForB: reverse.displayPercent || reverse.scoreForActor || 0,
+      scoringVersion: myAction.scoringVersion || reverse.scoringVersion || 'v1',
+      unreadBy: {
+        [currentUser.uid]: 0,
+        [otherUid]: 0
+      },
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      lastMessageAt: null
+    }, { merge:true });
+  }
+}
+
+function renderInbox(){
+  const totalUnread = chatItems.reduce((sum, item) => sum + item.unread, 0);
+  if(totalUnread > 0){
+    chatBadge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+    chatBadge.style.display = 'flex';
+  } else {
+    chatBadge.style.display = 'none';
+  }
+
+  if(!chatItems.length){
+    showView('viewEmpty');
+    return;
+  }
+
+  chatList.innerHTML = '';
+  chatItems.forEach(item => {
+    const displayScore = getDisplayScore(item);
+    const isEmptyThread = !item.match.lastMessage;
+    const card = document.createElement('article');
+    card.className = `letter-card${item.unread > 0 ? ' unread' : ''}${isEmptyThread ? ' empty-thread' : ''}`;
+    card.innerHTML = `
+      <div class="letter-main">
+        ${avatarHtml(item.other)}
+        <div class="letter-info">
+          <div class="letter-top">
+            <div class="name">${escapeHtml(item.other.nickname || 'Pengoo 用戶')}</div>
+            <div class="time">${escapeHtml(formatTime(item.match.lastMessageAt))}</div>
+          </div>
+          <div class="score">${displayScore || '--'}% 契合</div>
+          <div class="last">${escapeHtml(item.match.lastMessage || '你們配對成功了，先打聲招呼吧')}</div>
+        </div>
+      </div>
+      <div class="letter-actions"><button class="delete-chat-btn" type="button">刪除</button></div>
+      ${item.unread > 0 ? `<div class="unread-badge">${item.unread > 99 ? '99+' : item.unread}</div>` : ''}
+    `;
+    card.addEventListener('click', () => openChat(item));
+    card.querySelector('.delete-chat-btn').addEventListener('click', event => {
+      event.stopPropagation();
+      deleteConversation(item);
+    });
+    chatList.appendChild(card);
+  });
+
+  if(pendingOpenMatchId){
+    const target = chatItems.find(item => item.id === pendingOpenMatchId);
+    pendingOpenMatchId = '';
+    if(target){
+      openChat(target);
+    }
+  }
+}
+
+function listenInboxNotifications(){
+  if(unsubscribeInboxNotifications) unsubscribeInboxNotifications();
+  inboxNotificationReady = false;
+
+  unsubscribeInboxNotifications = onSnapshot(collection(db, 'matches'), async snap => {
+    if(!inboxNotificationReady){
+      inboxNotificationReady = true;
+      return;
+    }
+
+    for(const change of snap.docChanges()){
+      if(change.type !== 'modified') continue;
+      const match = change.doc.data();
+      if(!Array.isArray(match.users) || !match.users.includes(currentUser.uid)) continue;
+      const hiddenBy = Array.isArray(match.hiddenBy) ? match.hiddenBy : [];
+      if(hiddenBy.includes(currentUser.uid)) continue;
+      if(match.lastSenderUid === currentUser.uid) continue;
+      if((match.unreadBy?.[currentUser.uid] || 0) <= 0) continue;
+      if(activeChat?.id === change.doc.id) continue;
+
+      const otherUid = (match.users || []).find(uid => uid !== currentUser.uid);
+      let senderName = 'Pengoo 用戶';
+      try{
+        if(otherUid){
+          const userSnap = await getDoc(doc(db, 'users', otherUid));
+          if(userSnap.exists()) senderName = userSnap.data().nickname || senderName;
+        }
+      } catch(e){
+        console.error(e);
+      }
+      notifyNewMessage(senderName, match.lastMessage || '你收到一則新的月老信件');
+      loadInbox();
+    }
+  });
+}
+
+async function openChat(item){
+  activeChat = item;
+  showView('viewChat');
+  chatHead.innerHTML = `
+      ${avatarHtml(item.other)}
+      <div>
+        <div class="chat-name">${escapeHtml(item.other.nickname || 'Pengoo 用戶')}</div>
+      <div class="chat-sub">${getDisplayScore(item)}% 契合・由月老牽線</div>
+      </div>
+  `;
+  chatHead.onclick = () => openProfileSheet(item);
+
+  const unreadBeforeOpen = item.unread;
+  await clearUnread(item);
+  listenMessages(item, unreadBeforeOpen);
+}
+
+async function clearUnread(item){
+  if(!item.unread) return;
+  try{
+    await updateDoc(doc(db, 'matches', item.id), {
+      [`unreadBy.${currentUser.uid}`]: 0,
+      updatedAt: serverTimestamp()
+    });
+    const nextUnread = Math.max(0, (currentData.unreadCount || 0) - item.unread);
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      unreadCount: nextUnread,
+      updatedAt: serverTimestamp()
+    });
+    currentData.unreadCount = nextUnread;
+    item.unread = 0;
+  } catch(e){
+    console.error(e);
+  }
+}
+
+function listenMessages(item, unreadBeforeOpen=0){
+  if(unsubscribeMessages) unsubscribeMessages();
+  messagesEl.innerHTML = '';
+
+  const messagesRef = collection(db, 'matches', item.id, 'messages');
+  const q = query(messagesRef, orderBy('createdAt', 'asc'));
+  unsubscribeMessages = onSnapshot(q, snap => {
+    messagesEl.innerHTML = '';
+    const messages = [];
+
+    snap.forEach(messageDoc => {
+      messages.push(messageDoc.data());
+    });
+
+    const incomingTotal = messages.filter(msg => msg.senderUid !== currentUser.uid).length;
+    const unreadIncomingStart = Math.max(0, incomingTotal - unreadBeforeOpen);
+    let incomingSeen = 0;
+    let unreadLineShown = false;
+
+    messages.forEach(msg => {
+      const isMine = msg.senderUid === currentUser.uid;
+      if(!isMine && !unreadLineShown && unreadBeforeOpen > 0 && incomingSeen >= unreadIncomingStart){
+        const line = document.createElement('div');
+        line.className = 'unread-line';
+        line.textContent = '未讀訊息';
+        messagesEl.appendChild(line);
+        unreadLineShown = true;
+      }
+      if(!isMine) incomingSeen += 1;
+
+      const group = document.createElement('div');
+      group.className = `msg-group${isMine ? ' me' : ' other'}`;
+      group.innerHTML = `
+        <div class="bubble">${escapeHtml(msg.text || '')}</div>
+        <div class="msg-meta">${escapeHtml(formatMessageTime(msg.createdAt))}${isMine ? '・已送達' : ''}</div>
+      `;
+      messagesEl.appendChild(group);
+    });
+
+    if(!snap.size){
+      renderIcebreaker(item);
+    }
+
+    scrollMessagesToBottom();
+  });
+}
+
+async function sendMessage(){
+  const text = messageInput.value.trim();
+  if(!text || !activeChat) return;
+
+  const otherUid = activeChat.otherUid;
+  messageInput.value = '';
+  sendBtn.disabled = true;
+  messageInput.disabled = true;
+  messageInput.classList.add('sending');
+  sendBtn.textContent = '送...';
+
+  try{
+    await addDoc(collection(db, 'matches', activeChat.id, 'messages'), {
+      senderUid: currentUser.uid,
+      text,
+      createdAt: serverTimestamp()
+    });
+
+    await updateDoc(doc(db, 'matches', activeChat.id), {
+      lastMessage: text,
+      lastMessageAt: serverTimestamp(),
+      lastSenderUid: currentUser.uid,
+      hiddenBy: [],
+      [`unreadBy.${currentUser.uid}`]: 0,
+      [`unreadBy.${otherUid}`]: increment(1),
+      updatedAt: serverTimestamp()
+    });
+
+    await updateDoc(doc(db, 'users', otherUid), {
+      unreadCount: increment(1),
+      updatedAt: serverTimestamp()
+    });
+  } catch(e){
+    console.error(e);
+    showToast('訊息送出失敗，請再試一次');
+    messageInput.value = text;
+  } finally {
+    sendBtn.disabled = false;
+    messageInput.disabled = false;
+    messageInput.classList.remove('sending');
+    sendBtn.textContent = '送出';
+    messageInput.focus();
+  }
+}
+
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keydown', event => {
+  if(event.key === 'Enter') sendMessage();
+});
+
+onAuthStateChanged(auth, async user => {
+  if(!user){ window.location.href = 'index.html'; return; }
+
+  try{
+    const dev = await resolveDevUser(user, db, doc, getDoc);
+    currentUser = dev.user;
+    currentData = dev.data;
+    if(!currentData){
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      if(!snap.exists()){ window.location.href = 'profile.html'; return; }
+      currentData = snap.data();
+    }
+    if(!currentData.quizComplete){ window.location.href = 'quiz_intro.html'; return; }
+    updateNotifyButton();
+    listenInboxNotifications();
+    await loadInbox();
+  } catch(e){
+    console.error(e);
+    showToast('載入失敗，請再試一次');
+  }
+});
+</script>
+<script src="app-transition.js"></script>
+</body>
+</html>

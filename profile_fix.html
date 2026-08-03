@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 💕 修正資料</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+
+.wrap{width:100%;max-width:390px;min-height:100vh;display:flex;flex-direction:column;}
+
+/* 頂部 */
+.top-bar{padding:0.9rem 1.2rem 0.6rem;display:flex;align-items:center;gap:0.8rem;background:#F5F0EE;position:sticky;top:0;z-index:10;}
+.back-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(184,205,217,0.6);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:1rem;color:#7A9BB5;}
+.top-title{font-size:0.9rem;font-weight:800;color:#3A2A2E;}
+
+/* 主體 */
+.body{flex:1;padding:0.5rem 1.5rem 2rem;}
+
+/* 標題區 */
+.fix-header{margin-bottom:1.5rem;}
+.fix-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:0.8rem;}
+.fix-icon.red{background:rgba(204,17,17,0.08);border:1.5px solid rgba(204,17,17,0.2);}
+.fix-icon.blue{background:rgba(184,205,217,0.2);border:1.5px solid rgba(184,205,217,0.4);}
+.fix-icon.pink{background:rgba(232,180,188,0.2);border:1.5px solid rgba(232,180,188,0.4);}
+.fix-title{font-size:1.35rem;font-weight:900;color:#3A2A2E;line-height:1.3;margin-bottom:0.35rem;}
+.fix-sub{font-size:0.8rem;color:rgba(58,42,46,0.5);line-height:1.7;}
+
+/* 拒絕原因提示卡 */
+.reason-card{background:rgba(204,17,17,0.04);border:1px solid rgba(204,17,17,0.15);border-radius:12px;padding:0.8rem 1rem;margin-bottom:1.2rem;}
+.reason-card-title{font-size:0.68rem;font-weight:800;color:#CC1111;letter-spacing:0.05em;margin-bottom:0.4rem;}
+.reason-item{font-size:0.78rem;color:rgba(58,42,46,0.65);line-height:1.8;display:flex;align-items:flex-start;gap:0.4rem;}
+.reason-item::before{content:'•';color:#CC1111;flex-shrink:0;}
+
+/* ── 自拍區 ── */
+.selfie-rules{background:rgba(184,205,217,0.1);border:1px solid rgba(184,205,217,0.3);border-radius:12px;padding:0.8rem 1rem;margin-bottom:1rem;}
+.selfie-rules-title{font-size:0.7rem;font-weight:800;color:#7A9BB5;margin-bottom:0.4rem;}
+.selfie-rule{font-size:0.7rem;color:rgba(58,42,46,0.55);line-height:1.8;display:flex;align-items:flex-start;gap:0.4rem;}
+.selfie-rule::before{content:'✦';color:#B8CDD9;flex-shrink:0;}
+
+.selfie-area{width:100%;border-radius:18px;border:2px dashed rgba(184,205,217,0.5);background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;margin-bottom:1rem;cursor:pointer;transition:all 0.15s;min-height:200px;position:relative;overflow:hidden;}
+.selfie-area:active{transform:scale(0.99);}
+.selfie-area.has-photo{border-style:solid;border-color:#B8CDD9;}
+.selfie-preview{width:100%;height:200px;object-fit:cover;border-radius:14px;display:none;}
+.selfie-preview.show{display:block;}
+.selfie-placeholder{display:flex;flex-direction:column;align-items:center;gap:0.5rem;text-align:center;}
+.selfie-placeholder.hide{display:none;}
+.selfie-icon-big{font-size:2.2rem;}
+.selfie-label{font-size:0.88rem;font-weight:800;color:#3A2A2E;}
+.selfie-hint{font-size:0.72rem;color:rgba(58,42,46,0.45);line-height:1.6;}
+
+.retake-btn{width:100%;padding:0.7rem;border-radius:10px;border:1.5px solid rgba(184,205,217,0.5);background:white;font-size:0.82rem;font-weight:700;color:#7A9BB5;cursor:pointer;margin-bottom:1rem;touch-action:manipulation;}
+
+/* ── 照片修正區 ── */
+.photos-hint{font-size:0.78rem;color:rgba(58,42,46,0.5);margin-bottom:0.8rem;line-height:1.6;}
+
+/* 舊照片 + 新照片對比區塊 */
+.photo-fix-item{background:white;border-radius:14px;border:1.5px solid rgba(184,205,217,0.3);padding:0.9rem;margin-bottom:0.8rem;overflow:hidden;}
+.photo-fix-label{font-size:0.7rem;font-weight:800;color:rgba(107,45,62,0.6);letter-spacing:0.05em;margin-bottom:0.6rem;}
+.photo-fix-row{display:flex;gap:0.7rem;align-items:flex-start;}
+
+/* 舊照片（左） */
+.old-photo-wrap{flex-shrink:0;position:relative;}
+.old-photo-img{width:70px;height:88px;border-radius:10px;object-fit:cover;border:1.5px solid rgba(204,17,17,0.25);filter:brightness(0.7);}
+.old-photo-badge{position:absolute;top:-6px;left:-6px;background:#CC1111;color:white;font-size:0.55rem;font-weight:800;padding:2px 6px;border-radius:99px;}
+.old-photo-reasons{margin-top:0.35rem;display:flex;flex-wrap:wrap;gap:3px;}
+.old-photo-chip{font-size:0.6rem;padding:1px 6px;border-radius:99px;background:rgba(204,17,17,0.08);color:#CC1111;font-weight:700;}
+
+/* 箭頭 */
+.fix-arrow{flex-shrink:0;font-size:1.1rem;color:rgba(184,205,217,0.8);align-self:center;margin:0 0.1rem;}
+
+/* 新照片格（右） */
+.new-photo-slot{width:70px;height:88px;border-radius:10px;border:2px dashed rgba(184,205,217,0.5);background:#F5F0EE;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;flex-shrink:0;transition:all 0.15s;}
+.new-photo-slot:active{transform:scale(0.97);}
+.new-photo-slot.filled{border-style:solid;border-color:#B8CDD9;background:white;}
+.new-photo-slot img{width:100%;height:100%;object-fit:cover;display:none;}
+.new-photo-slot.filled img{display:block;}
+.new-slot-placeholder{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.new-photo-slot.filled .new-slot-placeholder{display:none;}
+.new-slot-icon{font-size:1.2rem;}
+.new-slot-label{font-size:0.55rem;font-weight:700;color:rgba(58,42,46,0.4);}
+.new-photo-del{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:rgba(107,45,62,0.7);color:white;border:none;font-size:10px;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
+.new-photo-slot.filled .new-photo-del{display:flex;}
+
+/* 上傳動畫 */
+.upload-overlay{position:absolute;inset:0;background:rgba(245,240,238,0.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:10px;z-index:3;}
+.upload-overlay.show{display:flex;}
+.upload-peng{width:32px;height:37px;animation:upBounce 0.8s ease-in-out infinite;}
+@keyframes upBounce{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-6px) rotate(3deg);}}
+.upload-txt{font-size:9px;font-weight:700;color:#7A9BB5;}
+
+/* 全部重換模式 */
+.all-photos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:0.8rem;}
+.all-photo-slot{aspect-ratio:3/4;border-radius:12px;border:2px dashed rgba(184,205,217,0.5);background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:all 0.15s;}
+.all-photo-slot:active{transform:scale(0.97);}
+.all-photo-slot.filled{border-style:solid;border-color:#B8CDD9;}
+.all-photo-slot.req-slot{border-color:rgba(232,180,188,0.6);}
+.all-photo-slot img{width:100%;height:100%;object-fit:cover;display:none;}
+.all-photo-slot.filled img{display:block;}
+.all-slot-placeholder{display:flex;flex-direction:column;align-items:center;gap:0.2rem;}
+.all-photo-slot.filled .all-slot-placeholder{display:none;}
+.all-slot-del{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(107,45,62,0.7);color:white;border:none;font-size:11px;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
+.all-photo-slot.filled .all-slot-del{display:flex;}
+.photo-counter{font-size:0.75rem;font-weight:700;margin-bottom:0.5rem;}
+.photo-counter.ok{color:#1D8348;}
+.photo-counter.warn{color:#C94B6A;}
+
+/* ── 暱稱修正 ── */
+.input-wrap{margin-bottom:1rem;}
+.input-label{font-size:0.72rem;font-weight:800;color:rgba(107,45,62,0.7);letter-spacing:0.05em;margin-bottom:0.5rem;display:block;}
+.text-input{width:100%;padding:0.9rem 1rem;border-radius:12px;border:2px solid rgba(184,205,217,0.4);background:white;font-size:1rem;font-weight:700;color:#3A2A2E;outline:none;transition:border-color 0.15s;font-family:'Nunito','Noto Sans TC',sans-serif;}
+.text-input:focus{border-color:#B8CDD9;}
+.text-input.error{border-color:#E8B4BC;}
+.char-count{font-size:0.7rem;color:rgba(58,42,46,0.35);text-align:right;margin-top:0.25rem;}
+.error-text{font-size:0.72rem;color:#C94B6A;font-weight:700;margin-top:0.35rem;display:none;}
+.error-text.show{display:block;}
+.input-hint{font-size:0.7rem;color:rgba(58,42,46,0.4);margin-top:0.35rem;}
+
+/* ── 完成畫面 ── */
+.done-screen{display:flex;flex-direction:column;align-items:center;text-align:center;padding:2rem 1rem;}
+.done-peng{width:80px;height:92px;margin-bottom:1rem;animation:wb 2s ease-in-out infinite;}
+@keyframes wb{0%,100%{transform:rotate(-3deg) translateY(0);}50%{transform:rotate(3deg) translateY(-7px);}}
+.done-title{font-size:1.2rem;font-weight:900;color:#3A2A2E;margin-bottom:0.4rem;}
+.done-sub{font-size:0.82rem;color:rgba(58,42,46,0.5);line-height:1.8;margin-bottom:1.5rem;}
+
+/* 底部按鈕 */
+.btn-main{width:100%;padding:1rem;border-radius:14px;border:none;background:#6B2D3E;font-size:0.95rem;font-weight:800;color:white;cursor:pointer;touch-action:manipulation;transition:all 0.15s;margin-bottom:0.5rem;}
+.btn-main:active{transform:scale(0.98);}
+.btn-main:disabled{opacity:0.35;cursor:not-allowed;}
+.btn-secondary{width:100%;padding:0.85rem;border-radius:14px;border:1.5px solid rgba(184,205,217,0.5);background:white;font-size:0.88rem;font-weight:700;color:#7A9BB5;cursor:pointer;touch-action:manipulation;transition:all 0.15s;}
+
+/* Toast & Loading */
+.toast{position:fixed;top:5rem;left:50%;transform:translateX(-50%);background:#3A2A2E;color:white;padding:0.6rem 1.2rem;border-radius:99px;font-size:0.78rem;font-weight:700;z-index:200;opacity:0;transition:opacity 0.3s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(245,240,238,0.95);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:1rem;}
+.loading-overlay.show{display:flex;}
+.spin{width:42px;height:42px;border-radius:50%;border:4px solid rgba(184,205,217,0.3);border-top-color:#B8CDD9;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:0.82rem;font-weight:700;color:rgba(58,42,46,0.5);}
+
+/* Screen switcher */
+.screen{display:none;}
+.screen.active{display:block;}
+</style>
+</head>
+<body>
+
+<div id="initOverlay" style="position:fixed;inset:0;background:#F5F0EE;z-index:999;display:flex;align-items:center;justify-content:center;">
+  <div style="width:36px;height:36px;border-radius:50%;border:4px solid rgba(184,205,217,0.3);border-top-color:#B8CDD9;animation:spin 0.8s linear infinite;"></div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spin"></div>
+  <div class="loading-text" id="loadingText">上傳中...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- 隱藏 file inputs -->
+<input type="file" id="selfieInput" accept="image/*" capture="user"/>
+<input type="file" id="photoInput" accept="image/*"/>
+
+<div class="wrap">
+  <div class="top-bar">
+    <div class="back-btn" onclick="window.location.href='home.html'">←</div>
+    <div class="top-title" id="topTitle">修正資料</div>
+  </div>
+
+  <div class="body">
+
+    <!-- ── 自拍修正 ── -->
+    <div class="screen" id="screenSelfie">
+      <div class="fix-header">
+        <div class="fix-icon blue">📸</div>
+        <div class="fix-title">重新拍攝<br/>自拍驗證</div>
+        <div class="fix-sub">請重新拍一張清晰的即時自拍，確認你是真實的人</div>
+      </div>
+
+      <div class="reason-card" id="selfieReasonCard" style="display:none">
+        <div class="reason-card-title">🔴 拒絕原因</div>
+        <div id="selfieReasons"></div>
+      </div>
+
+      <div class="selfie-rules">
+        <div class="selfie-rules-title">📋 自拍規則</div>
+        <div class="selfie-rule">必須即時拍攝，不能從相簿選取</div>
+        <div class="selfie-rule">清楚露出臉部，不能遮臉</div>
+        <div class="selfie-rule">光線充足，照片清晰</div>
+        <div class="selfie-rule">照片只用於真人驗證，不會公開</div>
+      </div>
+
+      <div class="selfie-area" id="selfieArea" onclick="document.getElementById('selfieInput').click()">
+        <img class="selfie-preview" id="selfiePreview" src="" alt=""/>
+        <div class="selfie-placeholder" id="selfiePlaceholder">
+          <div class="selfie-icon-big">🤳</div>
+          <div class="selfie-label">點擊即時拍攝</div>
+          <div class="selfie-hint">使用前置鏡頭<br/>照片只用於真人驗證，不會公開</div>
+        </div>
+      </div>
+      <button class="retake-btn" id="retakeBtn" style="display:none" onclick="document.getElementById('selfieInput').click()">📷 重新拍攝</button>
+
+      <button class="btn-main" id="btnSubmitSelfie" disabled onclick="submitSelfie()">送出重新審核</button>
+    </div>
+
+    <!-- ── 照片修正（指定張數）── -->
+    <div class="screen" id="screenPhotos">
+      <div class="fix-header">
+        <div class="fix-icon red">🖼️</div>
+        <div class="fix-title" id="photosFixTitle">重新上傳<br/>有問題的照片</div>
+        <div class="fix-sub" id="photosFixSub">請重新上傳以下照片，替換有問題的版本</div>
+      </div>
+
+      <div class="reason-card" style="background:rgba(184,205,217,0.06);border-color:rgba(184,205,217,0.25);">
+        <div class="reason-card-title" style="color:#7A9BB5;">📋 照片規則</div>
+        <div class="reason-item" style="color:rgba(58,42,46,0.6);">✦  每張照片都要清楚看到臉部</div>
+        <div class="reason-item" style="color:rgba(58,42,46,0.6);">✦  照片清晰，不能太暗或模糊</div>
+        <div class="reason-item" style="color:rgba(58,42,46,0.6);">✦  不能使用他人照片或明星圖片</div>
+      </div>
+
+      <!-- 動態產生的照片修正列表 -->
+      <div id="photoFixList"></div>
+
+      <button class="btn-main" id="btnSubmitPhotos" disabled onclick="submitPhotos()">送出重新審核</button>
+    </div>
+
+    <!-- ── 全部照片重換 ── -->
+    <div class="screen" id="screenAllPhotos">
+      <div class="fix-header">
+        <div class="fix-icon red">🖼️</div>
+        <div class="fix-title">重新上傳<br/>所有照片</div>
+        <div class="fix-sub">所有照片都需要重新上傳，至少 3 張，最多 6 張</div>
+      </div>
+
+      <div class="reason-card" style="background:rgba(184,205,217,0.06);border-color:rgba(184,205,217,0.25);">
+        <div class="reason-card-title" style="color:#7A9BB5;">📋 照片規則</div>
+        <div class="reason-item" style="color:rgba(58,42,46,0.6);">✦  至少 3 張，最多 6 張</div>
+        <div class="reason-item" style="color:rgba(58,42,46,0.6);">✦  每張照片都要清楚看到臉部</div>
+        <div class="reason-item" style="color:rgba(58,42,46,0.6);">✦  照片清晰，不能太暗或模糊</div>
+      </div>
+
+      <div class="photo-counter warn" id="allPhotoCounter">已上傳 0 張（至少需要 3 張）</div>
+      <div class="all-photos-grid" id="allPhotosGrid">
+        <!-- 動態產生 6 格 -->
+      </div>
+
+      <button class="btn-main" id="btnSubmitAllPhotos" disabled onclick="submitAllPhotos()">送出重新審核</button>
+    </div>
+
+    <!-- ── 暱稱修正 ── -->
+    <div class="screen" id="screenNickname">
+      <div class="fix-header">
+        <div class="fix-icon pink">✏️</div>
+        <div class="fix-title">修改暱稱</div>
+        <div class="fix-sub">請更換一個符合規定的暱稱</div>
+      </div>
+
+      <div class="reason-card" id="nickReasonCard" style="display:none">
+        <div class="reason-card-title">🔴 拒絕原因</div>
+        <div id="nickReasons"></div>
+      </div>
+
+      <div class="input-wrap">
+        <label class="input-label">新暱稱</label>
+        <input class="text-input" type="text" id="nickInput" maxlength="15" autocomplete="off" placeholder="輸入新暱稱"/>
+        <div class="char-count" id="charCount">0 / 8（中文）</div>
+        <p class="error-text" id="nickError"></p>
+        <p class="input-hint">中文最多 8 字・英文最多 15 字・可加表情符號・不能重複</p>
+      </div>
+
+      <button class="btn-main" id="btnSubmitNick" disabled onclick="submitNickname()">送出重新審核</button>
+    </div>
+
+    <!-- ── 完成 ── -->
+    <div class="screen" id="screenDone">
+      <div class="done-screen">
+        <svg class="done-peng" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+          <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+          <polygon points="60,0 60,28 85,28" fill="#a50e0e"/>
+          <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="none" stroke="#d4a030" stroke-width="1.5"/>
+          <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+          <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+          <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+          <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+          <ellipse cx="44" cy="62" rx="7" ry="4" fill="#e8a0a0" opacity="0.45"/>
+          <ellipse cx="76" cy="62" rx="7" ry="4" fill="#e8a0a0" opacity="0.45"/>
+          <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+          <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+          <ellipse cx="48" cy="134" rx="12" ry="5" fill="#d4a030" transform="rotate(-10 48 134)"/>
+          <ellipse cx="72" cy="134" rx="12" ry="5" fill="#d4a030" transform="rotate(10 72 134)"/>
+          <path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/>
+        </svg>
+        <div class="done-title">已重新送審 🐧</div>
+        <div class="done-sub">企鵝月老會在 24 小時內完成審核<br/>通過後即可開始交友測驗</div>
+        <button class="btn-main" onclick="window.location.href='home.html'">回到主頁</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js";
+import { IMAGE_PRESETS, compressImage, imageUploadMeta } from './image-utils.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+const toast = document.getElementById('toast');
+const loadingOverlay = document.getElementById('loadingOverlay');
+
+function showLoading(msg){ document.getElementById('loadingText').textContent = msg||'上傳中...'; loadingOverlay.classList.add('show'); }
+function hideLoading(){ loadingOverlay.classList.remove('show'); }
+function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2500); }
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── URL 參數解析 ──
+const params = new URLSearchParams(location.search);
+const fixType = params.get('fix');   // selfie | photos | nickname
+const fixIdx  = params.get('idx');   // "0,2" | "-1"（全部）
+
+let currentUser = null;
+let userData = null;
+// 指定照片修正用
+let fixPhotoFiles = {};   // { slotIndex: downloadURL | null }
+let fixPhotoTargets = []; // 要修正的 index 陣列
+// 全部照片重換用
+let allPhotoFiles = [null,null,null,null,null,null];
+let allPhotoCount = 0;
+// 自拍用
+let newSelfieFile = null;
+// 目前上傳中的格子 index
+let uploadingSlot = null;
+
+onAuthStateChanged(auth, async (user) => {
+  if(!user){ window.location.href='index.html'; return; }
+  currentUser = user;
+
+  try{
+    const snap = await getDoc(doc(db,'users',user.uid));
+    if(!snap.exists()){ window.location.href='profile.html'; return; }
+    userData = snap.data();
+
+    // 若不是被拒絕狀態，回主頁
+    if(!userData.rejected){ window.location.href='home.html'; return; }
+
+    initPage();
+  } catch(e){
+    console.error(e);
+    window.location.href='home.html';
+  }
+
+  document.getElementById('initOverlay').style.display='none';
+});
+
+function initPage(){
+  const reasons = userData.rejectionReasons || {};
+
+  if(fixType === 'selfie'){
+    document.getElementById('topTitle').textContent = '修正自拍';
+    showScreen('screenSelfie');
+
+    // 顯示拒絕原因
+    if(reasons.selfie && reasons.selfie.length > 0){
+      document.getElementById('selfieReasonCard').style.display='block';
+      document.getElementById('selfieReasons').innerHTML =
+        reasons.selfie.map(r=>`<div class="reason-item">${r}</div>`).join('');
+    }
+
+  } else if(fixType === 'photos'){
+    document.getElementById('topTitle').textContent = '修正照片';
+
+    if(fixIdx === '-1'){
+      // 全部重換
+      showScreen('screenAllPhotos');
+      buildAllPhotosGrid();
+    } else {
+      // 指定張數
+      showScreen('screenPhotos');
+      fixPhotoTargets = fixIdx ? fixIdx.split(',').map(Number) : [];
+      buildPhotoFixList(reasons.photos || {});
+    }
+
+  } else if(fixType === 'nickname'){
+    document.getElementById('topTitle').textContent = '修正暱稱';
+    showScreen('screenNickname');
+
+    if(reasons.nickname && reasons.nickname.length > 0){
+      document.getElementById('nickReasonCard').style.display='block';
+      document.getElementById('nickReasons').innerHTML =
+        reasons.nickname.map(r=>`<div class="reason-item">${r}</div>`).join('');
+    }
+    initNicknameInput();
+
+  } else {
+    window.location.href='home.html';
+  }
+}
+
+// ══ 自拍修正 ══
+document.getElementById('selfieInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  newSelfieFile = file;
+  const url = URL.createObjectURL(file);
+  const preview = document.getElementById('selfiePreview');
+  const placeholder = document.getElementById('selfiePlaceholder');
+  preview.src = url;
+  preview.classList.add('show');
+  placeholder.classList.add('hide');
+  document.getElementById('selfieArea').classList.add('has-photo');
+  document.getElementById('retakeBtn').style.display = 'block';
+  document.getElementById('btnSubmitSelfie').disabled = false;
+  e.target.value='';
+});
+
+window.submitSelfie = async () => {
+  if(!newSelfieFile || !currentUser) return;
+  const btn = document.getElementById('btnSubmitSelfie');
+  btn.disabled = true;
+  showLoading('上傳自拍中...');
+  try{
+    const sRef = ref(storage, `selfies/${currentUser.uid}_${Date.now()}.jpg`);
+    const optimizedSelfie = await compressImage(newSelfieFile, IMAGE_PRESETS.selfie);
+    await uploadBytes(sRef, optimizedSelfie, imageUploadMeta(newSelfieFile, optimizedSelfie));
+    const selfieURL = await getDownloadURL(sRef);
+    await updateDoc(doc(db,'users',currentUser.uid), {
+      selfieURL,
+      rejected: false,
+      pendingReview: true,
+      rejectionReasons: {},
+      updatedAt: serverTimestamp()
+    });
+    hideLoading();
+    showScreen('screenDone');
+  } catch(err){
+    hideLoading();
+    btn.disabled = false;
+    showToast('上傳失敗，請再試一次');
+    console.error(err);
+  }
+};
+
+// ══ 指定照片修正 ══
+function buildPhotoFixList(photoReasons){
+  const container = document.getElementById('photoFixList');
+  const oldPhotos = userData.photos || [];
+  container.innerHTML = '';
+
+  fixPhotoTargets.forEach(idx => {
+    fixPhotoFiles[idx] = null;
+
+    const reasons = photoReasons[idx] || [];
+    const oldUrl = oldPhotos[idx] || null;
+    const reasonChips = reasons.map(r=>`<span class="old-photo-chip">${r}</span>`).join('');
+
+    const item = document.createElement('div');
+    item.className = 'photo-fix-item';
+    item.innerHTML = `
+      <div class="photo-fix-label">第 ${idx+1} 張照片</div>
+      <div class="photo-fix-row">
+        <div class="old-photo-wrap">
+          ${oldUrl
+            ? `<img class="old-photo-img" src="${oldUrl}" alt="舊照片" onclick="openLightbox('${oldUrl}')"/>`
+            : `<div class="old-photo-img" style="background:rgba(204,17,17,0.06);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🖼️</div>`
+          }
+          <div class="old-photo-badge">舊</div>
+          <div class="old-photo-reasons">${reasonChips}</div>
+        </div>
+        <div class="fix-arrow">→</div>
+        <div class="new-photo-slot" id="newSlot${idx}" onclick="triggerFixPhoto(${idx})">
+          <img id="newPhoto${idx}" src="" alt=""/>
+          <div class="new-slot-placeholder">
+            <div class="new-slot-icon">📷</div>
+            <div class="new-slot-label">新照片</div>
+          </div>
+          <button class="new-photo-del" onclick="delFixPhoto(event,${idx})">✕</button>
+          <div class="upload-overlay" id="fixUploading${idx}">
+            ${pengSvg()}
+            <div class="upload-txt">上傳中...</div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+
+  checkPhotosSubmitReady();
+}
+
+window.triggerFixPhoto = (idx) => {
+  if(uploadingSlot !== null){ showToast('請等待目前照片上傳完成'); return; }
+  uploadingSlot = idx;
+  document.getElementById('photoInput').click();
+};
+
+window.delFixPhoto = (e, idx) => {
+  e.stopPropagation();
+  document.getElementById('newPhoto'+idx).src='';
+  document.getElementById('newSlot'+idx).classList.remove('filled');
+  fixPhotoFiles[idx] = null;
+  checkPhotosSubmitReady();
+};
+
+document.getElementById('photoInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file || uploadingSlot === null) return;
+  return;
+  const idx = uploadingSlot;
+
+  // 預覽
+  document.getElementById('newPhoto'+idx).src = URL.createObjectURL(file);
+  document.getElementById('newSlot'+idx).classList.add('filled');
+  document.getElementById('fixUploading'+idx).classList.add('show');
+  document.getElementById('btnSubmitPhotos').disabled = true;
+  document.getElementById('btnSubmitAllPhotos').disabled = true;
+
+  try{
+    const optimizedPhoto = await compressImage(file, IMAGE_PRESETS.photo);
+    const pRef = ref(storage, `photos/${currentUser.uid}_fix${idx}_${Date.now()}.jpg`);
+    await uploadBytes(pRef, optimizedPhoto, imageUploadMeta(file, optimizedPhoto));
+    const url = await getDownloadURL(pRef);
+
+    document.getElementById('fixUploading'+idx).classList.remove('show');
+    fixPhotoFiles[idx] = url;
+    uploadingSlot = null;
+    checkPhotosSubmitReady();
+    showToast('照片上傳成功 ✓');
+  } catch(err){
+    document.getElementById('newPhoto'+idx).src='';
+    document.getElementById('newSlot'+idx).classList.remove('filled');
+    document.getElementById('fixUploading'+idx).classList.remove('show');
+    uploadingSlot = null;
+    showToast('上傳失敗，請再試一次');
+    console.error(err);
+  }
+  e.target.value='';
+});
+
+function checkPhotosSubmitReady(){
+  const allDone = fixPhotoTargets.every(idx => fixPhotoFiles[idx] !== null);
+  document.getElementById('btnSubmitPhotos').disabled = !allDone;
+}
+
+window.submitPhotos = async () => {
+  if(!currentUser) return;
+  const btn = document.getElementById('btnSubmitPhotos');
+  btn.disabled = true;
+  showLoading('儲存中...');
+  try{
+    // 合併：把舊照片陣列中指定位置換成新的
+    const oldPhotos = [...(userData.photos || [])];
+    const oldThumbs = [...(userData.photoThumbs || userData.photos || [])];
+    fixPhotoTargets.forEach(idx => {
+      if(fixPhotoFiles[idx]){
+        if(typeof fixPhotoFiles[idx] === 'string'){
+          oldPhotos[idx] = fixPhotoFiles[idx];
+          oldThumbs[idx] = fixPhotoFiles[idx];
+        } else {
+          oldPhotos[idx] = fixPhotoFiles[idx].url;
+          oldThumbs[idx] = fixPhotoFiles[idx].thumb;
+        }
+      }
+    });
+    await updateDoc(doc(db,'users',currentUser.uid), {
+      photos: oldPhotos,
+      photoThumbs: oldThumbs,
+      rejected: false,
+      pendingReview: true,
+      rejectionReasons: {},
+      updatedAt: serverTimestamp()
+    });
+    hideLoading();
+    showScreen('screenDone');
+  } catch(err){
+    hideLoading();
+    btn.disabled = false;
+    showToast('儲存失敗，請再試一次');
+    console.error(err);
+  }
+};
+
+// ══ 全部照片重換 ══
+function buildAllPhotosGrid(){
+  const grid = document.getElementById('allPhotosGrid');
+  grid.innerHTML = '';
+  for(let i=0; i<6; i++){
+    const slot = document.createElement('div');
+    slot.className = 'all-photo-slot' + (i<3?' req-slot':'');
+    slot.id = 'allSlot'+i;
+    slot.innerHTML = `
+      <img id="allPhoto${i}" src="" alt=""/>
+      <div class="all-slot-placeholder">
+        <div class="slot-icon">${i<3?'📷':'➕'}</div>
+        <div class="new-slot-label">${i<3?'必填':'選填'}</div>
+      </div>
+      <button class="all-slot-del" onclick="delAllPhoto(event,${i})">✕</button>
+      <div class="upload-overlay" id="allUploading${i}">
+        ${pengSvg()}
+        <div class="upload-txt">上傳中...</div>
+      </div>
+    `;
+    slot.addEventListener('click', ()=>triggerAllPhoto(i));
+    grid.appendChild(slot);
+  }
+}
+
+window.triggerAllPhoto = (i) => {
+  if(uploadingSlot !== null){ showToast('請等待目前照片上傳完成'); return; }
+  uploadingSlot = 'all_'+i;
+  document.getElementById('photoInput').click();
+};
+
+// 攔截 all 模式下的 photoInput
+// (photoInput change 事件已在指定模式用，這裡用 uploadingSlot 判斷)
+// → 已在同一個 listener 裡處理，透過 uploadingSlot 格式區分
+
+window.delAllPhoto = (e, i) => {
+  e.stopPropagation();
+  document.getElementById('allPhoto'+i).src='';
+  document.getElementById('allSlot'+i).classList.remove('filled');
+  allPhotoFiles[i] = null;
+  allPhotoCount = allPhotoFiles.filter(f=>f!==null).length;
+  updateAllCounter();
+};
+
+// photoInput change 已有 listener，加上 all 模式邏輯
+// 因為兩個模式共用同一個 photoInput，用 uploadingSlot 字串前綴區分
+
+// Override photoInput change listener（重新宣告會蓋掉，改用 named handler）
+// → 直接在原本 listener 裡依 uploadingSlot 決定行為（見下方統一 listener）
+
+function updateAllCounter(){
+  const el = document.getElementById('allPhotoCounter');
+  const n = allPhotoCount;
+  if(n<3){ el.textContent=`已上傳 ${n} 張（至少需要 3 張）`; el.className='photo-counter warn'; }
+  else{ el.textContent=`已上傳 ${n} 張 ✓`; el.className='photo-counter ok'; }
+  document.getElementById('btnSubmitAllPhotos').disabled = n < 3;
+}
+
+window.submitAllPhotos = async () => {
+  if(!currentUser) return;
+  const btn = document.getElementById('btnSubmitAllPhotos');
+  btn.disabled = true;
+  showLoading('儲存中...');
+  try{
+    const photoItems = allPhotoFiles.filter(f=>f!==null);
+    const newPhotos = photoItems.map(item => typeof item === 'string' ? item : item.url);
+    const newThumbs = photoItems.map(item => typeof item === 'string' ? item : item.thumb);
+    await updateDoc(doc(db,'users',currentUser.uid), {
+      photos: newPhotos,
+      photoThumbs: newThumbs,
+      rejected: false,
+      pendingReview: true,
+      rejectionReasons: {},
+      updatedAt: serverTimestamp()
+    });
+    hideLoading();
+    showScreen('screenDone');
+  } catch(err){
+    hideLoading();
+    btn.disabled = false;
+    showToast('儲存失敗，請再試一次');
+    console.error(err);
+  }
+};
+
+// ══ 統一 photoInput listener ══
+// (覆蓋前面用 addEventListener 掛的，改用此統一版)
+const photoInputEl = document.getElementById('photoInput');
+photoInputEl.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file || uploadingSlot === null){ e.target.value=''; return; }
+
+  const isAll = String(uploadingSlot).startsWith('all_');
+  const slotIdx = isAll ? parseInt(String(uploadingSlot).split('_')[1]) : uploadingSlot;
+  const uploadId = isAll ? 'allUploading'+slotIdx : 'fixUploading'+slotIdx;
+  const photoEl  = isAll ? document.getElementById('allPhoto'+slotIdx) : document.getElementById('newPhoto'+slotIdx);
+  const slotEl   = isAll ? document.getElementById('allSlot'+slotIdx) : document.getElementById('newSlot'+slotIdx);
+  const submitId = isAll ? 'btnSubmitAllPhotos' : 'btnSubmitPhotos';
+
+  photoEl.src = URL.createObjectURL(file);
+  slotEl.classList.add('filled');
+  const ovEl = document.getElementById(uploadId);
+  if(ovEl) ovEl.classList.add('show');
+  document.getElementById(submitId).disabled = true;
+
+  try{
+    const optimizedPhoto = await compressImage(file, IMAGE_PRESETS.photo);
+    const thumbPhoto = await compressImage(file, IMAGE_PRESETS.thumb);
+    const stamp = Date.now();
+    const pRef = ref(storage, `photos/${currentUser.uid}_fix${slotIdx}_${stamp}.jpg`);
+    await uploadBytes(pRef, optimizedPhoto, imageUploadMeta(file, optimizedPhoto));
+    const url = await getDownloadURL(pRef);
+    const tRef = ref(storage, `thumbs/${currentUser.uid}_fix${slotIdx}_${stamp}.jpg`);
+    await uploadBytes(tRef, thumbPhoto, imageUploadMeta(file, thumbPhoto));
+    const thumb = await getDownloadURL(tRef);
+
+    if(ovEl) ovEl.classList.remove('show');
+
+    if(isAll){
+      allPhotoFiles[slotIdx] = { url, thumb };
+      allPhotoCount = allPhotoFiles.filter(f=>f!==null).length;
+      updateAllCounter();
+    } else {
+      fixPhotoFiles[slotIdx] = { url, thumb };
+      checkPhotosSubmitReady();
+    }
+    uploadingSlot = null;
+    showToast('照片上傳成功 ✓');
+  } catch(err){
+    photoEl.src='';
+    slotEl.classList.remove('filled');
+    if(ovEl) ovEl.classList.remove('show');
+    uploadingSlot = null;
+    showToast('上傳失敗，請再試一次');
+    console.error(err);
+  }
+  e.target.value='';
+}, { once: false });
+
+// ══ 暱稱修正 ══
+function initNicknameInput(){
+  const nickInput = document.getElementById('nickInput');
+  const btn = document.getElementById('btnSubmitNick');
+
+  // 前置鏡頭 input 要重掛
+  nickInput.addEventListener('input', ()=>{
+    const v = nickInput.value;
+    const noEmoji = removeEmoji(v).trim();
+    const cnLen = v.replace(/[^\u4e00-\u9fff]/g,'').length;
+    const hasCN = /[\u4e00-\u9fff]/.test(v);
+    const err = document.getElementById('nickError');
+    const cc = document.getElementById('charCount');
+
+    cc.textContent = hasCN ? `${cnLen} / 8（中文）` : `${v.length} / 15（英文）`;
+
+    if(v.trim() && noEmoji.length===0){
+      err.textContent='暱稱不能只有表情符號'; err.classList.add('show');
+      nickInput.classList.add('error'); btn.disabled=true; return;
+    }
+    if(hasSpecial(v)){
+      err.textContent='不能包含特殊符號'; err.classList.add('show');
+      nickInput.classList.add('error'); btn.disabled=true; return;
+    }
+    if(hasCN && cnLen>8){
+      err.textContent='中文最多 8 個字'; err.classList.add('show');
+      nickInput.classList.add('error'); btn.disabled=true; return;
+    }
+    if(!hasCN && v.length>15){
+      err.textContent='英文最多 15 個字'; err.classList.add('show');
+      nickInput.classList.add('error'); btn.disabled=true; return;
+    }
+    err.classList.remove('show'); nickInput.classList.remove('error');
+    btn.disabled = v.trim().length < 1;
+  });
+}
+
+window.submitNickname = async () => {
+  const val = document.getElementById('nickInput').value.trim();
+  if(!val || !currentUser) return;
+  const btn = document.getElementById('btnSubmitNick');
+  btn.disabled = true;
+  btn.textContent = '檢查中...';
+  try{
+    // 重複檢查
+    const q = query(collection(db,'users'), where('nickname','==',val));
+    const snap = await getDocs(q);
+    const others = snap.docs.filter(d=>d.id!==currentUser.uid);
+    if(others.length>0){
+      document.getElementById('nickError').textContent='這個暱稱已被使用，請換一個';
+      document.getElementById('nickError').classList.add('show');
+      document.getElementById('nickInput').classList.add('error');
+      btn.disabled=false; btn.textContent='送出重新審核'; return;
+    }
+    showLoading('儲存中...');
+    await updateDoc(doc(db,'users',currentUser.uid), {
+      nickname: val,
+      rejected: false,
+      pendingReview: true,
+      rejectionReasons: {},
+      updatedAt: serverTimestamp()
+    });
+    hideLoading();
+    showScreen('screenDone');
+  } catch(err){
+    hideLoading();
+    btn.disabled=false; btn.textContent='送出重新審核';
+    showToast('儲存失敗，請再試一次');
+    console.error(err);
+  }
+};
+
+// ── 工具 ──
+function removeEmoji(s){ return s.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FEFF}\u{1F300}-\u{1F9FF}\u{1FA00}-\u{1FAFF}]/gu,'').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g,''); }
+function hasSpecial(s){ return /[^a-zA-Z0-9\u4e00-\u9fff\s]/.test(removeEmoji(s)); }
+
+function pengSvg(){ return `<svg class="upload-peng" viewBox="0 0 120 140"><ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/><polygon points="60,0 35,28 85,28" fill="#CC1111"/><circle cx="60" cy="2" r="5" fill="#d4a030"/><ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/><ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/><circle cx="60" cy="55" r="28" fill="#1a1a1a"/><ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/><circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/><ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/><path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/></svg>`; }
+
+// 照片燈箱
+window.openLightbox = (url) => {
+  const lb = document.createElement('div');
+  lb.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+  lb.innerHTML=`<img src="${url}" style="max-width:92%;max-height:85%;object-fit:contain;border-radius:12px;"/>`;
+  lb.onclick=()=>document.body.removeChild(lb);
+  document.body.appendChild(lb);
+};
+</script>
+</body>
+</html>

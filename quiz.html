@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 💕 30 題交友測驗</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;overflow:hidden;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;min-height:100vh;display:flex;justify-content:center;overflow:hidden;color:#3A2A2E;}
+
+.wrap{width:100%;max-width:390px;height:100vh;max-height:100vh;display:flex;flex-direction:column;position:relative;background:#F5F0EE;overflow:hidden;}
+.top-bar{padding:0.72rem 1.1rem 0.45rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;background:#F5F0EE;flex-shrink:0;}
+.back-btn{width:34px;height:34px;border-radius:50%;border:0.5px solid rgba(184,205,217,0.45);background:white;color:#6B2D3E;font-size:1.1rem;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;}
+.top-mid{text-align:center;}
+.top-title{font-size:0.78rem;font-weight:900;color:rgba(58,42,46,0.68);letter-spacing:0.08em;}
+.top-sub{font-size:0.62rem;font-weight:800;color:rgba(58,42,46,0.35);margin-top:0.08rem;}
+.top-spacer{width:34px;height:34px;}
+
+.progress-wrap{padding:0 1.2rem 0.52rem;background:#F5F0EE;position:sticky;top:48px;z-index:9;flex-shrink:0;}
+.progress-track{height:8px;border-radius:99px;background:rgba(184,205,217,0.25);overflow:hidden;}
+.progress-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#E8B4BC,#B8CDD9);transition:width .25s ease;}
+
+.body{flex:1;min-height:0;padding:0.45rem 1.2rem 5.8rem;display:flex;flex-direction:column;overflow:hidden;}
+.question-card{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:16px;padding:0.82rem 0.86rem;margin-bottom:0.58rem;box-shadow:0 12px 26px rgba(58,42,46,0.04);flex-shrink:0;}
+.q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.46rem;}
+.q-chip{font-size:0.6rem;font-weight:900;color:#7A9BB5;background:rgba(184,205,217,0.18);border-radius:99px;padding:0.22rem 0.48rem;}
+.q-count{font-size:0.62rem;font-weight:900;color:rgba(58,42,46,0.38);}
+.q-title{font-size:1.04rem;line-height:1.32;font-weight:900;color:#3A2A2E;margin-bottom:0.34rem;}
+.q-desc{font-size:0.68rem;line-height:1.48;font-weight:600;color:rgba(58,42,46,0.5);}
+
+.options{display:grid;gap:0.46rem;margin-bottom:0;min-height:0;overflow-y:auto;padding-bottom:0.55rem;overscroll-behavior:contain;}
+.option-btn{width:100%;min-height:46px;border-radius:13px;border:1.5px solid rgba(184,205,217,0.35);background:white;color:#3A2A2E;text-align:left;padding:0.58rem 0.68rem;display:flex;align-items:center;gap:0.58rem;cursor:pointer;touch-action:manipulation;transition:transform .12s,border-color .12s,background .12s;}
+.option-btn:active{transform:scale(.985);}
+.option-btn.selected{border-color:rgba(232,180,188,0.9);background:rgba(232,180,188,0.12);}
+.option-mark{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(184,205,217,0.6);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:0.62rem;font-weight:900;}
+.option-btn.selected .option-mark{background:#E8B4BC;border-color:#E8B4BC;}
+.option-text{font-size:0.75rem;line-height:1.35;font-weight:800;}
+
+.actions{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:390px;display:grid;grid-template-columns:0.75fr 1.25fr;gap:0.55rem;margin-top:0;padding:0.62rem 1.2rem calc(1.15rem + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(245,240,238,0),#F5F0EE 28%,#F5F0EE);z-index:40;}
+.btn{height:46px;border-radius:13px;font-size:0.82rem;font-weight:900;cursor:pointer;touch-action:manipulation;}
+.btn:active{transform:scale(.985);}
+.btn-prev{border:1.5px solid rgba(184,205,217,0.5);background:white;color:#3A5068;}
+.btn-next{border:none;background:#6B2D3E;color:white;box-shadow:0 10px 22px rgba(107,45,62,0.17);}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+
+.done-card{display:none;background:white;border:1.5px solid rgba(232,180,188,0.45);border-radius:20px;padding:1.4rem 1.1rem;text-align:center;margin-top:1.2rem;overflow-y:auto;}
+.done-card.show{display:block;}
+.done-icon{font-size:2.4rem;margin-bottom:0.55rem;}
+.done-title{font-size:1.15rem;font-weight:900;color:#3A2A2E;margin-bottom:0.35rem;}
+.done-sub{font-size:0.78rem;line-height:1.7;color:rgba(58,42,46,0.54);font-weight:600;margin-bottom:1rem;}
+.done-btn{width:100%;height:50px;border-radius:14px;border:none;background:#6B2D3E;color:white;font-size:0.9rem;font-weight:900;cursor:pointer;}
+
+.toast{position:fixed;top:4.4rem;left:50%;transform:translateX(-50%);background:#3A2A2E;color:white;padding:0.6rem 1.1rem;border-radius:99px;font-size:0.76rem;font-weight:800;z-index:200;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.loading-overlay{position:fixed;inset:0;background:rgba(245,240,238,0.96);z-index:300;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0.9rem;}
+.loading-overlay.hide{display:none;}
+.spin{width:38px;height:38px;border-radius:50%;border:4px solid rgba(184,205,217,0.3);border-top-color:#B8CDD9;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:0.78rem;font-weight:800;color:rgba(58,42,46,0.5);}
+
+@media (max-height:680px){
+  .top-bar{padding-top:0.5rem;padding-bottom:0.34rem;}
+  .progress-wrap{padding-bottom:0.38rem;}
+  .body{padding-top:0.32rem;padding-bottom:5.3rem;}
+  .question-card{padding:0.68rem 0.76rem;margin-bottom:0.45rem;}
+  .q-title{font-size:0.96rem;line-height:1.26;}
+  .q-desc{font-size:0.64rem;line-height:1.38;}
+  .option-btn{min-height:42px;padding:0.5rem 0.62rem;}
+  .option-text{font-size:0.72rem;line-height:1.28;}
+  .btn{height:43px;}
+}
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spin"></div>
+  <div class="loading-text" id="loadingText">準備測驗中...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="wrap">
+  <div class="top-bar">
+    <button class="back-btn" id="backBtn" aria-label="回上一頁">‹</button>
+    <div class="top-mid">
+      <div class="top-title">交友測驗</div>
+      <div class="top-sub">送出後 90 天內不能重填</div>
+    </div>
+    <div class="top-spacer"></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <main class="body" id="quizBody">
+    <section class="question-card">
+      <div class="q-meta">
+        <div class="q-chip" id="qCategory">生活節奏</div>
+        <div class="q-count" id="qCount">1 / 30</div>
+      </div>
+      <h1 class="q-title" id="qTitle"></h1>
+      <p class="q-desc" id="qDesc"></p>
+    </section>
+
+    <section class="options" id="options"></section>
+
+    <div class="actions">
+      <button class="btn btn-prev" id="prevBtn">上一題</button>
+      <button class="btn btn-next" id="nextBtn">下一題</button>
+    </div>
+  </main>
+
+  <section class="body done-card" id="doneCard">
+    <div class="done-icon">💕</div>
+    <div class="done-title">測驗完成</div>
+    <div class="done-sub">企鵝月老已收到你的答案。接下來會依照你的節奏與偏好，慢慢整理更適合的配對。</div>
+    <button class="done-btn" id="homeBtn">回到主頁</button>
+  </section>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getQuizQuestions, QUIZ_VERSION } from './quiz-bank.js';
+import { SCORING_VERSION } from './quiz-scoring.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let questions = [
+  ['生活節奏','假日最理想的安排是？','選最接近你真實狀態的答案。','休息充電','出門走走','安排約會','臨時看心情'],
+  ['生活節奏','你平常比較像哪一種作息？','這會影響配對後的互動頻率。','早睡早起','普通穩定','夜晚精神好','作息彈性大'],
+  ['生活節奏','面對臨時邀約，你通常會？','不用選最討喜的答案，真實就好。','喜歡先約好','可以偶爾接受','常常說走就走','看對方是誰'],
+  ['生活節奏','你和另一半見面的頻率偏好？','想像穩定交往後的狀態。','一週多次','一週一次','兩週一次也行','順其自然'],
+  ['生活節奏','你比較重視生活中的哪種感覺？','這題會用來判斷相處節奏。','安定規律','新鮮刺激','自由空間','陪伴感'],
+  ['溝通方式','吵架時你比較常怎麼處理？','請選最接近你的反應。','先冷靜再談','當下說清楚','需要對方主動','容易先逃避'],
+  ['溝通方式','你希望對方訊息回覆速度？','不是越快越好，而是越適合越好。','越快越安心','半天內即可','忙完再回就好','重要事再即時'],
+  ['溝通方式','你表達喜歡的方式比較像？','這會影響相處溫度。','直接說出口','用行動照顧','製造小驚喜','默默陪伴'],
+  ['溝通方式','你最不能接受的互動是？','選最容易讓你扣分的狀況。','冷暴力','說謊隱瞞','太黏太逼','忽冷忽熱'],
+  ['溝通方式','你偏好的相處模式是？','想像每天互動的樣子。','什麼都能聊','各自保有空間','一起規劃生活','輕鬆不壓迫'],
+  ['價值觀','金錢使用上你比較像？','這題沒有好壞，只看習慣。','穩定存錢','該花就花','精打細算','看目標調整'],
+  ['價值觀','你對未來規劃的態度？','包含工作、感情與生活。','明確規劃','有方向即可','邊走邊看','不喜歡被限制'],
+  ['價值觀','感情裡你最重視什麼？','選最核心的一項。','安全感','信任感','共同成長','快樂自在'],
+  ['價值觀','你對婚姻或長期關係的想法？','目前想法即可，不代表永久。','認真期待','看遇到誰','還不確定','暫時不急'],
+  ['價值觀','你希望感情和工作如何平衡？','這會影響生活配合度。','感情優先','工作優先','兩者平衡','依階段調整'],
+  ['期待對象','你希望對方個性比較偏？','從這題開始偏向你期待的對象。','溫柔穩定','活潑外向','理性成熟','有趣幽默'],
+  ['期待對象','你希望對方生活型態？','選最能和你合拍的。','規律安定','愛探索體驗','重視家庭','自由彈性'],
+  ['期待對象','你欣賞對方怎麼表達在乎？','想像你會感到被愛的方式。','主動關心','實際行動','甜言蜜語','尊重空間'],
+  ['期待對象','你能接受對方社交活躍嗎？','包含朋友聚會與社群互動。','很可以','適度可以','希望偏低調','要看界線'],
+  ['期待對象','你期待約會通常是？','選你會最開心的形式。','吃飯聊天','戶外活動','看電影展覽','在家放鬆'],
+  ['親密界線','你對個人空間的需求？','這會影響黏著度配對。','非常需要','適度需要','喜歡多陪伴','依對象調整'],
+  ['親密界線','公開關係這件事，你偏好？','例如社群、朋友介紹。','自然公開','穩定後公開','低調就好','看對方意願'],
+  ['親密界線','你能接受遠距離嗎？','以台灣縣市距離想像。','可以接受','短期可以','不太能接受','看感情深度'],
+  ['親密界線','你對另一半異性朋友的態度？','重點是界線與信任。','信任為主','希望主動告知','需要明確界線','不太能接受'],
+  ['親密界線','感情中你需要多少安全感確認？','例如報備、承諾、陪伴。','需要很多','適中即可','不太需要','看狀況'],
+  ['配對偏好','你最希望對方和你相似的是？','相似不代表全部一樣。','價值觀','生活作息','興趣娛樂','感情目標'],
+  ['配對偏好','你最能接受的差異是？','互補也可能很迷人。','個性不同','興趣不同','消費習慣不同','作息不同'],
+  ['配對偏好','第一次見面你最在意？','這會影響配對推薦排序。','聊天自然','外表吸引','禮貌細節','價值觀契合'],
+  ['配對偏好','你希望 Pengoo 優先推薦？','最後幫月老校準一下。','穩定型對象','有趣型對象','高契合對象','先多看看'],
+  ['配對偏好','如果只能選一個，你最想遇見？','最後一題，直覺回答。','讓我安心的人','讓我心動的人','和我成長的人','相處自在的人']
+].map((q, i) => ({
+  id: `q${i+1}`,
+  category: q[0],
+  title: q[1],
+  desc: q[2],
+  options: q.slice(3).map((text, idx) => ({ text, value: idx + 1 }))
+}));
+
+const scoresByCategory = {
+  '生活節奏': 'rhythm',
+  '溝通方式': 'communication',
+  '價值觀': 'values',
+  '期待對象': 'preference',
+  '親密界線': 'boundary',
+  '配對偏好': 'matching'
+};
+
+let currentUser = null;
+let currentIndex = 0;
+let answers = {};
+let submitting = false;
+let quizGenderVersion = 'other';
+
+const loadingOverlay = document.getElementById('loadingOverlay');
+const loadingText = document.getElementById('loadingText');
+const toast = document.getElementById('toast');
+const quizBody = document.getElementById('quizBody');
+const doneCard = document.getElementById('doneCard');
+const progressFill = document.getElementById('progressFill');
+const qCategory = document.getElementById('qCategory');
+const qCount = document.getElementById('qCount');
+const qTitle = document.getElementById('qTitle');
+const qDesc = document.getElementById('qDesc');
+const optionsEl = document.getElementById('options');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function hideLoading(){
+  loadingOverlay.classList.add('hide');
+}
+
+function showLoading(msg){
+  loadingText.textContent = msg || '處理中...';
+  loadingOverlay.classList.remove('hide');
+}
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 2400);
+}
+
+function renderQuestion(){
+  const q = questions[currentIndex];
+  qCategory.textContent = q.category;
+  qCount.textContent = `${currentIndex + 1} / ${questions.length}`;
+  qTitle.textContent = q.title;
+  qDesc.textContent = q.desc;
+  progressFill.style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+  optionsEl.innerHTML = '';
+
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    if(answers[q.id] === opt.value) btn.classList.add('selected');
+
+    const mark = document.createElement('div');
+    mark.className = 'option-mark';
+    mark.textContent = answers[q.id] === opt.value ? '✓' : '';
+
+    const text = document.createElement('div');
+    text.className = 'option-text';
+    text.textContent = opt.text;
+
+    btn.appendChild(mark);
+    btn.appendChild(text);
+    btn.addEventListener('click', () => {
+      answers[q.id] = opt.value;
+      renderQuestion();
+    });
+    optionsEl.appendChild(btn);
+  });
+
+  prevBtn.disabled = currentIndex === 0 || submitting;
+  nextBtn.disabled = submitting;
+  nextBtn.textContent = currentIndex === questions.length - 1 ? '完成並送出' : '下一題';
+}
+
+function calculateScores(){
+  const totals = {};
+  const counts = {};
+  questions.forEach(q => {
+    const key = q.dimension || scoresByCategory[q.category] || 'general';
+    const optionIndex = q.options.findIndex(opt => opt.key === answers[q.id] || opt.value === answers[q.id]);
+    const max = Math.max(q.options.length, 1);
+    const value = optionIndex >= 0 ? Math.round(((optionIndex + 1) / max) * 100) : 0;
+    totals[key] = (totals[key] || 0) + value;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+
+  const scores = {};
+  Object.keys(totals).forEach(key => {
+    scores[key] = Math.round(totals[key] / counts[key]);
+  });
+  return scores;
+}
+
+async function submitQuiz(){
+  if(submitting) return;
+  const unanswered = questions.find(q => !answers[q.id]);
+  if(unanswered){
+    showToast('還有題目尚未作答');
+    return;
+  }
+
+  submitting = true;
+  renderQuestion();
+  showLoading('儲存測驗結果...');
+
+  try{
+    const unlockAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+    await updateDoc(doc(db,'users',currentUser.uid), {
+      quizComplete: true,
+      quizVersion: QUIZ_VERSION,
+      quizScoringVersion: SCORING_VERSION,
+      quizGenderVersion,
+      quizQuestionCount: questions.length,
+      quizCompletedAt: serverTimestamp(),
+      quizUnlockAt: Timestamp.fromDate(unlockAt),
+      quizAnswers: answers,
+      quizScores: calculateScores(),
+      avatarConfig: {
+        style: 'default',
+        top: 'rose',
+        bottom: 'blue',
+        shoes: 'gold'
+      },
+      updatedAt: serverTimestamp()
+    });
+
+    hideLoading();
+    quizBody.style.display = 'none';
+    doneCard.classList.add('show');
+  } catch(e){
+    submitting = false;
+    hideLoading();
+    renderQuestion();
+    showToast('儲存失敗，請再試一次');
+    console.error(e);
+  }
+}
+
+prevBtn.addEventListener('click', () => {
+  if(currentIndex > 0){
+    currentIndex -= 1;
+    renderQuestion();
+  }
+});
+
+nextBtn.addEventListener('click', () => {
+  const q = questions[currentIndex];
+  if(!answers[q.id]){
+    showToast('請先選擇一個答案');
+    return;
+  }
+
+  if(currentIndex === questions.length - 1){
+    submitQuiz();
+  } else {
+    currentIndex += 1;
+    renderQuestion();
+  }
+});
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  window.location.href = 'quiz_intro.html';
+});
+
+document.getElementById('homeBtn').addEventListener('click', () => {
+  window.location.href = 'home.html';
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if(!user){
+    window.location.href = 'index.html';
+    return;
+  }
+
+  currentUser = user;
+
+  try{
+    const snap = await getDoc(doc(db,'users',user.uid));
+    if(!snap.exists()){
+      window.location.href = 'profile.html';
+      return;
+    }
+
+    const data = snap.data();
+    if(data.pendingReview || data.rejected || !data.selfieApproved){
+      window.location.href = 'home.html';
+      return;
+    }
+
+    if(data.quizComplete){
+      window.location.href = 'home.html';
+      return;
+    }
+
+    quizGenderVersion = data.gender === 'male' || data.gender === 'female' ? data.gender : 'other';
+    questions = getQuizQuestions(quizGenderVersion);
+    answers = {};
+    currentIndex = 0;
+    renderQuestion();
+  } catch(e){
+    console.error(e);
+    showToast('載入失敗，請再試一次');
+  }
+
+  hideLoading();
+});
+</script>
+</body>
+</html>

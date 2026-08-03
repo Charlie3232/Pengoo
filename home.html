@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 💕 主頁</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+
+.wrap{width:100%;max-width:390px;min-height:100vh;display:flex;flex-direction:column;position:relative;}
+
+.top-bar{padding:0.9rem 1.2rem 0.6rem;display:flex;align-items:center;justify-content:space-between;background:#F5F0EE;position:sticky;top:0;z-index:10;}
+.top-left{display:flex;align-items:center;gap:0.6rem;}
+.top-avatar{width:36px;height:36px;border-radius:50%;background:#E8B4BC;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.top-greeting{font-size:0.88rem;font-weight:700;color:#3A2A2E;}
+.top-right{display:flex;gap:0.5rem;}
+.top-btn{width:34px;height:34px;border-radius:50%;background:white;border:0.5px solid rgba(184,205,217,0.4);display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;touch-action:manipulation;}
+
+.body{flex:1;padding:0.5rem 1.2rem;overflow-y:auto;padding-bottom:5rem;}
+
+/* 狀態卡 */
+.status-card{background:white;border-radius:20px;border:1.5px solid rgba(184,205,217,0.3);padding:1.5rem;text-align:center;margin-bottom:1rem;}
+.peng-anim{width:80px;height:92px;margin:0 auto 0.8rem;animation:wb 2s ease-in-out infinite;}
+@keyframes wb{0%,100%{transform:rotate(-3deg) translateY(0);}50%{transform:rotate(3deg) translateY(-7px);}}
+
+/* 拒絕原因 */
+.rej-section{background:rgba(204,17,17,0.05);border:1px solid rgba(204,17,17,0.15);border-radius:12px;padding:0.8rem;margin-bottom:0.6rem;text-align:left;}
+.rej-section-title{font-size:0.72rem;font-weight:800;color:#CC1111;margin-bottom:0.4rem;}
+.rej-item{font-size:0.75rem;color:rgba(58,42,46,0.6);line-height:1.8;display:flex;align-items:flex-start;gap:0.4rem;}
+.rej-item::before{content:'•';color:#CC1111;flex-shrink:0;}
+
+/* 照片問題列（含縮圖） */
+.rej-photo-row{display:flex;align-items:flex-start;gap:0.65rem;padding:0.45rem 0;border-bottom:0.5px solid rgba(204,17,17,0.08);}
+.rej-photo-row:last-child{border-bottom:none;padding-bottom:0;}
+.rej-thumb-wrap{flex-shrink:0;position:relative;}
+.rej-thumb{width:52px;height:52px;border-radius:8px;object-fit:cover;border:1.5px solid rgba(204,17,17,0.3);cursor:pointer;}
+.rej-thumb-placeholder{width:52px;height:52px;border-radius:8px;background:rgba(204,17,17,0.06);border:1.5px dashed rgba(204,17,17,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.rej-thumb-badge{position:absolute;top:-5px;left:-5px;width:18px;height:18px;border-radius:50%;background:#CC1111;color:white;font-size:0.55rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.rej-photo-info{flex:1;min-width:0;}
+.rej-photo-label{font-size:0.75rem;font-weight:800;color:rgba(58,42,46,0.7);margin-bottom:0.2rem;}
+.rej-photo-reasons{display:flex;flex-wrap:wrap;gap:3px;}
+.rej-photo-chip{font-size:0.65rem;padding:2px 7px;border-radius:99px;background:rgba(204,17,17,0.08);color:#CC1111;font-weight:700;}
+
+/* 全部照片不過 */
+.rej-all-photos{display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;}
+.rej-all-thumbs{display:flex;gap:4px;flex-wrap:wrap;}
+.rej-all-thumb{width:38px;height:38px;border-radius:6px;object-fit:cover;border:1.5px solid rgba(204,17,17,0.25);cursor:pointer;opacity:0.7;}
+.rej-all-thumb-placeholder{width:38px;height:38px;border-radius:6px;background:rgba(204,17,17,0.06);border:1.5px dashed rgba(204,17,17,0.2);display:flex;align-items:center;justify-content:center;font-size:0.9rem;opacity:0.6;}
+
+.fix-btn{width:100%;padding:0.85rem;border-radius:12px;border:1.5px solid rgba(184,205,217,0.5);background:white;font-size:0.85rem;font-weight:700;color:#3A5068;cursor:pointer;margin-bottom:0.5rem;touch-action:manipulation;transition:all 0.15s;}
+.fix-btn:active{transform:scale(0.98);}
+.fix-btn.done{border-color:#1D8348;color:#1D8348;background:rgba(29,131,72,0.05);}
+
+.status-title{font-size:1.1rem;font-weight:900;color:#3A2A2E;margin-bottom:0.4rem;}
+.status-sub{font-size:0.8rem;color:rgba(58,42,46,0.5);line-height:1.7;}
+.status-dots{display:flex;gap:6px;justify-content:center;margin-top:0.8rem;}
+.sdot{width:7px;height:7px;border-radius:50%;background:#B8CDD9;animation:dp 1.5s ease-in-out infinite;}
+@keyframes dp{0%,100%{opacity:0.3;transform:scale(0.8);}50%{opacity:1;transform:scale(1.2);}}
+
+.approve-card{background:white;border-radius:20px;border:1.5px solid rgba(232,180,188,0.4);padding:1.5rem;text-align:center;margin-bottom:1rem;}
+.approve-icon{font-size:2.5rem;margin-bottom:0.6rem;}
+.approve-title{font-size:1.1rem;font-weight:900;color:#3A2A2E;margin-bottom:0.35rem;}
+.approve-sub{font-size:0.8rem;color:rgba(58,42,46,0.5);line-height:1.7;margin-bottom:1rem;}
+.btn-main{width:100%;padding:0.95rem;border-radius:14px;border:none;background:#6B2D3E;color:white;font-size:0.95rem;font-weight:800;cursor:pointer;touch-action:manipulation;transition:all 0.15s;}
+.btn-main:active{transform:scale(0.98);}
+
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.8rem;}
+.stat-card{background:white;border-radius:14px;border:0.5px solid rgba(184,205,217,0.3);padding:0.9rem;text-align:center;}
+.stat-num{font-size:1.4rem;font-weight:900;color:#E8B4BC;line-height:1;}
+.stat-lbl{font-size:0.65rem;color:rgba(58,42,46,0.45);font-weight:700;margin-top:0.2rem;}
+
+.avatar-card{background:white;border-radius:18px;border:0.5px solid rgba(184,205,217,0.3);padding:1rem;display:flex;align-items:center;gap:0.9rem;margin-bottom:0.8rem;cursor:pointer;transition:all 0.15s;}
+.avatar-card:active{transform:scale(0.98);}
+.av-svg-wrap{flex-shrink:0;}
+.av-right{flex:1;min-width:0;}
+.av-section-lbl{font-size:0.68rem;font-weight:800;color:rgba(107,45,62,0.5);letter-spacing:0.06em;margin-bottom:0.3rem;}
+.av-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.2rem;}
+.av-title{font-size:0.9rem;font-weight:900;color:#3A2A2E;}
+.edit-badge{font-size:0.65rem;padding:2px 8px;border-radius:99px;background:rgba(184,205,217,0.2);color:#7A9BB5;font-weight:700;flex-shrink:0;}
+.av-desc{font-size:0.72rem;color:rgba(58,42,46,0.5);line-height:1.6;margin-bottom:0.4rem;}
+.av-tags{display:flex;flex-wrap:wrap;gap:3px;}
+.av-tag{font-size:0.65rem;padding:2px 7px;border-radius:99px;border:0.5px solid rgba(184,205,217,0.4);color:rgba(58,42,46,0.5);}
+
+.poem{text-align:center;padding:0.6rem 0 0.2rem;}
+.poem-line{font-size:0.75rem;color:rgba(107,45,62,0.4);letter-spacing:0.1em;line-height:2;font-style:italic;}
+.poem-dot{width:4px;height:4px;border-radius:50%;background:rgba(232,180,188,0.5);margin:0.2rem auto 0;}
+
+.unlock-card{background:linear-gradient(135deg,rgba(232,180,188,0.1),rgba(184,205,217,0.1));border:1.5px solid rgba(184,205,217,0.4);border-radius:16px;padding:1rem;text-align:center;margin-bottom:0.8rem;}
+.unlock-icon{font-size:1.8rem;margin-bottom:0.4rem;}
+.unlock-title{font-size:0.9rem;font-weight:900;color:#3A2A2E;margin-bottom:0.3rem;}
+.unlock-sub{font-size:0.75rem;color:rgba(58,42,46,0.5);line-height:1.6;margin-bottom:0.8rem;}
+
+/* 照片燈箱 */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;align-items:center;justify-content:center;cursor:pointer;}
+.lightbox.show{display:flex;}
+.lightbox img{max-width:92%;max-height:85%;object-fit:contain;border-radius:12px;}
+
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:white;border-top:0.5px solid rgba(184,205,217,0.3);padding:0.5rem 0 1rem;display:flex;z-index:20;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;touch-action:manipulation;}
+.nav-icon{font-size:1.3rem;}
+.nav-lbl{font-size:0.6rem;font-weight:700;color:rgba(58,42,46,0.4);}
+.nav-item.active .nav-lbl{color:#6B2D3E;}
+.nav-badge{position:relative;display:inline-block;}
+.badge{position:absolute;top:-4px;right:-8px;width:16px;height:16px;border-radius:50%;background:#E8B4BC;color:#6B2D3E;font-size:0.55rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+
+.toast{position:fixed;top:5rem;left:50%;transform:translateX(-50%);background:#3A2A2E;color:white;padding:0.6rem 1.2rem;border-radius:99px;font-size:0.78rem;font-weight:700;z-index:200;opacity:0;transition:opacity 0.3s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(245,240,238,0.95);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:1rem;}
+.loading-overlay.show{display:flex;}
+.spin{width:42px;height:42px;border-radius:50%;border:4px solid rgba(184,205,217,0.3);border-top-color:#B8CDD9;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:0.82rem;font-weight:700;color:rgba(58,42,46,0.5);}
+
+.state{display:none;}
+.state.active{display:block;}
+</style>
+</head>
+<body>
+
+<div id="initOverlay" style="position:fixed;inset:0;background:#F5F0EE;z-index:999;display:flex;align-items:center;justify-content:center;">
+  <div style="width:36px;height:36px;border-radius:50%;border:4px solid rgba(184,205,217,0.3);border-top-color:#B8CDD9;animation:spin 0.8s linear infinite;"></div>
+</div>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spin"></div>
+  <div class="loading-text">載入中...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- 照片燈箱 -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
+  <img id="lightboxImg" src="" alt=""/>
+</div>
+
+<div class="wrap">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-avatar">💕</div>
+      <div class="top-greeting" id="greeting">你好 👋</div>
+    </div>
+    <div class="top-right">
+      <div class="top-btn" onclick="window.location.href='my.html'">⚙️</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- State 1: 審核中 -->
+    <div class="state" id="statePending">
+      <div class="status-card">
+        <svg class="peng-anim" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+          <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+          <polygon points="60,0 60,28 85,28" fill="#a50e0e"/>
+          <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="none" stroke="#d4a030" stroke-width="1.5"/>
+          <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+          <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+          <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+          <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+          <ellipse cx="44" cy="62" rx="7" ry="4" fill="#e8a0a0" opacity="0.45"/>
+          <ellipse cx="76" cy="62" rx="7" ry="4" fill="#e8a0a0" opacity="0.45"/>
+          <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+          <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+          <ellipse cx="48" cy="134" rx="12" ry="5" fill="#d4a030" transform="rotate(-10 48 134)"/>
+          <ellipse cx="72" cy="134" rx="12" ry="5" fill="#d4a030" transform="rotate(10 72 134)"/>
+          <path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/>
+        </svg>
+        <div class="status-title">企鵝月老審核中 🐧</div>
+        <div class="status-sub">審核時間約 24 小時內完成<br/>通過後即可開始交友測驗</div>
+        <div class="status-dots">
+          <div class="sdot"></div>
+          <div class="sdot" style="animation-delay:.4s"></div>
+          <div class="sdot" style="animation-delay:.8s"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- State 2: 審核通過，未做測驗 -->
+    <div class="state" id="stateApproved">
+      <div class="approve-card">
+        <div class="approve-icon">🎉</div>
+        <div class="approve-title">審核通過！</div>
+        <div class="approve-sub">企鵝月老已確認你是真實的人<br/>現在可以開始交友測驗了</div>
+        <button class="btn-main" onclick="goToQuiz()">開始交友測驗 💕</button>
+      </div>
+    </div>
+
+    <!-- State: 審核未通過 -->
+    <div class="state" id="stateRejected">
+      <div class="status-card" style="border-color:rgba(204,17,17,0.3);">
+        <div style="font-size:2.2rem;margin-bottom:0.6rem;">❌</div>
+        <div class="status-title">審核未通過</div>
+        <div class="status-sub" style="margin-bottom:1rem;">請根據以下原因修正後重新送審</div>
+        <div id="rejectionReasons" style="text-align:left;margin-bottom:0.5rem;"></div>
+      </div>
+      <div id="fixButtons"></div>
+      <button class="btn-main" id="resubmitBtn" style="margin-top:0.5rem;display:none;" onclick="resubmit()">重新送審</button>
+    </div>
+
+    <!-- State 3: 測驗完成，可配對 -->
+    <div class="state" id="stateReady">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="matchCount">0</div>
+          <div class="stat-lbl">配對成功</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="unreadCount">0</div>
+          <div class="stat-lbl">未讀訊息</div>
+        </div>
+      </div>
+      <div class="poem">
+        <div class="poem-line">月老的紅線，悄悄繞過你的指尖</div>
+        <div class="poem-dot"></div>
+      </div>
+    </div>
+
+    <!-- State 4: 可重填測驗 -->
+    <div class="state" id="stateUnlock">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="matchCount2">0</div>
+          <div class="stat-lbl">配對成功</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="unreadCount2">0</div>
+          <div class="stat-lbl">未讀訊息</div>
+        </div>
+      </div>
+      <div class="unlock-card">
+        <div class="unlock-icon">🎉</div>
+        <div class="unlock-title">測驗重填已解鎖！</div>
+        <div class="unlock-sub">距離上次填寫已超過 90 天<br/>重新填寫讓配對更精準</div>
+        <button class="btn-main" onclick="goToQuiz()">重新填寫測驗 ✨</button>
+      </div>
+      <div class="poem">
+        <div class="poem-line">月老的紅線，悄悄繞過你的指尖</div>
+        <div class="poem-dot"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nav">
+    <div class="nav-item active" onclick="navTo('home')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-lbl">主頁</div>
+    </div>
+    <div class="nav-item" onclick="navTo('match')">
+      <div class="nav-icon">💕</div>
+      <div class="nav-lbl">配對</div>
+    </div>
+    <div class="nav-item" onclick="navTo('chat')">
+      <div class="nav-badge">
+        <div class="nav-icon">💬</div>
+        <div class="badge" id="chatBadge" style="display:none">0</div>
+      </div>
+      <div class="nav-lbl">聊天</div>
+    </div>
+    <div class="nav-item" onclick="navTo('my')">
+      <div class="nav-icon">👤</div>
+      <div class="nav-lbl">我的</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { resolveDevUser } from './dev-impersonation.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+let unsubscribeHomeUser = null;
+
+const loadingOverlay = document.getElementById('loadingOverlay');
+const toast = document.getElementById('toast');
+
+function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2500); }
+function showState(id){
+  document.querySelectorAll('.state').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// 燈箱
+window.openLightbox = (url) => {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('show');
+};
+
+window.navTo = (page) => {
+  const pageMap = { home:'home.html', match:'match.html', chat:'chat.html', my:'my.html' };
+  if(page !== 'home') window.PengooTransition?.go(pageMap[page]) || (window.location.href = pageMap[page]);
+};
+
+window.goToQuiz = () => { window.location.href = 'quiz_intro.html'; };
+
+// ── 渲染拒絕原因（含照片縮圖）──
+function renderRejectionReasons(reasons, photos){
+  if(!reasons) return;
+  const container = document.getElementById('rejectionReasons');
+  const btnContainer = document.getElementById('fixButtons');
+  let html = '';
+  let btns = '';
+
+  // 自拍問題
+  if(reasons.selfie && reasons.selfie.length > 0){
+    html += '<div class="rej-section"><div class="rej-section-title">📸 自拍驗證問題</div>';
+    reasons.selfie.forEach(r => { html += `<div class="rej-item">${r}</div>`; });
+    html += '</div>';
+    btns += '<button class="fix-btn" onclick="fixSelfie()">重新拍攝自拍 📷</button>';
+  }
+
+  // 照片問題（含縮圖）
+  if(reasons.allPhotosBad){
+    // 全部不過 → 顯示所有縮圖，整排變暗
+    html += '<div class="rej-section"><div class="rej-section-title">🖼️ 上傳照片問題</div>';
+    html += '<div class="rej-item" style="margin-bottom:0.6rem;">全部照片都不符合規定</div>';
+    if(photos && photos.length > 0){
+      html += '<div class="rej-all-thumbs">';
+      photos.forEach((url, i) => {
+        html += `<img class="rej-all-thumb" src="${url}" alt="第${i+1}張"
+                     onerror="this.style.display='none'"
+                     onclick="openLightbox('${url}')"/>`;
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    btns += '<button class="fix-btn" onclick="fixPhotos(-1)">重新上傳所有照片 🖼️</button>';
+
+  } else if(reasons.photos && Object.keys(reasons.photos).length > 0){
+    // 部分照片有問題 → 每張一列，顯示縮圖 + 原因 chip
+    html += '<div class="rej-section"><div class="rej-section-title">🖼️ 上傳照片問題</div>';
+
+    const sortedEntries = Object.entries(reasons.photos).sort((a,b) => parseInt(a[0])-parseInt(b[0]));
+    sortedEntries.forEach(([idx, reasonList]) => {
+      const i = parseInt(idx);
+      const url = (photos && photos[i]) ? photos[i] : null;
+      const chips = reasonList.map(r => `<span class="rej-photo-chip">${r}</span>`).join('');
+
+      html += '<div class="rej-photo-row">';
+      html += '<div class="rej-thumb-wrap">';
+      if(url){
+        html += `<img class="rej-thumb" src="${url}" alt="第${i+1}張"
+                      onerror="this.parentNode.innerHTML='<div class=\\'rej-thumb-placeholder\\'>🖼️</div>'"
+                      onclick="openLightbox('${url}')"/>`;
+      } else {
+        html += '<div class="rej-thumb-placeholder">🖼️</div>';
+      }
+      html += `<div class="rej-thumb-badge">${i+1}</div>`;
+      html += '</div>';
+      html += '<div class="rej-photo-info">';
+      html += `<div class="rej-photo-label">第 ${i+1} 張照片</div>`;
+      html += `<div class="rej-photo-reasons">${chips}</div>`;
+      html += '</div>';
+      html += '</div>';
+    });
+
+    html += '</div>';
+    const idxList = Object.keys(reasons.photos).join(',');
+    btns += `<button class="fix-btn" onclick="fixPhotos('${idxList}')">重新上傳有問題的照片 🖼️</button>`;
+  }
+
+  // 暱稱問題
+  if(reasons.nickname && reasons.nickname.length > 0){
+    html += '<div class="rej-section"><div class="rej-section-title">✏️ 暱稱問題</div>';
+    reasons.nickname.forEach(r => { html += `<div class="rej-item">${r}</div>`; });
+    html += '</div>';
+    btns += '<button class="fix-btn" onclick="fixNickname()">修改暱稱 ✏️</button>';
+  }
+
+  container.innerHTML = html;
+  btnContainer.innerHTML = btns;
+}
+
+// 修正操作
+window.fixSelfie  = () => { window.location.href = 'profile_fix.html?fix=selfie'; };
+window.fixPhotos  = (idx) => { window.location.href = 'profile_fix.html?fix=photos&idx='+idx; };
+window.fixNickname = () => { window.location.href = 'profile_fix.html?fix=nickname'; };
+window.resubmit   = () => { showToast('重新送審中...'); };
+
+// 形象相關
+const styleTitles = {
+  active:{ travel:'活潑旅行家', book:'活潑讀書人', sport:'運動達人', cook:'熱情廚師', default:'活潑開朗者' },
+  calm:{ travel:'文靜旅人', book:'書香夜貓', sport:'安靜健身者', cook:'靜心料理家', default:'沉靜內斂者' },
+  cool:{ travel:'理性探索家', book:'冷靜學者', sport:'紀律運動員', cook:'精準廚藝家', default:'理性思考者' },
+  gentle:{ travel:'溫柔旅伴', book:'溫暖書蟲', sport:'體貼健身者', cook:'愛心料理師', default:'溫柔體貼者' }
+};
+const styleDesc = {
+  active:'充滿活力，喜歡探索新地方\n對感情認真而熱情',
+  calm:'沉靜內斂，享受獨處時光\n用心感受每段關係',
+  cool:'自律有目標，邏輯清晰\n對感情直接坦誠',
+  gentle:'溫柔體貼，重視家庭\n用行動表達愛意'
+};
+function getPersonality(tags){ if(!tags||!tags.length) return 'active'; if(tags.includes('活潑開朗')) return 'active'; if(tags.includes('內向安靜')) return 'calm'; if(tags.includes('理性冷靜')) return 'cool'; if(tags.includes('溫柔體貼')) return 'gentle'; return 'active'; }
+function getHobby(tags){ if(!tags||!tags.length) return 'default'; if(tags.includes('愛旅行')) return 'travel'; if(tags.includes('喜歡讀書')) return 'book'; if(tags.includes('愛運動')||tags.includes('健身控')) return 'sport'; if(tags.includes('愛做料理')) return 'cook'; return 'default'; }
+
+function drawDefaultAvatar(gender){
+  const skin=gender==='female'?'#FFE4E1':'#FFDAB9',hC='#1a1a1a',tC=gender==='female'?'#E8B4BC':'#4169E1',bC=gender==='female'?'#CC1111':'#1a1a1a',sC=gender==='female'?'#1a1a1a':'#ffffff',hCY=18;
+  let s='';
+  s+=`<circle cx="35" cy="${hCY}" r="13" fill="${skin}"/>`;
+  if(gender==='female'){s+=`<ellipse cx="35" cy="${hCY-8}" rx="13" ry="6" fill="${hC}"/><rect x="22" y="${hCY-8}" width="26" height="8" rx="2" fill="${hC}"/><rect x="19" y="${hCY-4}" width="5" height="22" rx="2.5" fill="${hC}"/><rect x="46" y="${hCY-4}" width="5" height="22" rx="2.5" fill="${hC}"/>`;}
+  else{s+=`<ellipse cx="35" cy="${hCY-8}" rx="13" ry="6" fill="${hC}"/><rect x="22" y="${hCY-8}" width="26" height="7" rx="2" fill="${hC}"/>`;}
+  s+=`<circle cx="29" cy="${hCY-1}" r="3" fill="white"/><circle cx="41" cy="${hCY-1}" r="3" fill="white"/><circle cx="29" cy="${hCY-1}" r="1.8" fill="#333"/><circle cx="41" cy="${hCY-1}" r="1.8" fill="#333"/><circle cx="30" cy="${hCY-2}" r="0.7" fill="white"/><circle cx="42" cy="${hCY-2}" r="0.7" fill="white"/>`;
+  s+=`<ellipse cx="23" cy="${hCY+5}" rx="3" ry="2" fill="#FFB6C1" opacity="${gender==='female'?0.6:0.4}"/><ellipse cx="47" cy="${hCY+5}" rx="3" ry="2" fill="#FFB6C1" opacity="${gender==='female'?0.6:0.4}"/>`;
+  s+=`<path d="M30 ${hCY+8} Q35 ${hCY+11} 40 ${hCY+8}" fill="${gender==='female'?'#FF8FAB':'#FF9999'}" stroke="${gender==='female'?'#CC5577':'#CC7777'}" stroke-width="0.6"/>`;
+  const nY=hCY+13;s+=`<rect x="32" y="${nY}" width="6" height="6" fill="${skin}"/>`;
+  const bY=nY+6,bH=38;
+  if(gender==='female'){s+=`<path d="M23 ${bY} L21 ${bY+bH} L49 ${bY+bH} L47 ${bY} Q35 ${bY+5} 23 ${bY}Z" fill="${tC}"/><rect x="15" y="${bY+3}" width="9" height="14" rx="4.5" fill="${skin}"/><rect x="46" y="${bY+3}" width="9" height="14" rx="4.5" fill="${skin}"/>`;}
+  else{s+=`<rect x="23" y="${bY}" width="24" height="${bH}" rx="3" fill="${tC}"/><rect x="15" y="${bY}" width="8" height="17" rx="4" fill="${tC}"/><rect x="47" y="${bY}" width="8" height="17" rx="4" fill="${tC}"/>`;}
+  s+=`<circle cx="19" cy="${bY+20}" r="4" fill="${skin}"/><circle cx="51" cy="${bY+20}" r="4" fill="${skin}"/>`;
+  const lY=bY+bH,lH=32;
+  if(gender==='female'){s+=`<path d="M23 ${lY} L19 ${lY+lH*0.5} L51 ${lY+lH*0.5} L47 ${lY} Z" fill="${bC}"/><rect x="24" y="${lY+lH*0.5}" width="9" height="${lH*0.5}" rx="3" fill="${skin}"/><rect x="37" y="${lY+lH*0.5}" width="9" height="${lH*0.5}" rx="3" fill="${skin}"/>`;}
+  else{s+=`<rect x="23" y="${lY}" width="9" height="${lH}" rx="3" fill="${bC}"/><rect x="38" y="${lY}" width="9" height="${lH}" rx="3" fill="${bC}"/>`;}
+  const sY=lY+lH;
+  if(gender==='female'){s+=`<ellipse cx="28" cy="${sY+3}" rx="7" ry="4" fill="${sC}"/><ellipse cx="41" cy="${sY+3}" rx="7" ry="4" fill="${sC}"/><line x1="31" y1="${sY+3}" x2="32" y2="${sY+8}" stroke="${sC}" stroke-width="1.5" stroke-linecap="round"/><line x1="44" y1="${sY+3}" x2="45" y2="${sY+8}" stroke="${sC}" stroke-width="1.5" stroke-linecap="round"/>`;}
+  else{s+=`<ellipse cx="27" cy="${sY+4}" rx="8" ry="4" fill="${sC}" stroke="#ccc" stroke-width="0.8"/><ellipse cx="42" cy="${sY+4}" rx="8" ry="4" fill="${sC}" stroke="#ccc" stroke-width="0.8"/>`;}
+  return s;
+}
+
+function setAvatarInfo(userData, svgId, titleId, descId, tagsId){
+  if(!document.getElementById(svgId)) return;
+  const gender=userData.gender||'male', tags=userData.tags||[], height=userData.height||'';
+  const personality=getPersonality(tags), hobby=getHobby(tags);
+  const title=(styleTitles[personality]||styleTitles.active)[hobby]||(styleTitles[personality]||styleTitles.active).default;
+  const desc=(styleDesc[personality]||styleDesc.active).replace('\n','<br/>');
+  const svgEl=document.getElementById(svgId);
+  if(svgEl) svgEl.innerHTML=drawDefaultAvatar(gender);
+  if(titleId) document.getElementById(titleId).textContent=title;
+  if(descId) document.getElementById(descId).innerHTML=desc;
+  if(tagsId){
+    const tagsEl=document.getElementById(tagsId);
+    const displayTags=tags.slice(0,3);
+    if(height) displayTags.push(height+'cm');
+    tagsEl.innerHTML=displayTags.map(t=>`<span class="av-tag">${t}</span>`).join('');
+  }
+}
+
+// 超時保護
+const homeTimeout = setTimeout(()=>{
+  const o=document.getElementById('initOverlay');
+  if(o) o.style.display='none';
+  showState('statePending');
+}, 5000);
+
+function renderHomeState(data){
+  document.getElementById('greeting').textContent = `${data.nickname||'你'}，你好 👋`;
+
+  const unread=data.unreadCount||0;
+  const badge=document.getElementById('chatBadge');
+  if(badge){
+    if(unread>0){
+      badge.textContent=unread>99?'99+':unread;
+      badge.style.display='flex';
+    } else {
+      badge.style.display='none';
+    }
+  }
+
+  if(data.rejected){
+    showState('stateRejected');
+    renderRejectionReasons(data.rejectionReasons, data.photos);
+    return;
+  }
+
+  if(data.pendingReview || !data.selfieApproved){
+    showState('statePending');
+    return;
+  }
+
+  if(!data.quizComplete){
+    showState('stateApproved');
+    return;
+  }
+
+  const now = Date.now();
+  let canRefill = false;
+  try{ const unlockAt=data.quizUnlockAt?data.quizUnlockAt.toMillis():null; canRefill=unlockAt&&now>unlockAt; } catch(e){}
+  if(canRefill){
+    showState('stateUnlock');
+    document.getElementById('matchCount2').textContent=data.matchCount||0;
+    document.getElementById('unreadCount2').textContent=unread;
+  } else {
+    showState('stateReady');
+    document.getElementById('matchCount').textContent=data.matchCount||0;
+    document.getElementById('unreadCount').textContent=unread;
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  clearTimeout(homeTimeout);
+  const initOverlay = document.getElementById('initOverlay');
+
+  if(!user){
+    if(unsubscribeHomeUser) unsubscribeHomeUser();
+    unsubscribeHomeUser = null;
+    window.location.href='index.html';
+    return;
+  }
+
+  try{
+    const dev = await resolveDevUser(user, db, doc, getDoc);
+    const effectiveUser = dev.user;
+    const userRef = doc(db,'users',effectiveUser.uid);
+
+    if(unsubscribeHomeUser) unsubscribeHomeUser();
+    unsubscribeHomeUser = onSnapshot(userRef, (snap) => {
+      if(!snap.exists()){ window.location.href='profile.html'; return; }
+      renderHomeState(snap.data());
+      if(initOverlay) initOverlay.style.display='none';
+    }, (e) => {
+      console.error('Home snapshot error:', e);
+      showState('statePending');
+      if(initOverlay) initOverlay.style.display='none';
+    });
+  } catch(e){
+    console.error('Home error:', e);
+    showState('statePending');
+    if(initOverlay) initOverlay.style.display='none';
+  }
+});
+</script>
+<script src="app-transition.js"></script>
+</body>
+</html>

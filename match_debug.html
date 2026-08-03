@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 配對診斷</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A2A2E;display:flex;justify-content:center;}
+.wrap{width:100%;max-width:430px;min-height:100vh;padding:1rem 1rem 2rem;}
+.eyebrow{font-size:0.62rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.16rem;}
+h1{font-size:1.28rem;font-weight:900;margin-bottom:0.45rem;}
+.lead{font-size:0.76rem;line-height:1.65;color:rgba(58,42,46,0.58);font-weight:750;margin-bottom:0.85rem;}
+.bar{display:grid;grid-template-columns:1fr 1fr;gap:0.52rem;margin-bottom:0.75rem;}
+.input{width:100%;height:42px;border-radius:13px;border:1.5px solid rgba(184,205,217,0.45);background:white;color:#3A2A2E;font-size:0.76rem;font-weight:850;padding:0 0.72rem;font-family:inherit;margin-bottom:0.62rem;}
+button{height:44px;border-radius:13px;border:0;background:#6B2D3E;color:white;font-size:0.78rem;font-weight:900;cursor:pointer;}
+button.light{background:white;color:#3A5068;border:1.5px solid rgba(184,205,217,0.45);}
+.card{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:17px;padding:0.82rem;box-shadow:0 8px 20px rgba(58,42,46,0.035);margin-bottom:0.62rem;}
+.title{font-size:0.84rem;font-weight:900;margin-bottom:0.36rem;}
+.text{font-size:0.72rem;line-height:1.58;color:rgba(58,42,46,0.6);font-weight:750;word-break:break-word;}
+.ok{border-color:rgba(29,107,62,0.22);background:#E6F4ED;}
+.bad{border-color:rgba(185,28,28,0.18);background:#FEE2E2;}
+.warn{border-color:rgba(180,83,9,0.2);background:#FEF3C7;}
+.bot{display:grid;gap:0.42rem;}
+.bot-head{display:flex;align-items:center;justify-content:space-between;gap:0.6rem;}
+.bot-name{font-size:0.86rem;font-weight:900;}
+.pill{font-size:0.62rem;font-weight:900;border-radius:99px;padding:0.16rem 0.45rem;background:rgba(184,205,217,0.18);color:#3A5068;white-space:nowrap;}
+.pill.ok{background:#1D6B3E;color:white;border:0;}
+.pill.bad{background:#B91C1C;color:white;border:0;}
+.pill.warn{background:#B45309;color:white;border:0;}
+.scores{display:grid;grid-template-columns:1fr 1fr;gap:0.42rem;}
+.score{background:rgba(245,240,238,0.85);border-radius:12px;padding:0.5rem;}
+.score-num{font-size:1rem;font-weight:900;color:#C8545A;}
+.score-lbl{font-size:0.62rem;font-weight:800;color:rgba(58,42,46,0.45);}
+.reason{font-size:0.7rem;line-height:1.55;font-weight:760;color:rgba(58,42,46,0.62);}
+.mono{font-family:Consolas,monospace;font-size:0.68rem;}
+.identity-list{display:grid;gap:0.42rem;max-height:230px;overflow-y:auto;padding-right:0.1rem;margin-top:0.58rem;}
+.identity{width:100%;height:auto;display:flex;align-items:center;gap:0.56rem;background:rgba(184,205,217,0.12);border:0;border-radius:13px;padding:0.54rem 0.62rem;text-align:left;font-family:inherit;color:inherit;}
+.identity.active{background:rgba(232,180,188,0.22);box-shadow:0 0 0 1.5px rgba(107,45,62,0.22) inset;}
+.avatar{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#B8CDD9,#E8B4BC);display:flex;align-items:center;justify-content:center;color:white;font-size:0.78rem;font-weight:900;flex-shrink:0;}
+.identity-main{flex:1;min-width:0;}
+.identity-name{font-size:0.75rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.identity-meta{font-size:0.62rem;font-weight:760;color:rgba(58,42,46,0.46);margin-top:0.08rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">PENGOO DEBUG</div>
+  <h1>配對診斷</h1>
+  <div class="lead">這頁會檢查目前登入帳號、機器人是否存在、性別互選、是否被略過、雙向分數是否超過 80。</div>
+  <section class="card">
+    <div class="title">診斷身份</div>
+    <div class="text">選一個用戶後，下面會用那個人的身份檢查配對頁會看到誰。也會同步套用到配對頁。</div>
+    <input class="input" id="viewerInput" placeholder="輸入用戶 uid，例如 h / bot_pengoo_xxx"/>
+    <div class="bar">
+      <button id="useViewerBtn" type="button">使用這個身份</button>
+      <button class="light" id="clearViewerBtn" type="button">回到登入身份</button>
+    </div>
+    <div class="identity-list" id="identityList">
+      <div class="text">讀取身份中...</div>
+    </div>
+  </section>
+  <div class="bar">
+    <button id="runBtn">重新診斷</button>
+    <button class="light" id="matchBtn">前往配對頁</button>
+  </div>
+  <input class="input" id="targetInput" placeholder="可輸入暱稱或 uid，例如 小威 / 檸檬1 / bot_pengoo_xxx"/>
+  <div id="summary"></div>
+  <div id="list"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { calculateMutualMatch } from './quiz-scoring.js';
+import { resolveDevUser, setDevBotUid, clearDevBotUid } from './dev-impersonation.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const botIds = [
+  'bot_pengoo_yuna','bot_pengoo_mei','bot_pengoo_grace','bot_pengoo_anna',
+  'bot_pengoo_rina','bot_pengoo_luna','bot_pengoo_ray','bot_pengoo_kai',
+  'bot_pengoo_hao','bot_pengoo_noa','bot_pengoo_mika','bot_pengoo_shan'
+];
+
+let currentUser = null;
+let currentData = null;
+let isDevBotSession = false;
+let authUser = null;
+let authData = null;
+let identityUsers = [];
+
+const viewerInput = document.getElementById('viewerInput');
+const identityList = document.getElementById('identityList');
+
+function esc(value=''){
+  return String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
+}
+
+function isGenderCompatible(viewer, target){
+  const viewerLooking = viewer.lookingFor || 'any';
+  const targetLooking = target.lookingFor || 'any';
+  const targetGender = target.gender || 'other';
+  const viewerGender = viewer.gender || 'other';
+  const viewerOk = viewerLooking === 'any' || viewerLooking === targetGender;
+  const targetOk = targetLooking === 'any' || targetLooking === viewerGender;
+  return { ok: viewerOk && targetOk, viewerOk, targetOk };
+}
+
+async function getActedUids(){
+  const acted = new Set();
+  const snap = await getDocs(collection(db, 'matchActions'));
+  snap.forEach(actionDoc => {
+    const data = actionDoc.data();
+    if(data.actorUid === currentUser.uid && data.targetUid) acted.add(data.targetUid);
+  });
+  return acted;
+}
+
+function getBasicBlockReason(uid, data, actedUids){
+  if(!data) return 'Firestore 找不到這個機器人文件，可能尚未匯入成功。';
+  if(uid === currentUser.uid) return '這是自己，所以排除。';
+  if(actedUids.has(uid)) return '你已經對它按過配對或不配對，配對頁會排除。';
+  if(!data.selfieApproved) return 'selfieApproved 不是 true。';
+  if(!data.quizComplete) return 'quizComplete 不是 true。';
+  if(data.pendingReview) return 'pendingReview 是 true。';
+  if(data.rejected) return 'rejected 是 true。';
+  if(data.adminBlocked || data.blocked === true) return '被管理員封鎖或 blocked 是 true。';
+  if(!data.quizAnswers) return '沒有 quizAnswers。';
+
+  const myBlocked = Array.isArray(currentData.blocked) ? currentData.blocked : [];
+  const theirBlocked = Array.isArray(data.blocked) ? data.blocked : [];
+  if(myBlocked.includes(uid)) return '你把這個 uid 放在 blocked 裡。';
+  if(theirBlocked.includes(currentUser.uid)) return '這個機器人的 blocked 裡有你。';
+
+  const gender = isGenderCompatible(currentData, data);
+  if(!gender.ok) return `性別互選不符合。你想找 ${currentData.lookingFor || 'any'}，它是 ${data.gender || 'other'}；它想找 ${data.lookingFor || 'any'}，你是 ${currentData.gender || 'other'}。`;
+  return '';
+}
+
+function renderSummary(text, cls='card'){
+  document.getElementById('summary').innerHTML = `<div class="${cls}"><div class="title">診斷摘要</div><div class="text">${text}</div></div>`;
+}
+
+function genderText(gender){
+  if(gender === 'female') return '女';
+  if(gender === 'male') return '男';
+  return '多元';
+}
+
+function renderIdentityList(){
+  if(!identityUsers.length){
+    identityList.innerHTML = '<div class="text">目前沒有讀到 users 身份。</div>';
+    return;
+  }
+
+  identityList.innerHTML = '';
+  identityUsers.forEach(user => {
+    const data = user.data || {};
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = `identity${user.uid === currentUser?.uid ? ' active' : ''}`;
+    item.innerHTML = `
+      <div class="avatar">${esc((data.nickname || '?').slice(0,1))}</div>
+      <div class="identity-main">
+        <div class="identity-name">${esc(data.nickname || user.uid)}</div>
+        <div class="identity-meta">${esc([user.uid, data.age ? `${data.age} 歲` : '', data.city || '', data.quizComplete ? '已測驗' : '未測驗'].filter(Boolean).join('・'))}</div>
+      </div>
+      <div class="pill">${data.isTestBot || user.uid.startsWith('bot_pengoo_') ? '機器人' : genderText(data.gender)}</div>
+    `;
+    item.addEventListener('click', () => useViewer(user.uid));
+    identityList.appendChild(item);
+  });
+}
+
+async function loadIdentityUsers(){
+  const snap = await getDocs(collection(db, 'users'));
+  identityUsers = snap.docs
+    .map(userDoc => ({ uid:userDoc.id, data:userDoc.data() }))
+    .filter(user => user.data)
+    .sort((a,b) => String(a.data?.nickname || a.uid).localeCompare(String(b.data?.nickname || b.uid), 'zh-Hant'));
+  renderIdentityList();
+}
+
+async function useViewer(uid){
+  const cleanUid = String(uid || '').trim();
+  if(!cleanUid){
+    renderSummary('請先輸入或選擇一個診斷身份。', 'card warn');
+    return;
+  }
+
+  const snap = await getDoc(doc(db, 'users', cleanUid));
+  if(!snap.exists()){
+    renderSummary(`找不到這個 users 身份：${esc(cleanUid)}`, 'card bad');
+    return;
+  }
+
+  const data = snap.data();
+  setDevBotUid(cleanUid);
+  currentUser = {
+    uid: cleanUid,
+    email: data.email || `${cleanUid}@pengoo.test`,
+    displayName: data.nickname || cleanUid,
+    realUid: authUser?.uid || '',
+    isDevBotSession: true
+  };
+  currentData = data;
+  isDevBotSession = true;
+  viewerInput.value = cleanUid;
+  renderIdentityList();
+  await runDebug();
+}
+
+async function clearViewer(){
+  clearDevBotUid();
+  currentUser = authUser;
+  currentData = authData;
+  isDevBotSession = false;
+  viewerInput.value = '';
+  renderIdentityList();
+  await runDebug();
+}
+
+async function getDebugTargets(){
+  const keyword = document.getElementById('targetInput').value.trim().toLowerCase();
+  const snap = await getDocs(collection(db, 'users'));
+  const users = snap.docs.map(userDoc => ({ uid:userDoc.id, data:userDoc.data() }));
+  const botUsers = users.filter(user => user.data?.isTestBot || user.uid.startsWith('bot_pengoo_'));
+  if(keyword){
+    return users.filter(user => {
+      const nickname = String(user.data?.nickname || '').toLowerCase();
+      const uid = String(user.uid || '').toLowerCase();
+      return nickname.includes(keyword) || uid.includes(keyword);
+    });
+  }
+
+  const fixed = botIds.map(uid => botUsers.find(user => user.uid === uid)).filter(Boolean);
+  const custom = botUsers.filter(user => !botIds.includes(user.uid));
+  return [...fixed, ...custom];
+}
+
+async function runDebug(){
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  renderSummary('診斷中...', 'card warn');
+
+  if(!currentUser || !currentData){
+    renderSummary('目前沒有登入，請先到 index.html 登入。', 'card bad');
+    return;
+  }
+
+  const myProblems = [];
+  if(currentData.pendingReview) myProblems.push('你的帳號還在審核中');
+  if(currentData.rejected) myProblems.push('你的帳號審核未通過');
+  if(!currentData.selfieApproved) myProblems.push('你的 selfieApproved 不是 true');
+  if(!currentData.quizComplete) myProblems.push('你的 quizComplete 不是 true');
+  if(!currentData.quizAnswers) myProblems.push('你的帳號沒有 quizAnswers');
+
+  if(myProblems.length){
+    renderSummary(`你的帳號目前不能進配對頁：${myProblems.join('、')}。`, 'card bad');
+    return;
+  }
+
+  const actedUids = await getActedUids();
+  const debugTargets = await getDebugTargets();
+  let found = 0;
+  let eligible = 0;
+  let recommended = 0;
+
+  for(const target of debugTargets){
+    const uid = target.uid;
+    const data = target.data;
+    if(data) found++;
+
+    const blockReason = getBasicBlockReason(uid, data, actedUids);
+    let match = null;
+    let resultLabel = '不可出現';
+    let pillClass = 'bad';
+    let reason = blockReason;
+
+    if(!blockReason){
+      eligible++;
+      match = calculateMutualMatch(currentData, data);
+      if(match.recommended){
+        recommended++;
+        resultLabel = '會出現';
+        pillClass = 'ok';
+        reason = '通過資格檢查，雙向分數都達 80。';
+      } else {
+        resultLabel = '分數不足';
+        pillClass = 'warn';
+        reason = `資格通過，但雙向分數未都達 80。你看它 ${Math.round(match.scoreForA.rawScore)}，它看你 ${Math.round(match.scoreForB.rawScore)}。`;
+        if(match.scoreForA.excluded) reason += ` 你這邊有硬性排除：${match.scoreForA.excludeRule?.dimension || ''}`;
+        if(match.scoreForB.excluded) reason += ` 它那邊有硬性排除：${match.scoreForB.excludeRule?.dimension || ''}`;
+      }
+    }
+
+    list.insertAdjacentHTML('beforeend', `
+      <div class="card bot">
+        <div class="bot-head">
+          <div>
+            <div class="bot-name">${esc(data?.nickname || uid)}</div>
+            <div class="text mono">${esc(uid)}</div>
+          </div>
+          <div class="pill ${pillClass}">${resultLabel}</div>
+        </div>
+        <div class="scores">
+          <div class="score"><div class="score-num">${match ? Math.round(match.scoreForA.rawScore) : '--'}</div><div class="score-lbl">你看它</div></div>
+          <div class="score"><div class="score-num">${match ? Math.round(match.scoreForB.rawScore) : '--'}</div><div class="score-lbl">它看你</div></div>
+        </div>
+        <div class="reason">${esc(reason)}</div>
+      </div>
+    `);
+  }
+
+  const cls = recommended ? 'card ok' : found ? 'card warn' : 'card bad';
+  const viewer = currentData?.nickname || currentUser?.email || currentUser?.uid || '目前帳號';
+  const mode = isDevBotSession ? '測試身份視角' : '原本登入者視角';
+  renderSummary(`目前用「${esc(viewer)}」診斷（${mode}）。已找到 ${found}/${debugTargets.length} 個檢查對象。資格通過 ${eligible} 個，會在配對頁出現 ${recommended} 個。`, cls);
+}
+
+document.getElementById('runBtn').addEventListener('click', runDebug);
+document.getElementById('matchBtn').addEventListener('click', () => window.location.href = 'match.html');
+document.getElementById('useViewerBtn').addEventListener('click', () => useViewer(viewerInput.value));
+document.getElementById('clearViewerBtn').addEventListener('click', clearViewer);
+
+onAuthStateChanged(auth, async user => {
+  authUser = user;
+  if(!user){
+    currentUser = null;
+    currentData = null;
+    authData = null;
+    isDevBotSession = false;
+    renderSummary('目前沒有登入，請先到 index.html 登入。', 'card bad');
+    return;
+  }
+
+  const authSnap = await getDoc(doc(db, 'users', user.uid));
+  authData = authSnap.exists() ? authSnap.data() : null;
+
+  const dev = await resolveDevUser(user, db, doc, getDoc);
+  currentUser = dev.user;
+  currentData = dev.data;
+  isDevBotSession = dev.isDevBot;
+
+  if(!currentData){
+    const snap = await getDoc(doc(db, 'users', currentUser.uid));
+    currentData = snap.exists() ? snap.data() : null;
+  }
+
+  if(!currentData){
+    renderSummary('目前登入帳號沒有 users 文件，請先完成基本資料。', 'card bad');
+    return;
+  }
+  viewerInput.value = isDevBotSession ? currentUser.uid : '';
+  await loadIdentityUsers();
+  runDebug();
+});
+</script>
+</body>
+</html>

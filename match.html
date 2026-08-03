@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 配對</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;overflow:hidden;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A2A2E;display:flex;justify-content:center;overflow:hidden;}
+.wrap{width:100%;max-width:390px;height:100vh;background:#F5F0EE;position:relative;display:flex;flex-direction:column;overflow:hidden;}
+.top{position:sticky;top:0;z-index:20;background:#F5F0EE;padding:0.9rem 1.15rem 0.75rem;display:flex;align-items:center;justify-content:space-between;}
+.top-left{min-width:0;}
+.eyebrow{font-size:0.62rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.16rem;}
+.title{font-size:1.25rem;font-weight:900;color:#3A2A2E;line-height:1.2;}
+.dev-pill{display:none;margin-top:0.24rem;width:max-content;max-width:220px;height:24px;border-radius:99px;background:#3A2A2E;color:white;font-size:0.62rem;font-weight:900;padding:0 0.55rem;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.refresh-btn{width:38px;height:38px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#6B2D3E;font-size:1rem;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;}
+.body{flex:1;min-height:0;padding:0.05rem 1.05rem 10.35rem;display:flex;flex-direction:column;overflow:hidden;}
+.filter-strip{display:flex;align-items:center;gap:0.42rem;margin-bottom:0.58rem;overflow-x:auto;flex-shrink:0;padding-bottom:0.05rem;}
+.filter-chip{height:34px;border-radius:99px;border:1px solid rgba(184,205,217,0.42);background:white;color:#3A5068;font-size:0.7rem;font-weight:900;padding:0 0.72rem;white-space:nowrap;display:flex;align-items:center;gap:0.24rem;cursor:pointer;}
+.filter-chip.active{background:#6B2D3E;color:white;border-color:#6B2D3E;box-shadow:0 8px 18px rgba(107,45,62,0.14);}
+.match-list{flex:1;min-height:0;display:flex;}
+.match-card{width:100%;background:white;border:1px solid rgba(184,205,217,0.34);border-radius:20px;overflow:hidden;box-shadow:0 14px 32px rgba(58,42,46,0.06);display:flex;flex-direction:column;min-height:0;}
+.photo-wrap{position:relative;flex:1 1 30%;min-height:150px;background:rgba(184,205,217,0.18);overflow:hidden;}
+.photo{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-placeholder{height:100%;display:flex;align-items:center;justify-content:center;font-size:2.4rem;color:rgba(58,42,46,0.24);}
+.photo-shade{position:absolute;inset:auto 0 0;height:46%;background:linear-gradient(180deg,rgba(58,42,46,0),rgba(58,42,46,0.62));pointer-events:none;}
+.photo-info{position:absolute;left:0.8rem;right:0.8rem;bottom:0.8rem;display:flex;align-items:flex-end;justify-content:space-between;gap:0.7rem;color:white;}
+.photo-name{min-width:0;}
+.photo-title{font-size:1.26rem;font-weight:900;line-height:1.16;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 8px rgba(0,0,0,0.18);}
+.photo-meta{font-size:0.72rem;font-weight:800;opacity:0.86;margin-top:0.18rem;}
+.score-badge{background:rgba(107,45,62,0.95);color:white;border-radius:16px;padding:0.5rem 0.58rem;min-width:76px;text-align:center;box-shadow:0 8px 18px rgba(58,42,46,0.18);flex-shrink:0;}
+.score-num{font-size:1.18rem;font-weight:900;line-height:1;}
+.score-lbl{font-size:0.58rem;font-weight:900;opacity:0.82;}
+.thumb-row{display:flex;gap:0.32rem;padding:0.42rem 0.72rem 0;background:white;flex-shrink:0;}
+.thumb{width:36px;height:36px;border-radius:9px;object-fit:cover;border:1.5px solid rgba(184,205,217,0.34);background:rgba(184,205,217,0.12);cursor:pointer;touch-action:manipulation;opacity:0.72;}
+.thumb.active{border-color:rgba(232,180,188,0.95);opacity:1;box-shadow:0 0 0 2px rgba(232,180,188,0.18);}
+.card-body{padding:0.58rem 0.82rem 0.72rem;display:flex;flex-direction:column;min-height:0;flex-shrink:0;}
+.profile-line{display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.42rem;}
+.profile-pill{font-size:0.64rem;font-weight:850;color:#3A5068;background:rgba(184,205,217,0.15);border:1px solid rgba(184,205,217,0.24);border-radius:99px;padding:0.18rem 0.46rem;}
+.bio{font-size:0.7rem;line-height:1.42;color:rgba(58,42,46,0.6);font-weight:650;margin-bottom:0.42rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.tags{display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.56rem;max-height:24px;overflow:hidden;}
+.tag{font-size:0.65rem;font-weight:800;color:#6B2D3E;background:rgba(232,180,188,0.18);border:1px solid rgba(232,180,188,0.28);border-radius:99px;padding:0.18rem 0.48rem;}
+.detail-link{width:100%;height:38px;border-radius:12px;border:1px solid rgba(184,205,217,0.45);background:rgba(184,205,217,0.1);color:#3A5068;font-size:0.74rem;font-weight:900;margin-bottom:1.35rem;cursor:pointer;touch-action:manipulation;}
+.detail-sheet{position:fixed;inset:0;background:rgba(58,42,46,0.32);z-index:80;display:none;align-items:flex-end;justify-content:center;}
+.detail-sheet.show{display:flex;}
+.sheet-panel{width:100%;max-width:390px;max-height:82vh;background:white;border-radius:22px 22px 0 0;padding:0.95rem 1.05rem calc(1.1rem + env(safe-area-inset-bottom));overflow-y:auto;}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;}
+.sheet-title{font-size:1rem;font-weight:900;color:#3A2A2E;}
+.sheet-close{width:32px;height:32px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;cursor:pointer;}
+.detail-section{border-radius:15px;background:rgba(184,205,217,0.1);padding:0.75rem;margin-bottom:0.65rem;}
+.detail-k{font-size:0.62rem;font-weight:900;color:#7A9BB5;letter-spacing:0.08em;margin-bottom:0.24rem;}
+.detail-v{font-size:0.76rem;line-height:1.58;font-weight:750;color:rgba(58,42,46,0.68);}
+.actions{position:fixed;left:50%;bottom:4.9rem;transform:translateX(-50%);width:100%;max-width:390px;display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;padding:0.55rem 1.05rem 0.65rem;background:linear-gradient(180deg,rgba(245,240,238,0),#F5F0EE 30%,#F5F0EE);z-index:28;}
+.btn{height:46px;border-radius:14px;font-size:0.84rem;font-weight:900;cursor:pointer;touch-action:manipulation;}
+.btn:active{transform:scale(.985);}
+.btn:disabled{opacity:0.62;cursor:not-allowed;}
+.btn-light{background:white;color:#3A5068;border:1.5px solid rgba(184,205,217,0.55);}
+.btn-main{background:#6B2D3E;color:white;border:none;box-shadow:0 10px 20px rgba(107,45,62,0.16);}
+.match-card.is-acting{transform:scale(0.992);opacity:0.88;transition:transform .16s ease,opacity .16s ease;}
+.empty,.loading{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:18px;padding:1.25rem;text-align:center;margin-top:0.8rem;}
+.empty-icon,.loading-icon{font-size:2rem;margin-bottom:0.45rem;}
+.empty-title,.loading-title{font-size:0.95rem;font-weight:900;color:#3A2A2E;margin-bottom:0.25rem;}
+.empty-text,.loading-text{font-size:0.74rem;line-height:1.65;color:rgba(58,42,46,0.54);font-weight:700;}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:white;border-top:0.5px solid rgba(184,205,217,0.3);padding:0.5rem 0 1rem;display:flex;z-index:30;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;touch-action:manipulation;}
+.nav-icon{font-size:1.3rem;}
+.nav-lbl{font-size:0.6rem;font-weight:700;color:rgba(58,42,46,0.4);}
+.nav-item.active .nav-lbl{color:#6B2D3E;}
+.nav-badge{position:relative;display:inline-block;}
+.badge{position:absolute;top:-4px;right:-8px;min-width:16px;height:16px;border-radius:50%;background:#E8B4BC;color:#6B2D3E;font-size:0.55rem;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px;}
+.toast{position:fixed;top:5rem;left:50%;transform:translateX(-50%);background:#3A2A2E;color:white;padding:0.6rem 1.1rem;border-radius:99px;font-size:0.76rem;font-weight:800;z-index:200;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.filter-sheet{position:fixed;inset:0;background:rgba(58,42,46,0.32);z-index:90;display:none;align-items:flex-end;justify-content:center;}
+.filter-sheet.show{display:flex;}
+.filter-panel{width:100%;max-width:390px;background:white;border-radius:22px 22px 0 0;padding:0.95rem 1.05rem calc(1.1rem + env(safe-area-inset-bottom));}
+.filter-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;}
+.filter-title{font-size:1rem;font-weight:900;}
+.filter-close{width:32px;height:32px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;}
+.filter-field{margin-bottom:0.72rem;}
+.filter-label{font-size:0.68rem;font-weight:900;color:#7A9BB5;letter-spacing:0.08em;margin-bottom:0.36rem;}
+.range-card{border-radius:16px;background:#F8F4F5;border:1px solid rgba(184,205,217,0.42);padding:0.78rem 0.82rem 0.92rem;}
+.range-values{display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;font-weight:900;color:#3A2A2E;margin-bottom:0.7rem;}
+.range-track{position:relative;height:30px;}
+.range-line{position:absolute;left:0;right:0;top:13px;height:4px;border-radius:99px;background:rgba(184,205,217,0.34);}
+.range-fill{position:absolute;top:13px;height:4px;border-radius:99px;background:#6B2D3E;}
+.age-range{position:absolute;left:0;top:0;width:100%;height:30px;background:transparent;pointer-events:none;-webkit-appearance:none;appearance:none;}
+.age-range::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:white;border:5px solid #6B2D3E;box-shadow:0 4px 12px rgba(58,42,46,0.16);}
+.age-range::-moz-range-thumb{pointer-events:auto;width:14px;height:14px;border-radius:50%;background:white;border:5px solid #6B2D3E;box-shadow:0 4px 12px rgba(58,42,46,0.16);}
+.age-range::-webkit-slider-runnable-track{height:30px;background:transparent;}
+.age-range::-moz-range-track{height:30px;background:transparent;}
+.city-tags{display:flex;flex-wrap:wrap;gap:0.42rem;max-height:168px;overflow-y:auto;padding-right:0.1rem;}
+.city-tag{height:34px;border-radius:99px;border:1px solid rgba(184,205,217,0.45);background:#F8F4F5;color:#3A5068;font-size:0.7rem;font-weight:900;padding:0 0.66rem;font-family:inherit;cursor:pointer;touch-action:manipulation;}
+.city-tag.active{background:#6B2D3E;color:white;border-color:#6B2D3E;box-shadow:0 8px 18px rgba(107,45,62,0.12);}
+.filter-actions{display:grid;grid-template-columns:1fr 1fr;gap:0.62rem;margin-top:0.9rem;}
+.success-sheet{position:fixed;inset:0;background:rgba(58,42,46,0.42);z-index:120;display:none;align-items:center;justify-content:center;padding:1rem;}
+.success-sheet.show{display:flex;}
+.success-card{width:100%;max-width:350px;background:white;border-radius:24px;padding:1.05rem;box-shadow:0 24px 50px rgba(58,42,46,0.18);text-align:center;}
+.success-kicker{font-size:0.66rem;font-weight:900;letter-spacing:0.14em;color:#C8545A;margin-bottom:0.42rem;}
+.success-title{font-size:1.28rem;font-weight:900;color:#3A2A2E;margin-bottom:0.34rem;}
+.success-copy{font-size:0.76rem;line-height:1.62;color:rgba(58,42,46,0.58);font-weight:740;margin-bottom:0.88rem;}
+.tie-row{display:flex;align-items:center;justify-content:center;gap:0.48rem;margin:0.35rem 0 0.82rem;}
+.tie-avatar{width:58px;height:58px;border-radius:20px;background:linear-gradient(135deg,#B8CDD9,#E8B4BC);display:flex;align-items:center;justify-content:center;color:white;font-size:1.1rem;font-weight:900;overflow:hidden;flex-shrink:0;}
+.tie-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.tie-line{height:4px;width:72px;background:#C8545A;border-radius:99px;position:relative;}
+.tie-line::before,.tie-line::after{content:'';position:absolute;width:10px;height:10px;border-radius:50%;background:#C8545A;top:50%;transform:translateY(-50%);}
+.tie-line::before{left:-2px;}
+.tie-line::after{right:-2px;}
+.success-score{display:inline-flex;align-items:center;justify-content:center;height:34px;border-radius:99px;background:rgba(232,180,188,0.18);color:#6B2D3E;font-size:0.78rem;font-weight:900;padding:0 0.82rem;margin-bottom:0.92rem;}
+.success-actions{display:grid;grid-template-columns:1fr 1fr;gap:0.58rem;}
+.success-actions .btn{width:100%;}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="wrap">
+  <header class="top">
+    <div class="top-left">
+      <div class="eyebrow">PENGOO MATCH</div>
+      <h1 class="title">配對探索</h1>
+      <div class="dev-pill" id="devPill"></div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" aria-label="重新整理">↻</button>
+  </header>
+
+  <main class="body">
+    <div class="filter-strip">
+      <button class="filter-chip" id="filterBtn" type="button">篩選</button>
+      <div class="filter-chip" id="ageFilterChip">年齡不限</div>
+      <div class="filter-chip" id="cityFilterChip">地區不限</div>
+    </div>
+
+    <div id="loadingState" class="loading">
+      <div class="loading-icon">💕</div>
+      <div class="loading-title">正在尋找適合的人</div>
+      <div class="loading-text">Pengoo 正在比對雙方測驗、偏好排序和基本資料。</div>
+    </div>
+
+    <div id="emptyState" class="empty" style="display:none;">
+      <div class="empty-icon">🐧</div>
+      <div class="empty-title">目前還沒有合適配對</div>
+      <div class="empty-text">這不是你不夠好，是月老還在等更多完成測驗的人。之後再回來看看。</div>
+    </div>
+
+    <section class="match-list" id="matchList"></section>
+  </main>
+
+  <nav class="nav">
+    <div class="nav-item" data-page="home">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-lbl">主頁</div>
+    </div>
+    <div class="nav-item active" data-page="match">
+      <div class="nav-icon">💕</div>
+      <div class="nav-lbl">配對</div>
+    </div>
+    <div class="nav-item" data-page="chat">
+      <div class="nav-badge">
+        <div class="nav-icon">💬</div>
+        <div class="badge" id="chatBadge">0</div>
+      </div>
+      <div class="nav-lbl">聊天</div>
+    </div>
+    <div class="nav-item" data-page="my">
+      <div class="nav-icon">👤</div>
+      <div class="nav-lbl">我的</div>
+    </div>
+  </nav>
+  <div class="detail-sheet" id="detailSheet"></div>
+  <div class="success-sheet" id="successSheet"></div>
+  <div class="filter-sheet" id="filterSheet">
+    <div class="filter-panel">
+      <div class="filter-head">
+        <div class="filter-title">篩選配對</div>
+        <button class="filter-close" id="filterClose" type="button">×</button>
+      </div>
+      <div class="filter-field">
+        <div class="filter-label">年齡區間</div>
+        <div class="range-card">
+          <div class="range-values">
+            <span id="minAgeText">18 歲</span>
+            <span id="maxAgeText">65 歲</span>
+          </div>
+          <div class="range-track">
+            <div class="range-line"></div>
+            <div class="range-fill" id="ageRangeFill"></div>
+            <input class="age-range" id="minAgeRange" type="range" min="18" max="65" value="18">
+            <input class="age-range" id="maxAgeRange" type="range" min="18" max="65" value="65">
+          </div>
+        </div>
+      </div>
+      <div class="filter-field">
+        <div class="filter-label">地區</div>
+        <div class="city-tags" id="cityFilterTags"></div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-light" id="clearFilterBtn" type="button">清除</button>
+        <button class="btn btn-main" id="applyFilterBtn" type="button">套用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { calculateMutualMatch, MATCH_SCORE_CONFIG } from './quiz-scoring.js';
+import { resolveDevUser } from './dev-impersonation.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+let currentData = null;
+let currentMatches = [];
+let allMatches = [];
+let currentMatchIndex = 0;
+let actedUids = new Set();
+let acting = false;
+let matchFilters = { minAge:null, maxAge:null, cities:[] };
+
+const toast = document.getElementById('toast');
+const matchList = document.getElementById('matchList');
+const loadingState = document.getElementById('loadingState');
+const emptyState = document.getElementById('emptyState');
+const detailSheet = document.getElementById('detailSheet');
+const successSheet = document.getElementById('successSheet');
+const filterSheet = document.getElementById('filterSheet');
+const filterBtn = document.getElementById('filterBtn');
+const filterClose = document.getElementById('filterClose');
+const devPill = document.getElementById('devPill');
+const minAgeRange = document.getElementById('minAgeRange');
+const maxAgeRange = document.getElementById('maxAgeRange');
+const minAgeText = document.getElementById('minAgeText');
+const maxAgeText = document.getElementById('maxAgeText');
+const ageRangeFill = document.getElementById('ageRangeFill');
+const cityFilterTags = document.getElementById('cityFilterTags');
+const ageFilterChip = document.getElementById('ageFilterChip');
+const cityFilterChip = document.getElementById('cityFilterChip');
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+function navTo(page){
+  const pageMap = { home:'home.html', match:'match.html', chat:'chat.html', my:'my.html' };
+  if(pageMap[page] && page !== 'match') window.PengooTransition?.go(pageMap[page]) || (window.location.href = pageMap[page]);
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => navTo(item.dataset.page));
+});
+
+document.getElementById('refreshBtn').addEventListener('click', () => {
+  if(currentUser && currentData) loadMatches();
+});
+
+const cities = ['基隆市','台北市','新北市','桃園市','新竹市','新竹縣','苗栗縣','台中市','彰化縣','南投縣','雲林縣','嘉義市','嘉義縣','台南市','高雄市','屏東縣','宜蘭縣','花蓮縣','台東縣','澎湖縣','金門縣','連江縣'];
+cities.forEach(city => {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'city-tag';
+  button.dataset.city = city;
+  button.textContent = city;
+  button.addEventListener('click', () => {
+    button.classList.toggle('active');
+  });
+  cityFilterTags.appendChild(button);
+});
+
+function normalizeAgeRanges(){
+  let minAge = parseInt(minAgeRange.value, 10);
+  let maxAge = parseInt(maxAgeRange.value, 10);
+  if(minAge > maxAge){
+    const active = document.activeElement === minAgeRange ? 'min' : 'max';
+    if(active === 'min'){
+      minAge = maxAge;
+      minAgeRange.value = minAge;
+    } else {
+      maxAge = minAge;
+      maxAgeRange.value = maxAge;
+    }
+  }
+
+  const minPct = ((minAge - 18) / 47) * 100;
+  const maxPct = ((maxAge - 18) / 47) * 100;
+  ageRangeFill.style.left = `${minPct}%`;
+  ageRangeFill.style.width = `${maxPct - minPct}%`;
+  minAgeText.textContent = `${minAge} 歲`;
+  maxAgeText.textContent = `${maxAge} 歲`;
+}
+
+function syncCityTags(){
+  const selected = new Set(matchFilters.cities || []);
+  document.querySelectorAll('.city-tag').forEach(tag => {
+    tag.classList.toggle('active', selected.has(tag.dataset.city));
+  });
+}
+
+function openFilterSheet(){
+  minAgeRange.value = matchFilters.minAge || 18;
+  maxAgeRange.value = matchFilters.maxAge || 65;
+  normalizeAgeRanges();
+  syncCityTags();
+  filterSheet.classList.add('show');
+}
+
+function closeFilterSheet(){
+  filterSheet.classList.remove('show');
+}
+
+function updateFilterChips(){
+  const hasAge = matchFilters.minAge || matchFilters.maxAge;
+  const selectedCities = matchFilters.cities || [];
+  const hasCity = selectedCities.length > 0;
+  ageFilterChip.textContent = hasAge
+    ? `${matchFilters.minAge || 18}-${matchFilters.maxAge || 65} 歲`
+    : '年齡不限';
+  cityFilterChip.textContent = hasCity
+    ? selectedCities.length === 1 ? selectedCities[0] : `${selectedCities.length} 個地區`
+    : '地區不限';
+  ageFilterChip.classList.toggle('active', !!hasAge);
+  cityFilterChip.classList.toggle('active', hasCity);
+  filterBtn.classList.toggle('active', !!hasAge || hasCity);
+}
+
+function passFilters(item){
+  const age = Number(item.data.age || 0);
+  if(matchFilters.minAge && age < matchFilters.minAge) return false;
+  if(matchFilters.maxAge && age > matchFilters.maxAge) return false;
+  if(matchFilters.cities?.length && !matchFilters.cities.includes(item.data.city)) return false;
+  return true;
+}
+
+function applyFilters(){
+  normalizeAgeRanges();
+  const minAge = parseInt(minAgeRange.value, 10);
+  const maxAge = parseInt(maxAgeRange.value, 10);
+  const selectedCities = [...document.querySelectorAll('.city-tag.active')].map(tag => tag.dataset.city);
+  matchFilters = {
+    minAge: minAge > 18 ? minAge : null,
+    maxAge: maxAge < 65 ? maxAge : null,
+    cities: selectedCities
+  };
+  updateFilterChips();
+  closeFilterSheet();
+  renderMatches(allMatches.filter(passFilters).slice(0, 30));
+}
+
+filterBtn.addEventListener('click', openFilterSheet);
+ageFilterChip.addEventListener('click', openFilterSheet);
+cityFilterChip.addEventListener('click', openFilterSheet);
+filterClose.addEventListener('click', closeFilterSheet);
+filterSheet.addEventListener('click', event => {
+  if(event.target === filterSheet) closeFilterSheet();
+});
+document.getElementById('applyFilterBtn').addEventListener('click', applyFilters);
+document.getElementById('clearFilterBtn').addEventListener('click', () => {
+  matchFilters = { minAge:null, maxAge:null, cities:[] };
+  minAgeRange.value = 18;
+  maxAgeRange.value = 65;
+  normalizeAgeRanges();
+  syncCityTags();
+  updateFilterChips();
+  closeFilterSheet();
+  renderMatches(allMatches.slice(0, 30));
+});
+minAgeRange.addEventListener('input', normalizeAgeRanges);
+maxAgeRange.addEventListener('input', normalizeAgeRanges);
+normalizeAgeRanges();
+
+function isGenderCompatible(viewer, target){
+  const viewerLooking = viewer.lookingFor || 'any';
+  const targetLooking = target.lookingFor || 'any';
+  const targetGender = target.gender || 'other';
+  const viewerGender = viewer.gender || 'other';
+  const viewerOk = viewerLooking === 'any' || viewerLooking === targetGender;
+  const targetOk = targetLooking === 'any' || targetLooking === viewerGender;
+  return viewerOk && targetOk;
+}
+
+function isCandidateEligible(uid, data){
+  if(uid === currentUser.uid) return false;
+  if(actedUids.has(uid)) return false;
+  if(!data || !data.selfieApproved || !data.quizComplete) return false;
+  if(data.pendingReview || data.rejected || data.adminBlocked || data.blocked === true) return false;
+  if(!data.quizAnswers) return false;
+
+  const myBlocked = Array.isArray(currentData.blocked) ? currentData.blocked : [];
+  const theirBlocked = Array.isArray(data.blocked) ? data.blocked : [];
+  if(myBlocked.includes(uid) || theirBlocked.includes(currentUser.uid)) return false;
+
+  return isGenderCompatible(currentData, data);
+}
+
+function getBestReason(match){
+  const details = match.scoreForA.details
+    .filter(item => item.score >= 85 && item.priorityCategory)
+    .sort((a, b) => (b.score * b.weight) - (a.score * a.weight));
+  return details[0]?.priorityCategory || null;
+}
+
+function getPriorityLabel(key){
+  return MATCH_SCORE_CONFIG.priorityWeighting.labels[key] || '整體節奏';
+}
+
+function getPurposeLabel(purpose){
+  return {
+    serious: '認真交往',
+    casual: '先相處看看',
+    open: '順其自然'
+  }[purpose] || '尚未設定';
+}
+
+function createTagHtml(tags=[]){
+  return tags.slice(0, 5).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
+}
+
+function escapeHtml(value=''){
+  return String(value)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+
+function getProfilePhoto(userData){
+  const thumbs = Array.isArray(userData?.photoThumbs) ? userData.photoThumbs.filter(Boolean) : [];
+  const photos = Array.isArray(userData?.photos) ? userData.photos.filter(Boolean) : [];
+  return thumbs[0] || photos[0] || '';
+}
+
+function matchAvatarHtml(userData, fallback='P'){
+  const photo = getProfilePhoto(userData);
+  if(photo) return `<div class="tie-avatar"><img src="${escapeHtml(photo)}" alt="${escapeHtml(userData?.nickname || '頭像')}" loading="lazy"></div>`;
+  return `<div class="tie-avatar">${escapeHtml((userData?.nickname || fallback).slice(0,1))}</div>`;
+}
+
+function renderMatchCard(item){
+  const data = item.data;
+  const viewerScore = item.match.scoreForA;
+  const bestReason = getBestReason(item.match);
+  const photos = Array.isArray(data.photos) ? data.photos.filter(Boolean).slice(0, 4) : [];
+  const thumbs = Array.isArray(data.photoThumbs) ? data.photoThumbs.filter(Boolean).slice(0, 4) : photos;
+  const photo = photos[0] || '';
+  const firstDisplayPhoto = thumbs[0] || photo;
+  const tagsHtml = createTagHtml(data.tags || []);
+  const ageCity = [data.age ? `${data.age} 歲` : '', data.city || ''].filter(Boolean).join(' · ');
+  const profilePills = [
+    data.job,
+    data.purpose === 'serious' ? '認真交往' : '',
+    data.purpose === 'casual' ? '先相處看看' : '',
+    data.purpose === 'open' ? '順其自然' : '',
+    data.height ? `${data.height} cm` : ''
+  ].filter(Boolean).slice(0, 4);
+  const thumbHtml = photos.length
+    ? photos.map((url, index) => `<img class="thumb${index === 0 ? ' active' : ''}" src="${escapeHtml(thumbs[index] || url)}" data-photo="${escapeHtml(url)}" alt="第 ${index + 1} 張照片縮圖" loading="lazy">`).join('')
+    : '<div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>';
+
+  const article = document.createElement('article');
+  article.className = 'match-card';
+  article.innerHTML = `
+    <div class="photo-wrap">
+      ${firstDisplayPhoto ? `<img class="photo" src="${escapeHtml(firstDisplayPhoto)}" data-full="${escapeHtml(photo)}" alt="${escapeHtml(data.nickname || '配對照片')}" loading="eager">` : '<div class="photo-placeholder">🐧</div>'}
+      <div class="photo-shade"></div>
+      <div class="photo-info">
+        <div class="photo-name">
+          <div class="photo-title">${escapeHtml(data.nickname || 'Pengoo 用戶')}</div>
+          <div class="photo-meta">${escapeHtml(ageCity || '等待更多資料')}</div>
+        </div>
+        <div class="score-badge">
+          <div class="score-num">${viewerScore.displayPercent}%</div>
+          <div class="score-lbl">契合</div>
+        </div>
+      </div>
+    </div>
+    <div class="thumb-row">${thumbHtml}</div>
+    <div class="card-body">
+      <div class="profile-line">${profilePills.map(text => `<span class="profile-pill">${escapeHtml(text)}</span>`).join('')}</div>
+      <div class="bio">${escapeHtml(data.bio || '這個人還保留一點神秘感。')}</div>
+      <div class="tags">${tagsHtml || '<span class="tag">等待更多標籤</span>'}</div>
+      <button class="detail-link" type="button">查看詳情與推薦原因</button>
+      <div class="actions">
+        <button class="btn btn-light pass-btn" type="button">不配對</button>
+        <button class="btn btn-main like-btn" type="button">配對</button>
+      </div>
+    </div>
+  `;
+
+  article.querySelector('.detail-link').addEventListener('click', () => {
+    openDetailSheet(item, bestReason);
+  });
+  article.querySelectorAll('.thumb').forEach(thumb => {
+    thumb.addEventListener('click', () => {
+      const nextPhoto = thumb.dataset.photo;
+      const mainPhoto = article.querySelector('.photo');
+      if(!nextPhoto || !mainPhoto) return;
+      mainPhoto.src = nextPhoto;
+      article.querySelectorAll('.thumb').forEach(item => item.classList.remove('active'));
+      thumb.classList.add('active');
+    });
+  });
+  article.querySelector('.pass-btn').addEventListener('click', () => {
+    recordMatchAction(item, 'pass', article);
+  });
+  article.querySelector('.like-btn').addEventListener('click', () => {
+    recordMatchAction(item, 'like', article);
+  });
+  return article;
+}
+
+function setActionFeedback(card, action, busy){
+  if(!card) return;
+  const passBtn = card.querySelector('.pass-btn');
+  const likeBtn = card.querySelector('.like-btn');
+  card.classList.toggle('is-acting', busy);
+  if(passBtn){
+    passBtn.disabled = busy;
+    passBtn.textContent = busy && action === 'pass' ? '略過中...' : '不配對';
+  }
+  if(likeBtn){
+    likeBtn.disabled = busy;
+    likeBtn.textContent = busy && action === 'like' ? '牽線中...' : '配對';
+  }
+}
+
+function getActionId(actorUid, targetUid){
+  return `${actorUid}_${targetUid}`;
+}
+
+function getPairId(uidA, uidB){
+  return [uidA, uidB].sort().join('_');
+}
+
+async function loadExistingActions(){
+  actedUids = new Set();
+  const snap = await getDocs(collection(db, 'matchActions'));
+  snap.forEach(actionDoc => {
+    const data = actionDoc.data();
+    if(data.actorUid === currentUser.uid && data.targetUid){
+      actedUids.add(data.targetUid);
+    }
+  });
+}
+
+async function recordMatchAction(item, action, card=null){
+  if(acting) return;
+  acting = true;
+  setActionFeedback(card, action, true);
+
+  try{
+    const actionId = getActionId(currentUser.uid, item.uid);
+    const actionData = {
+      actorUid: currentUser.uid,
+      targetUid: item.uid,
+      action,
+      scoreForActor: Math.round(item.match.scoreForA.rawScore),
+      scoreForTarget: Math.round(item.match.scoreForB.rawScore),
+      displayPercent: item.match.scoreForA.displayPercent,
+      recommended: item.match.recommended,
+      scoringVersion: item.match.scoringVersion,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    await setDoc(doc(db, 'matchActions', actionId), actionData, { merge:true });
+    actedUids.add(item.uid);
+
+    if(action === 'like'){
+      const reverseSnap = await getDoc(doc(db, 'matchActions', getActionId(item.uid, currentUser.uid)));
+      const reverseData = reverseSnap.exists() ? reverseSnap.data() : null;
+      if(reverseData?.action === 'like'){
+        const pairId = getPairId(currentUser.uid, item.uid);
+        await setDoc(doc(db, 'matches', pairId), {
+          users: [currentUser.uid, item.uid].sort(),
+          userA: currentUser.uid,
+          userB: item.uid,
+          scoreForA: Math.round(item.match.scoreForA.rawScore),
+          scoreForB: Math.round(item.match.scoreForB.rawScore),
+          displayForA: item.match.scoreForA.displayPercent,
+          displayForB: item.match.scoreForB.displayPercent,
+          scoringVersion: item.match.scoringVersion,
+          unreadBy: {
+            [currentUser.uid]: 0,
+            [item.uid]: 0
+          },
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          lastMessageAt: null
+        }, { merge:true });
+        showMatchSuccess(item, pairId);
+      } else {
+        goNextMatch('已送出配對');
+      }
+    } else {
+      goNextMatch('已略過這位配對');
+    }
+  } catch(e){
+    console.error(e);
+    setActionFeedback(card, action, false);
+    showToast('操作失敗，請再試一次');
+  } finally {
+    acting = false;
+  }
+}
+
+function openDetailSheet(item, bestReason){
+  const data = item.data;
+  const viewerScore = item.match.scoreForA;
+  const ageCity = [data.age ? `${data.age} 歲` : '', data.city || ''].filter(Boolean).join('，');
+  const commonTags = Array.isArray(currentData.tags) && Array.isArray(data.tags)
+    ? data.tags.filter(tag => currentData.tags.includes(tag)).slice(0, 6)
+    : [];
+
+  detailSheet.innerHTML = `
+    <div class="sheet-panel">
+      <div class="sheet-head">
+        <div class="sheet-title">${escapeHtml(data.nickname || 'Pengoo 用戶')}的詳細資料</div>
+        <button class="sheet-close" type="button">×</button>
+      </div>
+      <div class="detail-section">
+        <div class="detail-k">個人資料</div>
+        <div class="detail-v">${escapeHtml([ageCity, data.job, getPurposeLabel(data.purpose), data.height ? `${data.height} cm` : ''].filter(Boolean).join('｜'))}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-k">自我介紹</div>
+        <div class="detail-v">${escapeHtml(data.bio || '這個人還保留一點神秘感。')}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-k">為什麼推薦</div>
+        <div class="detail-v">你們在「${escapeHtml(getPriorityLabel(bestReason))}」上有高契合，且雙方各自看對方都達 80 分以上。你的契合度是 ${viewerScore.displayPercent}%。</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-k">共同標籤</div>
+        <div class="detail-v">${commonTags.length ? escapeHtml(commonTags.join('、')) : '目前沒有共同標籤'}，共 ${viewerScore.profileBonus.tagOverlap} 個。</div>
+      </div>
+    </div>
+  `;
+
+  detailSheet.classList.add('show');
+  detailSheet.querySelector('.sheet-close').addEventListener('click', closeDetailSheet);
+}
+
+function closeDetailSheet(){
+  detailSheet.classList.remove('show');
+}
+
+detailSheet.addEventListener('click', event => {
+  if(event.target === detailSheet) closeDetailSheet();
+});
+
+function showMatchSuccess(item, pairId){
+  const data = item.data;
+  const score = item.match.scoreForA.displayPercent || Math.round(item.match.scoreForA.rawScore);
+  successSheet.innerHTML = `
+    <div class="success-card">
+      <div class="success-kicker">PENGOO RED THREAD</div>
+      <div class="success-title">月老牽線成功</div>
+      <div class="success-copy">你和 ${escapeHtml(data.nickname || '這位用戶')} 都選擇了彼此，可以開始聊天了。</div>
+      <div class="tie-row">
+        ${matchAvatarHtml(currentData, '你')}
+        <div class="tie-line"></div>
+        ${matchAvatarHtml(data)}
+      </div>
+      <div class="success-score">${score}% 契合</div>
+      <div class="success-actions">
+        <button class="btn btn-light" id="continueMatchBtn" type="button">繼續配對</button>
+        <button class="btn btn-main" id="openChatBtn" type="button">月老信箱</button>
+      </div>
+    </div>
+  `;
+  successSheet.classList.add('show');
+  successSheet.querySelector('#continueMatchBtn').addEventListener('click', () => {
+    successSheet.classList.remove('show');
+    goNextMatch();
+  });
+  successSheet.querySelector('#openChatBtn').addEventListener('click', () => {
+    const url = `chat.html?match=${encodeURIComponent(pairId)}`;
+    window.PengooTransition?.go(url) || (window.location.href = url);
+  });
+}
+
+successSheet.addEventListener('click', event => {
+  if(event.target === successSheet){
+    successSheet.classList.remove('show');
+    goNextMatch();
+  }
+});
+
+function renderMatches(items){
+  currentMatches = items;
+  currentMatchIndex = 0;
+  renderCurrentMatch();
+}
+
+function renderCurrentMatch(){
+  matchList.innerHTML = '';
+  loadingState.style.display = 'none';
+  emptyState.style.display = currentMatches.length && currentMatchIndex < currentMatches.length ? 'none' : 'block';
+
+  if(currentMatches.length && currentMatchIndex < currentMatches.length){
+    matchList.appendChild(renderMatchCard(currentMatches[currentMatchIndex]));
+  }
+}
+
+function goNextMatch(message){
+  if(message) showToast(message);
+  currentMatchIndex += 1;
+  renderCurrentMatch();
+}
+
+async function loadMatches(){
+  loadingState.style.display = 'block';
+  emptyState.style.display = 'none';
+  matchList.innerHTML = '';
+
+  try{
+    await loadExistingActions();
+    const snap = await getDocs(collection(db, 'users'));
+    const matches = [];
+
+    snap.forEach(userDoc => {
+      const data = userDoc.data();
+      if(!isCandidateEligible(userDoc.id, data)) return;
+
+      const match = calculateMutualMatch(currentData, data);
+      if(!match.recommended) return;
+
+      matches.push({
+        uid: userDoc.id,
+        data,
+        match
+      });
+    });
+
+    matches.sort((a, b) => b.match.scoreForA.rawScore - a.match.scoreForA.rawScore);
+    allMatches = matches;
+    updateFilterChips();
+    renderMatches(allMatches.filter(passFilters).slice(0, 30));
+  } catch(e){
+    console.error(e);
+    loadingState.style.display = 'none';
+    showToast('配對載入失敗，請再試一次');
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if(!user){
+    window.location.href = 'index.html';
+    return;
+  }
+
+  try{
+    const dev = await resolveDevUser(user, db, doc, getDoc);
+    currentUser = dev.user;
+    currentData = dev.data;
+    if(dev.isDevBot){
+      devPill.textContent = `測試身份：${currentData?.nickname || currentUser.uid}`;
+      devPill.style.display = 'flex';
+    } else {
+      devPill.style.display = 'none';
+    }
+    if(!currentData){
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      if(!snap.exists()){
+        window.location.href = 'profile.html';
+        return;
+      }
+      currentData = snap.data();
+    }
+    if(currentData.pendingReview || currentData.rejected || !currentData.selfieApproved){
+      window.location.href = 'home.html';
+      return;
+    }
+    if(!currentData.quizComplete){
+      window.location.href = 'quiz_intro.html';
+      return;
+    }
+
+    const unread = currentData.unreadCount || 0;
+    if(unread > 0){
+      const badge = document.getElementById('chatBadge');
+      badge.textContent = unread > 99 ? '99+' : unread;
+      badge.style.display = 'flex';
+    }
+
+    await loadMatches();
+  } catch(e){
+    console.error(e);
+    loadingState.style.display = 'none';
+    showToast('載入失敗，請再試一次');
+  }
+});
+</script>
+<script src="app-transition.js"></script>
+</body>
+</html>

@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 🐧 管理後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#2A2A2E;min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+.wrap{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;}
+
+.top-bar{padding:0.9rem 1.2rem;background:#3A2A2E;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+.top-title{font-size:1rem;font-weight:800;color:white;}
+.top-badge{font-size:0.7rem;padding:3px 10px;border-radius:99px;background:rgba(232,180,188,0.3);color:#E8B4BC;font-weight:700;}
+.logout-btn{font-size:0.7rem;padding:4px 10px;border-radius:99px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:rgba(255,255,255,0.5);cursor:pointer;}
+
+.login-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;gap:1rem;}
+.lock-icon{font-size:2.5rem;}
+.login-title{font-size:1.2rem;font-weight:900;color:white;}
+.login-sub{font-size:0.8rem;color:rgba(255,255,255,0.4);}
+.btn-google-admin{padding:0.9rem 1.5rem;border-radius:14px;border:none;background:white;font-size:0.9rem;font-weight:800;color:#3A2A2E;cursor:pointer;display:flex;align-items:center;gap:0.6rem;}
+.login-error{font-size:0.78rem;color:#E8B4BC;font-weight:700;display:none;}
+.login-error.show{display:block;}
+
+.body{flex:1;padding:0.8rem 1rem;display:none;}
+.body.show{display:block;}
+
+.admin-tabs{display:flex;gap:0.4rem;margin-bottom:0.8rem;}
+.admin-tab{flex:1;padding:0.6rem;border-radius:10px;border:none;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4);font-size:0.75rem;font-weight:700;cursor:pointer;text-align:center;transition:all 0.15s;}
+.admin-tab.active{background:rgba(232,180,188,0.2);color:#E8B4BC;}
+
+.tab-page{display:none;}
+.tab-page.show{display:block;}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.8rem;}
+.stat-box{background:rgba(255,255,255,0.05);border-radius:12px;padding:0.8rem;text-align:center;}
+.stat-num{font-size:1.5rem;font-weight:900;color:#E8B4BC;}
+.stat-lbl{font-size:0.65rem;color:rgba(255,255,255,0.3);font-weight:700;margin-top:0.2rem;}
+
+.batch-bar{display:none;background:rgba(232,180,188,0.1);border-radius:12px;padding:0.6rem 0.8rem;margin-bottom:0.6rem;align-items:center;justify-content:space-between;}
+.batch-bar.show{display:flex;}
+.batch-count{font-size:0.78rem;font-weight:700;color:#E8B4BC;}
+.batch-btns{display:flex;gap:0.4rem;}
+.batch-btn{padding:0.4rem 0.8rem;border-radius:8px;border:none;font-size:0.7rem;font-weight:700;cursor:pointer;}
+.batch-approve{background:#1D8348;color:white;}
+.batch-reject{background:#CC1111;color:white;}
+.batch-cancel{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);}
+
+.section-title{font-size:0.68rem;font-weight:800;color:rgba(232,180,188,0.6);letter-spacing:0.06em;margin-bottom:0.5rem;}
+.review-card{background:rgba(255,255,255,0.05);border-radius:14px;padding:0.9rem;margin-bottom:0.6rem;border:1px solid transparent;transition:border-color 0.15s;}
+.review-card.selected{border-color:#E8B4BC;}
+.rc-top{display:flex;gap:0.7rem;margin-bottom:0.6rem;}
+.rc-check{width:22px;height:22px;border-radius:6px;border:2px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:0.7rem;color:transparent;transition:all 0.15s;}
+.rc-check.checked{background:#E8B4BC;border-color:#E8B4BC;color:#3A2A2E;}
+.rc-selfie{width:52px;height:52px;border-radius:10px;background:rgba(255,255,255,0.1);flex-shrink:0;overflow:hidden;cursor:pointer;}
+.rc-selfie img{width:100%;height:100%;object-fit:cover;}
+.rc-info{flex:1;min-width:0;}
+.rc-name{font-size:0.88rem;font-weight:900;color:white;margin-bottom:0.15rem;}
+.rc-detail{font-size:0.7rem;color:rgba(255,255,255,0.4);line-height:1.6;}
+.rc-photos{display:flex;gap:4px;margin-bottom:0.5rem;overflow-x:auto;}
+.rc-photo{width:44px;height:44px;border-radius:8px;background:rgba(255,255,255,0.08);flex-shrink:0;overflow:hidden;cursor:pointer;}
+.rc-photo img{width:100%;height:100%;object-fit:cover;}
+.rc-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:0.5rem;}
+.rc-tag{font-size:0.6rem;padding:2px 6px;border-radius:99px;background:rgba(184,205,217,0.1);color:rgba(184,205,217,0.6);}
+.rc-bio{font-size:0.7rem;color:rgba(255,255,255,0.35);margin-bottom:0.5rem;font-style:italic;}
+.rc-btns{display:flex;gap:0.4rem;}
+.rc-btn{flex:1;padding:0.55rem;border-radius:10px;border:none;font-size:0.75rem;font-weight:800;cursor:pointer;}
+.rc-approve{background:#1D8348;color:white;}
+.rc-reject{background:rgba(204,17,17,0.15);color:#CC1111;border:1px solid rgba(204,17,17,0.3);}
+.rc-detail-btn{background:rgba(184,205,217,0.1);color:#B8CDD9;border:1px solid rgba(184,205,217,0.2);}
+
+.tag-section{margin-bottom:0.8rem;}
+.tag-header{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.8rem;background:rgba(255,255,255,0.05);border-radius:10px;cursor:pointer;margin-bottom:0.4rem;}
+.tag-header-title{font-size:0.78rem;font-weight:800;color:rgba(255,255,255,0.6);}
+.tag-header-count{font-size:0.65rem;color:rgba(255,255,255,0.3);}
+.tag-arrow{font-size:0.7rem;color:rgba(255,255,255,0.3);transition:transform 0.2s;}
+.tag-header.open .tag-arrow{transform:rotate(180deg);}
+.tag-body{display:none;padding:0.4rem 0;}
+.tag-body.open{display:block;}
+.tag-list{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:0.5rem;}
+.tag-item{display:flex;align-items:center;gap:4px;font-size:0.72rem;padding:4px 8px;border-radius:99px;background:rgba(184,205,217,0.1);color:#B8CDD9;font-weight:600;}
+.tag-del{font-size:0.65rem;cursor:pointer;color:#CC1111;font-weight:700;}
+.add-row{display:flex;gap:0.4rem;}
+.add-input{flex:1;padding:0.5rem 0.7rem;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);font-size:0.75rem;color:white;outline:none;font-family:inherit;}
+.add-input::placeholder{color:rgba(255,255,255,0.2);}
+.add-btn{padding:0.5rem 0.9rem;border-radius:8px;border:none;background:#B8CDD9;color:#3A2A2E;font-size:0.72rem;font-weight:700;cursor:pointer;}
+.add-section-row{display:flex;gap:0.4rem;margin-bottom:0.8rem;}
+.quiz-tools{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.7rem;}
+.quiz-select,.quiz-textarea{width:100%;padding:0.6rem 0.7rem;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;font-family:inherit;outline:none;}
+.quiz-select{font-size:0.78rem;}
+.quiz-textarea{min-height:220px;resize:vertical;font-size:0.72rem;line-height:1.55;font-family:'Courier New',monospace;}
+.quiz-list{display:grid;gap:0.45rem;margin-bottom:0.7rem;}
+.quiz-item{padding:0.65rem 0.75rem;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid transparent;cursor:pointer;}
+.quiz-item.active{border-color:#E8B4BC;background:rgba(232,180,188,0.12);}
+.quiz-item-title{font-size:0.76rem;font-weight:800;color:white;line-height:1.45;}
+.quiz-item-meta{font-size:0.62rem;color:rgba(255,255,255,0.35);margin-top:0.2rem;}
+.quiz-note{font-size:0.68rem;line-height:1.65;color:rgba(255,255,255,0.38);margin-bottom:0.7rem;}
+.quiz-export-box{display:none;margin-top:0.8rem;}
+.quiz-export-box.show{display:block;}
+
+/* 密碼彈窗 */
+.pw-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;}
+.pw-modal.show{display:flex;}
+.pw-box{background:#3A2A2E;border-radius:18px;padding:1.5rem;width:90%;max-width:320px;text-align:center;}
+.pw-title{font-size:0.95rem;font-weight:800;color:white;margin-bottom:0.3rem;}
+.pw-sub{font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:1rem;}
+.pw-input{width:100%;padding:0.8rem;border-radius:10px;border:2px solid rgba(184,205,217,0.3);background:rgba(255,255,255,0.05);font-size:1.1rem;font-weight:700;color:white;text-align:center;outline:none;letter-spacing:4px;font-family:inherit;margin-bottom:0.6rem;}
+.pw-input:focus{border-color:#B8CDD9;}
+.pw-error{font-size:0.72rem;color:#E8B4BC;font-weight:700;margin-bottom:0.5rem;display:none;}
+.pw-error.show{display:block;}
+.pw-btns{display:flex;gap:0.5rem;}
+.pw-btn{flex:1;padding:0.7rem;border-radius:10px;border:none;font-size:0.85rem;font-weight:800;cursor:pointer;}
+.pw-confirm{background:#6B2D3E;color:white;}
+.pw-cancel{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);}
+
+/* 照片放大 */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:200;align-items:center;justify-content:center;cursor:pointer;}
+.lightbox.show{display:flex;}
+.lightbox img{max-width:95%;max-height:90%;object-fit:contain;border-radius:12px;}
+
+/* 詳細資料彈窗 */
+.detail-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;}
+.detail-modal.show{display:flex;}
+.detail-box{background:#3A2A2E;border-radius:18px;padding:1.2rem;width:90%;max-width:360px;max-height:85vh;overflow-y:auto;}
+.detail-close{font-size:0.8rem;color:rgba(255,255,255,0.4);cursor:pointer;text-align:right;margin-bottom:0.5rem;}
+.detail-row{display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:0.5px solid rgba(255,255,255,0.05);}
+.detail-label{font-size:0.75rem;color:rgba(255,255,255,0.4);}
+.detail-value{font-size:0.75rem;color:white;font-weight:700;text-align:right;max-width:60%;}
+.detail-photos{display:flex;gap:6px;flex-wrap:wrap;margin-top:0.5rem;}
+.detail-photo{width:60px;height:60px;border-radius:8px;overflow:hidden;cursor:pointer;}
+.detail-photo img{width:100%;height:100%;object-fit:cover;}
+
+/* 拒絕彈窗 */
+.reject-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:flex-end;justify-content:center;}
+.reject-modal.show{display:flex;}
+.reject-box{background:#2E2028;border-radius:20px 20px 0 0;padding:1.2rem 1rem 2rem;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
+.reject-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.15);margin:0 auto 1rem;}
+.reject-title{font-size:0.95rem;font-weight:900;color:white;text-align:center;margin-bottom:0.2rem;}
+.reject-username{font-size:0.72rem;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:1rem;}
+
+/* 拒絕區塊 */
+.rej-section{margin-bottom:0.9rem;}
+.rej-section-title{font-size:0.68rem;font-weight:800;letter-spacing:0.05em;padding:0.3rem 0.5rem;border-radius:6px;margin-bottom:0.4rem;display:inline-block;}
+.rej-section-title.selfie{background:rgba(232,180,188,0.12);color:#E8B4BC;}
+.rej-section-title.photo{background:rgba(184,205,217,0.12);color:#B8CDD9;}
+.rej-section-title.nick{background:rgba(255,215,0,0.1);color:#FFD700;}
+
+/* 照片選項列 */
+.photo-rej-item{display:flex;align-items:center;gap:0.6rem;padding:0.45rem 0.5rem;border-radius:10px;margin-bottom:0.35rem;border:1.5px solid transparent;transition:all 0.15s;cursor:pointer;}
+.photo-rej-item:hover{background:rgba(255,255,255,0.04);}
+.photo-rej-item.has-check{border-color:rgba(184,205,217,0.15);background:rgba(184,205,217,0.04);}
+.photo-rej-item input[type="checkbox"]{width:16px;height:16px;accent-color:#E8B4BC;cursor:pointer;flex-shrink:0;}
+.photo-thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.1);}
+.photo-thumb-placeholder{width:44px;height:44px;border-radius:8px;background:rgba(255,255,255,0.07);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:rgba(255,255,255,0.2);}
+.photo-rej-sub{flex:1;}
+.photo-rej-label{font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.7);margin-bottom:0.2rem;}
+.photo-rej-reasons{display:flex;flex-wrap:wrap;gap:0.25rem;}
+.photo-rej-reason-chip{display:flex;align-items:center;gap:0.25rem;font-size:0.62rem;color:rgba(255,255,255,0.4);cursor:pointer;}
+.photo-rej-reason-chip input{width:12px;height:12px;accent-color:#B8CDD9;cursor:pointer;}
+
+/* 簡單勾選項 */
+.rej-opt{display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.5rem;border-radius:8px;cursor:pointer;font-size:0.72rem;color:rgba(255,255,255,0.6);transition:background 0.1s;}
+.rej-opt:hover{background:rgba(255,255,255,0.05);}
+.rej-opt input[type="checkbox"]{width:16px;height:16px;accent-color:#E8B4BC;cursor:pointer;}
+
+/* 全部照片 */
+.photo-all-bad{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.6rem;border-radius:10px;background:rgba(204,17,17,0.08);border:1px solid rgba(204,17,17,0.2);cursor:pointer;font-size:0.72rem;color:rgba(255,100,100,0.8);font-weight:700;margin-top:0.3rem;}
+.photo-all-bad input{width:16px;height:16px;accent-color:#CC1111;cursor:pointer;}
+
+/* 密碼區 */
+.rej-pw-area{margin-top:0.8rem;padding-top:0.8rem;border-top:1px solid rgba(255,255,255,0.06);}
+.rej-pw-input{width:100%;padding:0.75rem;border-radius:10px;border:2px solid rgba(184,205,217,0.2);background:rgba(255,255,255,0.04);font-size:1rem;font-weight:700;color:white;text-align:center;outline:none;letter-spacing:4px;font-family:inherit;margin-bottom:0.4rem;}
+.rej-pw-input:focus{border-color:#B8CDD9;}
+.rej-pw-error{font-size:0.7rem;color:#E8B4BC;font-weight:700;margin-bottom:0.4rem;display:none;text-align:center;}
+.rej-pw-error.show{display:block;}
+.rej-btns{display:flex;gap:0.5rem;margin-top:0.2rem;}
+.rej-btn{flex:1;padding:0.75rem;border-radius:12px;border:none;font-size:0.85rem;font-weight:800;cursor:pointer;}
+.rej-confirm{background:#6B2D3E;color:white;}
+.rej-cancel{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);}
+
+.empty{text-align:center;padding:2rem;color:rgba(255,255,255,0.2);font-size:0.85rem;font-weight:700;}
+
+/* 所有用戶篩選按鈕 */
+.au-filter{padding:0.35rem 0.8rem;border-radius:99px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4);font-size:0.7rem;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+.au-filter.active{background:rgba(232,180,188,0.2);border-color:rgba(232,180,188,0.4);color:#E8B4BC;}
+
+/* 用戶列表行 */
+.au-row{display:flex;align-items:center;gap:0.7rem;padding:0.6rem 0.5rem;border-bottom:0.5px solid rgba(255,255,255,0.05);cursor:pointer;border-radius:8px;transition:background 0.1s;}
+.au-row:hover{background:rgba(255,255,255,0.04);}
+.au-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;background:rgba(255,255,255,0.08);}
+.au-avatar-placeholder{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.au-info{flex:1;min-width:0;}
+.au-name{font-size:0.82rem;font-weight:800;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.au-meta{font-size:0.65rem;color:rgba(255,255,255,0.35);margin-top:0.1rem;}
+.au-badge{font-size:0.6rem;padding:2px 7px;border-radius:99px;font-weight:700;flex-shrink:0;}
+.au-badge.pending{background:rgba(232,180,188,0.15);color:#E8B4BC;}
+.au-badge.approved{background:rgba(29,131,72,0.15);color:#4ADE80;}
+.au-badge.rejected{background:rgba(204,17,17,0.15);color:#FF6B6B;}
+.au-badge.quiz{background:rgba(184,205,217,0.15);color:#B8CDD9;}
+.au-badge.new{background:rgba(255,215,0,0.1);color:#FFD700;}
+
+.toast{position:fixed;top:4rem;left:50%;transform:translateX(-50%);background:#1D8348;color:white;padding:0.6rem 1.2rem;border-radius:99px;font-size:0.78rem;font-weight:700;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.toast.show{opacity:1;}
+.toast.error{background:#CC1111;}
+</style>
+</head>
+<body>
+
+<!-- 密碼彈窗（通用） -->
+<div class="pw-modal" id="pwModal">
+  <div class="pw-box">
+    <div class="pw-title" id="pwTitle">請輸入管理密碼</div>
+    <div class="pw-sub" id="pwSub">此操作需要密碼驗證</div>
+    <input class="pw-input" type="password" id="pwInput" maxlength="10" placeholder="••••"/>
+    <div class="pw-error" id="pwError">密碼錯誤</div>
+    <div class="pw-btns">
+      <button class="pw-btn pw-cancel" onclick="closePwModal()">取消</button>
+      <button class="pw-btn pw-confirm" onclick="confirmPw()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Session 密碼彈窗（每次進入頁面都要輸入） -->
+<div class="pw-modal" id="sessionPwModal" style="z-index:500;">
+  <div class="pw-box">
+    <div style="font-size:1.8rem;margin-bottom:0.6rem;">🐧</div>
+    <div class="pw-title">請輸入後台密碼</div>
+    <div class="pw-sub">每次進入後台都需要驗證</div>
+    <input class="pw-input" type="password" id="sessionPwInput" maxlength="10" placeholder="••••"/>
+    <div class="pw-error" id="sessionPwError">密碼錯誤</div>
+    <div class="pw-btns" style="justify-content:center;">
+      <button class="pw-btn pw-confirm" style="flex:unset;padding:0.7rem 2rem;" onclick="confirmSessionPw()">進入後台</button>
+    </div>
+  </div>
+</div>
+
+<!-- 照片放大 -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
+  <img id="lightboxImg" src="" alt=""/>
+</div>
+
+<!-- 詳細資料 -->
+<div class="detail-modal" id="detailModal">
+  <div class="detail-box">
+    <div class="detail-close" onclick="document.getElementById('detailModal').classList.remove('show')">✕ 關閉</div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- 所有用戶抽屜 -->
+<div class="reject-modal" id="allUsersModal">
+  <div class="reject-box" style="max-height:92vh;">
+    <div class="reject-handle"></div>
+    <div class="reject-title" style="margin-bottom:0.8rem;">所有用戶</div>
+
+    <!-- 篩選 -->
+    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.8rem;" id="userFilterBtns">
+      <button class="au-filter active" data-filter="all">全部</button>
+      <button class="au-filter" data-filter="pending">待審核</button>
+      <button class="au-filter" data-filter="approved">已通過</button>
+      <button class="au-filter" data-filter="rejected">已拒絕</button>
+      <button class="au-filter" data-filter="quiz">已測驗</button>
+    </div>
+
+    <div id="allUsersList" style="overflow-y:auto;max-height:70vh;"></div>
+
+    <button class="rej-btn rej-cancel" style="width:100%;margin-top:0.8rem;" onclick="document.getElementById('allUsersModal').classList.remove('show')">關閉</button>
+  </div>
+</div>
+
+<!-- 拒絕原因彈窗（底部滑出式） -->
+<div class="reject-modal" id="rejectModal">
+  <div class="reject-box">
+    <div class="reject-handle"></div>
+    <div class="reject-title">選擇拒絕原因</div>
+    <div class="reject-username" id="rejectUserName"></div>
+
+    <!-- 自拍問題 -->
+    <div class="rej-section">
+      <div class="rej-section-title selfie">📸 自拍驗證問題</div>
+      <label class="rej-opt"><input type="checkbox" class="rej-cb" value="selfie_blur"/> 照片不清楚、太模糊</label>
+      <label class="rej-opt"><input type="checkbox" class="rej-cb" value="selfie_noface"/> 看不到完整臉部</label>
+      <label class="rej-opt"><input type="checkbox" class="rej-cb" value="selfie_dark"/> 光線太暗</label>
+      <label class="rej-opt"><input type="checkbox" class="rej-cb" value="selfie_fake"/> 疑似非本人照片</label>
+    </div>
+
+    <!-- 上傳照片問題（動態，含縮圖） -->
+    <div class="rej-section">
+      <div class="rej-section-title photo">🖼️ 上傳照片問題</div>
+      <div id="photoCheckboxes"></div>
+      <label class="photo-all-bad">
+        <input type="checkbox" class="rej-cb" value="photo_all_bad"/>
+        全部照片都不符合規定
+      </label>
+    </div>
+
+    <!-- 暱稱問題 -->
+    <div class="rej-section">
+      <div class="rej-section-title nick">✏️ 暱稱問題</div>
+      <label class="rej-opt"><input type="checkbox" class="rej-cb" value="nick_bad"/> 含有不當文字</label>
+      <label class="rej-opt"><input type="checkbox" class="rej-cb" value="nick_ad"/> 含有廣告內容</label>
+      <label class="rej-opt"><input type="checkbox" class="rej-cb" value="nick_impersonate"/> 冒充他人</label>
+    </div>
+
+    <!-- 密碼確認 -->
+    <div class="rej-pw-area">
+      <input class="rej-pw-input" type="password" id="rejectPwInput" maxlength="10" placeholder="輸入密碼確認"/>
+      <div class="rej-pw-error" id="rejectPwError">密碼錯誤</div>
+      <div class="rej-btns">
+        <button class="rej-btn rej-cancel" onclick="closeRejectModal()">取消</button>
+        <button class="rej-btn rej-confirm" onclick="confirmReject()">確認拒絕</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 初始遮罩，等 Firebase Auth 確認後才移除 -->
+<div id="initOverlay" style="position:fixed;inset:0;background:#2A2A2E;z-index:999;display:flex;align-items:center;justify-content:center;">
+  <div style="width:36px;height:36px;border-radius:50%;border:4px solid rgba(232,180,188,0.3);border-top-color:#E8B4BC;animation:spin 0.8s linear infinite;"></div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg);}}</style>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="wrap">
+  <div class="top-bar">
+    <div class="top-title">🐧 Pengoo 後台</div>
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <div class="top-badge" id="pendingBadge">0 待審核</div>
+      <button class="logout-btn" id="logoutBtn" style="display:none" onclick="doLogout()">登出</button>
+    </div>
+  </div>
+
+  <div class="login-screen" id="loginScreen" style="display:none">
+    <div class="lock-icon">🔒</div>
+    <div class="login-title">管理員登入</div>
+    <div class="login-sub">僅限授權管理員</div>
+    <button class="btn-google-admin" id="adminLoginBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Google 管理員登入
+    </button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+
+  <div class="body" id="mainBody">
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchTab('review')">👥 審核</button>
+      <button class="admin-tab" onclick="switchTab('tags')">🏷️ 標籤</button>
+      <button class="admin-tab" onclick="switchTab('reports')">🚩 檢舉</button>
+      <button class="admin-tab" onclick="switchTab('quiz')">📝 題庫</button>
+    </div>
+
+    <div class="tab-page show" id="tabReview">
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-num" id="pendingCount">0</div><div class="stat-lbl">待審核</div></div>
+        <div class="stat-box" id="totalBox" style="cursor:pointer;transition:background 0.15s;" onclick="openAllUsers()">
+          <div class="stat-num" id="totalCount">0</div>
+          <div class="stat-lbl">總用戶 👆</div>
+        </div>
+      </div>
+      <div class="batch-bar" id="batchBar">
+        <div class="batch-count" id="batchCount">已選 0 人</div>
+        <div class="batch-btns">
+          <button class="batch-btn batch-cancel" onclick="clearSelection()">取消</button>
+          <button class="batch-btn batch-reject" onclick="batchAction('reject')">批量拒絕</button>
+          <button class="batch-btn batch-approve" onclick="batchAction('approve')">批量通過</button>
+        </div>
+      </div>
+      <div class="section-title">✦ 待審核用戶</div>
+      <div id="reviewList"></div>
+    </div>
+
+    <div class="tab-page" id="tabTags">
+      <div class="section-title">✦ 新增分類</div>
+      <div class="add-section-row">
+        <input class="add-input" id="newSectionInput" placeholder="新分類名稱（英文key）"/>
+        <input class="add-input" id="newSectionLabel" placeholder="顯示名稱"/>
+        <button class="add-btn" onclick="addSection()">新增</button>
+      </div>
+      <div id="tagSections"></div>
+    </div>
+
+    <div class="tab-page" id="tabReports">
+      <div class="section-title">✦ 檢舉管理</div>
+      <div id="reportsList"></div>
+    </div>
+
+    <div class="tab-page" id="tabQuiz">
+      <div class="section-title">✦ 題庫管理</div>
+      <div class="quiz-note">
+        題庫目前儲存在 quiz-bank.js。這裡可先編輯與匯出新版內容；因為目前是純靜態網站，瀏覽器不能直接寫回檔案。
+      </div>
+      <div class="quiz-tools">
+        <select class="quiz-select" id="quizGenderSelect">
+          <option value="male">男生版</option>
+          <option value="female">女生版</option>
+          <option value="other">多元版</option>
+        </select>
+        <button class="add-btn" id="quizAddBtn">新增題目</button>
+        <button class="add-btn" id="quizApplyBtn">套用編輯</button>
+        <button class="add-btn" id="quizExportBtn">匯出題庫 JS</button>
+      </div>
+      <div class="quiz-list" id="quizList"></div>
+      <div class="section-title">✦ 題目 JSON</div>
+      <textarea class="quiz-textarea" id="quizEditor" spellcheck="false"></textarea>
+      <div class="quiz-export-box" id="quizExportBox">
+        <div class="section-title">✦ 匯出內容</div>
+        <textarea class="quiz-textarea" id="quizExportText" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { QUIZ_BANK, QUIZ_VERSION } from './quiz-bank.js';
+import { QUIZ_SCORING_RULES } from './quiz-scoring.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+const ADMIN_PASSWORD = '1309';
+const ADMIN_WHITELIST = ['kingnashmvp@yahoo.com.tw'];
+
+const toast = document.getElementById('toast');
+let selectedUsers = new Set();
+let pendingCallback = null;
+let unsubscribeReviewList = null;
+
+// ★ session 密碼：只存在記憶體，刷新就清掉
+let sessionUnlocked = false;
+
+const userPhotosMap = {};
+let rejectingUid = null;
+let rejectingPhotos = [];
+
+function showToast(msg, isError=false){
+  toast.className = isError ? 'toast error show' : 'toast show';
+  toast.textContent = msg;
+  setTimeout(()=>toast.classList.remove('show'), 2500);
+}
+
+// ── Session 密碼 ──
+function requireSessionPw(callback){
+  if(sessionUnlocked){ callback(); return; }
+  document.getElementById('sessionPwInput').value = '';
+  document.getElementById('sessionPwError').classList.remove('show');
+  document.getElementById('sessionPwModal').classList.add('show');
+  setTimeout(()=>document.getElementById('sessionPwInput').focus(), 100);
+  // 存起來，confirmSessionPw 用
+  window._sessionCallback = callback;
+}
+
+window.confirmSessionPw = () => {
+  const pw = document.getElementById('sessionPwInput').value;
+  if(pw !== ADMIN_PASSWORD){
+    document.getElementById('sessionPwError').classList.add('show');
+    document.getElementById('sessionPwInput').value = '';
+    setTimeout(()=>document.getElementById('sessionPwInput').focus(), 50);
+    return;
+  }
+  sessionUnlocked = true;
+  document.getElementById('sessionPwModal').classList.remove('show');
+  if(window._sessionCallback) window._sessionCallback();
+  window._sessionCallback = null;
+};
+
+// Enter 鍵送出 session 密碼
+document.getElementById('sessionPwInput').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter') confirmSessionPw();
+});
+
+// ── 通用密碼彈窗 ──
+window.openPwModal = (title, sub, callback) => {
+  document.getElementById('pwTitle').textContent = title;
+  document.getElementById('pwSub').textContent = sub;
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwError').classList.remove('show');
+  pendingCallback = callback;
+  document.getElementById('pwModal').classList.add('show');
+  setTimeout(()=>document.getElementById('pwInput').focus(), 100);
+};
+window.closePwModal = () => {
+  document.getElementById('pwModal').classList.remove('show');
+  pendingCallback = null;
+};
+window.confirmPw = () => {
+  const pw = document.getElementById('pwInput').value;
+  if(pw !== ADMIN_PASSWORD){
+    document.getElementById('pwError').classList.add('show');
+    return;
+  }
+  document.getElementById('pwModal').classList.remove('show');
+  if(pendingCallback) pendingCallback();
+  pendingCallback = null;
+};
+
+// ── 照片放大 ──
+window.openLightbox = (url) => {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('show');
+};
+
+// ── Tab 切換 ──
+window.switchTab = (tab) => {
+  document.querySelectorAll('.admin-tab').forEach((el,i) => el.classList.toggle('active', ['review','tags','reports','quiz'][i]===tab));
+  document.querySelectorAll('.tab-page').forEach(el => el.classList.remove('show'));
+  document.getElementById(tab==='review'?'tabReview':tab==='tags'?'tabTags':tab==='reports'?'tabReports':'tabQuiz').classList.add('show');
+  if(tab === 'reports') loadReports();
+  if(tab === 'quiz') renderQuizManager();
+};
+
+// ── 登入 ──
+onAuthStateChanged(auth, async (user) => {
+  const overlay = document.getElementById('initOverlay');
+  if(user && ADMIN_WHITELIST.includes(user.email)){
+    if(overlay) overlay.style.display='none';
+    // Google auth 通過，但每次仍需 session 密碼
+    requireSessionPw(()=>{
+      showAdmin();
+      loadReviewList();
+      loadTags();
+    });
+  } else {
+    if(overlay) overlay.style.display='none';
+    document.getElementById('loginScreen').style.display='flex';
+  }
+});
+
+document.getElementById('adminLoginBtn').onclick = async () => {
+  try{
+    const result = await signInWithPopup(auth, provider);
+    if(!ADMIN_WHITELIST.includes(result.user.email)){
+      document.getElementById('loginError').textContent = '你沒有管理員權限';
+      document.getElementById('loginError').classList.add('show');
+      await signOut(auth);
+      return;
+    }
+    // Google 登入成功後也要過 session 密碼
+    requireSessionPw(()=>{
+      showAdmin();
+      loadReviewList();
+      loadTags();
+    });
+  } catch(e){
+    if(e.code !== 'auth/popup-closed-by-user'){
+      document.getElementById('loginError').textContent = '登入失敗';
+      document.getElementById('loginError').classList.add('show');
+    }
+  }
+};
+
+window.doLogout = async () => {
+  sessionUnlocked = false;
+  if(unsubscribeReviewList){
+    unsubscribeReviewList();
+    unsubscribeReviewList = null;
+  }
+  await signOut(auth);
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainBody').classList.remove('show');
+  document.getElementById('logoutBtn').style.display = 'none';
+};
+
+function showAdmin(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainBody').classList.add('show');
+  document.getElementById('logoutBtn').style.display = 'inline-block';
+}
+
+async function initAdmin(){
+  try{
+    const snap = await getDoc(doc(db,'settings','admin'));
+    if(!snap.exists()) await setDoc(doc(db,'settings','admin'),{ whitelist: ADMIN_WHITELIST });
+  } catch(e){}
+}
+initAdmin();
+
+async function renderReviewSnapshot(snap){
+  const list = document.getElementById('reviewList');
+  try{
+    const allSnap = await getDocs(collection(db,'users'));
+
+    document.getElementById('pendingCount').textContent = snap.size;
+    document.getElementById('totalCount').textContent = allSnap.size;
+    document.getElementById('pendingBadge').textContent = snap.size + ' 待審核';
+
+    if(snap.empty){
+      list.innerHTML = '<div class="empty">🎉 沒有待審核的用戶</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    snap.forEach(d => {
+      const data = d.data();
+      const uid = d.id;
+
+      // ★ 存照片到 Map，onclick 只傳 uid
+      userPhotosMap[uid] = data.photos || [];
+
+      // ★ 照片用 data-url，完全不嵌入 onclick 字串
+      const tagHTML = (data.tags||[]).map(t => `<span class="rc-tag">${t}</span>`).join('');
+
+      const card = document.createElement('div');
+      card.className = 'review-card';
+      card.id = 'card-'+uid;
+
+      // 照片列
+      const photosWrap = document.createElement('div');
+      photosWrap.className = 'rc-photos';
+      (data.photos||[]).forEach(url => {
+        const ph = document.createElement('div');
+        ph.className = 'rc-photo';
+        ph.innerHTML = `<img src="${url}" alt=""/>`;
+        ph.addEventListener('click', () => openLightbox(url));
+        photosWrap.appendChild(ph);
+      });
+
+      card.innerHTML = `
+        <div class="rc-top">
+          <div class="rc-check" id="check-${uid}">✓</div>
+          <div class="rc-selfie" id="selfie-${uid}">${data.selfieURL?`<img src="${data.selfieURL}" alt=""/>`:''}</div>
+          <div class="rc-info">
+            <div class="rc-name"></div>
+            <div class="rc-detail">${data.gender==='male'?'男生':data.gender==='female'?'女生':'多元性別'}・${data.age||'?'}歲・${data.city||'?'}<br/>${data.job||'?'}・${data.height||'?'}cm</div>
+          </div>
+        </div>
+        <div class="rc-photos-placeholder"></div>
+        <div class="rc-tags">${tagHTML}</div>
+        ${data.bio ? `<div class="rc-bio"></div>` : ''}
+        <div class="rc-btns">
+          <button class="rc-btn rc-reject">拒絕</button>
+          <button class="rc-btn rc-detail-btn">詳細</button>
+          <button class="rc-btn rc-approve">通過</button>
+        </div>
+      `;
+
+      // 用 textContent 設定文字，完全避免 XSS 和引號問題
+      card.querySelector('.rc-name').textContent = data.nickname || '—';
+      if(data.bio) card.querySelector('.rc-bio').textContent = `"${data.bio}"`;
+
+      // 照片列插入
+      card.querySelector('.rc-photos-placeholder').replaceWith(photosWrap);
+
+      // 自拍點擊
+      if(data.selfieURL){
+        card.querySelector('#selfie-'+uid).addEventListener('click', () => openLightbox(data.selfieURL));
+      }
+
+      // ★ 所有按鈕用 addEventListener，完全不用 onclick 字串
+      card.querySelector('#check-'+uid).addEventListener('click', () => toggleSelect(uid));
+      card.querySelector('.rc-reject').addEventListener('click', () => openRejectModal(uid, data.nickname||''));
+      card.querySelector('.rc-detail-btn').addEventListener('click', () => showDetail(uid));
+      card.querySelector('.rc-approve').addEventListener('click', () => reviewUser(uid,'approve'));
+
+      list.appendChild(card);
+    });
+  } catch(e){
+    console.error(e);
+    list.innerHTML = '<div class="empty">載入失敗</div>';
+  }
+}
+
+// ── 審核列表 ──
+function loadReviewList(){
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '<div class="empty">載入中...</div>';
+  if(unsubscribeReviewList) unsubscribeReviewList();
+  const q = query(collection(db,'users'), where('pendingReview','==',true));
+  unsubscribeReviewList = onSnapshot(q, snap => {
+    renderReviewSnapshot(snap);
+  }, e => {
+    console.error(e);
+    list.innerHTML = '<div class="empty">載入失敗</div>';
+  });
+}
+
+// ── 勾選 ──
+window.toggleSelect = (uid) => {
+  const el = document.getElementById('check-'+uid);
+  const card = document.getElementById('card-'+uid);
+  if(selectedUsers.has(uid)){
+    selectedUsers.delete(uid);
+    el.classList.remove('checked');
+    card.classList.remove('selected');
+  } else {
+    selectedUsers.add(uid);
+    el.classList.add('checked');
+    card.classList.add('selected');
+  }
+  updateBatchBar();
+};
+
+function updateBatchBar(){
+  const bar = document.getElementById('batchBar');
+  if(selectedUsers.size > 0){
+    bar.classList.add('show');
+    document.getElementById('batchCount').textContent = `已選 ${selectedUsers.size} 人`;
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+window.clearSelection = () => {
+  selectedUsers.forEach(uid => {
+    const el = document.getElementById('check-'+uid);
+    const card = document.getElementById('card-'+uid);
+    if(el) el.classList.remove('checked');
+    if(card) card.classList.remove('selected');
+  });
+  selectedUsers.clear();
+  updateBatchBar();
+};
+
+// ── 拒絕彈窗 ──
+window.openRejectModal = (uid, name) => {
+  rejectingUid = uid;
+  rejectingPhotos = userPhotosMap[uid] || [];   // ★ 從 Map 取，不從 onclick 傳入
+
+  document.getElementById('rejectUserName').textContent = '用戶：' + name;
+  document.getElementById('rejectPwInput').value = '';
+  document.getElementById('rejectPwError').classList.remove('show');
+  document.querySelectorAll('.rej-cb').forEach(cb => cb.checked = false);
+
+  // 動態產生每張照片縮圖 + 原因勾選
+  const photoContainer = document.getElementById('photoCheckboxes');
+  photoContainer.innerHTML = '';
+
+  if(rejectingPhotos.length > 0){
+    rejectingPhotos.forEach((url, i) => {
+      const item = document.createElement('div');
+      item.className = 'photo-rej-item has-check';
+      item.innerHTML = `
+        <img class="photo-thumb" src="${url}" alt="第${i+1}張"
+             onclick="event.stopPropagation();openLightbox('${url}')"/>
+        <div class="photo-rej-sub">
+          <div class="photo-rej-label">第 ${i+1} 張照片</div>
+          <div class="photo-rej-reasons">
+            <label class="photo-rej-reason-chip">
+              <input type="checkbox" class="rej-cb" value="photo_${i}_blur"/> 不清楚
+            </label>
+            <label class="photo-rej-reason-chip">
+              <input type="checkbox" class="rej-cb" value="photo_${i}_noface"/> 看不到臉
+            </label>
+            <label class="photo-rej-reason-chip">
+              <input type="checkbox" class="rej-cb" value="photo_${i}_inappropriate"/> 不恰當
+            </label>
+          </div>
+        </div>
+      `;
+      photoContainer.appendChild(item);
+    });
+  } else {
+    photoContainer.innerHTML = '<div style="font-size:0.68rem;color:rgba(255,255,255,0.25);padding:0.3rem 0.5rem;">無上傳照片</div>';
+  }
+
+  document.getElementById('rejectModal').classList.add('show');
+};
+
+window.closeRejectModal = () => {
+  document.getElementById('rejectModal').classList.remove('show');
+  rejectingUid = null;
+};
+
+window.confirmReject = async () => {
+  const pw = document.getElementById('rejectPwInput').value;
+  if(pw !== ADMIN_PASSWORD){
+    document.getElementById('rejectPwError').classList.add('show');
+    return;
+  }
+
+  const reasons = [];
+  document.querySelectorAll('.rej-cb:checked').forEach(cb => reasons.push(cb.value));
+
+  if(reasons.length === 0){
+    showToast('請至少選擇一個拒絕原因', true);
+    return;
+  }
+
+  const selfieReasons = { selfie_blur:'照片不清楚、太模糊', selfie_noface:'看不到完整臉部', selfie_dark:'光線太暗', selfie_fake:'疑似非本人照片' };
+  const nickReasons   = { nick_bad:'含有不當文字', nick_ad:'含有廣告內容', nick_impersonate:'冒充他人' };
+  const photoReasons  = { blur:'不清楚', noface:'看不到臉', inappropriate:'內容不恰當' };
+
+  const rejectionData = { selfie:[], photos:{}, nickname:[], allPhotosBad:false };
+
+  reasons.forEach(r => {
+    if(r.startsWith('selfie_'))    rejectionData.selfie.push(selfieReasons[r]||r);
+    else if(r === 'photo_all_bad') rejectionData.allPhotosBad = true;
+    else if(r.startsWith('photo_')){
+      const parts = r.split('_');
+      const idx = parseInt(parts[1]);
+      const reason = parts[2];
+      if(!rejectionData.photos[idx]) rejectionData.photos[idx] = [];
+      rejectionData.photos[idx].push(photoReasons[reason]||reason);
+    }
+    else if(r.startsWith('nick_')) rejectionData.nickname.push(nickReasons[r]||r);
+  });
+
+  try{
+    await updateDoc(doc(db,'users',rejectingUid),{
+      selfieApproved: false,
+      pendingReview: false,
+      rejected: true,
+      rejectionReasons: rejectionData,
+      rejectedAt: serverTimestamp()
+    });
+    showToast('已拒絕', true);
+    document.getElementById('rejectModal').classList.remove('show');
+    const card = document.getElementById('card-'+rejectingUid);
+    if(card) card.remove();
+    selectedUsers.delete(rejectingUid);
+    updateBatchBar();
+
+    const pending = parseInt(document.getElementById('pendingCount').textContent) - 1;
+    document.getElementById('pendingCount').textContent = Math.max(0, pending);
+    document.getElementById('pendingBadge').textContent = Math.max(0, pending) + ' 待審核';
+    rejectingUid = null;
+  } catch(e){
+    showToast('操作失敗', true);
+    console.error(e);
+  }
+};
+
+// ── 單人通過 ──
+window.reviewUser = (uid, action) => {
+  openPwModal(action==='approve'?'確認通過此用戶？':'確認拒絕此用戶？', '請輸入管理密碼', async () => {
+    try{
+      if(action==='approve'){
+        const userSnap = await getDoc(doc(db,'users',uid));
+        const userData = userSnap.exists() ? userSnap.data() : {};
+        const reviewedPhotos = Array.isArray(userData.photos) ? userData.photos.filter(Boolean).slice(0, 3) : [];
+        await updateDoc(doc(db,'users',uid),{
+          selfieApproved: true,
+          pendingReview: false,
+          rejected: false,
+          rejectionReasons: {},
+          reviewedPhotos,
+          photoReviewReason: '',
+          approvedAt: serverTimestamp()
+        });
+        showToast('✓ 已通過');
+      } else {
+        await updateDoc(doc(db,'users',uid),{ selfieApproved:false, pendingReview:false, rejected:true, rejectedAt:serverTimestamp() });
+        showToast('已拒絕', true);
+      }
+      const card = document.getElementById('card-'+uid);
+      if(card) card.remove();
+      selectedUsers.delete(uid);
+      updateBatchBar();
+      const pending = parseInt(document.getElementById('pendingCount').textContent) - 1;
+      document.getElementById('pendingCount').textContent = Math.max(0, pending);
+      document.getElementById('pendingBadge').textContent = Math.max(0, pending) + ' 待審核';
+    } catch(e){ showToast('操作失敗', true); console.error(e); }
+  });
+};
+
+// ── 批量操作 ──
+window.batchAction = (action) => {
+  if(selectedUsers.size === 0) return;
+  const title = action==='approve' ? `批量通過 ${selectedUsers.size} 人？` : `批量拒絕 ${selectedUsers.size} 人？`;
+  openPwModal(title, '請輸入管理密碼', async () => {
+    const uids = [...selectedUsers];
+    for(const uid of uids){
+      try{
+        if(action==='approve'){
+          const userSnap = await getDoc(doc(db,'users',uid));
+          const userData = userSnap.exists() ? userSnap.data() : {};
+          const reviewedPhotos = Array.isArray(userData.photos) ? userData.photos.filter(Boolean).slice(0, 3) : [];
+          await updateDoc(doc(db,'users',uid),{
+            selfieApproved: true,
+            pendingReview: false,
+            rejected: false,
+            rejectionReasons: {},
+            reviewedPhotos,
+            photoReviewReason: '',
+            approvedAt: serverTimestamp()
+          });
+        } else {
+          await updateDoc(doc(db,'users',uid),{ selfieApproved:false, pendingReview:false, rejected:true, rejectedAt:serverTimestamp() });
+        }
+        const card = document.getElementById('card-'+uid);
+        if(card) card.remove();
+      } catch(e){ console.error(e); }
+    }
+    selectedUsers.clear();
+    updateBatchBar();
+    showToast(action==='approve' ? `✓ 已通過 ${uids.length} 人` : `已拒絕 ${uids.length} 人`, action==='reject');
+    loadReviewList();
+  });
+};
+
+// ── 詳細資料 ──
+window.showDetail = async (uid) => {
+  try{
+    const snap = await getDoc(doc(db,'users',uid));
+    if(!snap.exists()) return;
+    const d = snap.data();
+    const genderMap = {male:'男生',female:'女生',other:'多元性別'};
+    const purposeMap = {serious:'尋找另一半',casual:'單純交朋友',open:'隨緣就好'};
+    const lookingMap = {female:'女生',male:'男生',any:'多元性別'};
+
+    let html = `
+      <div class="detail-row"><span class="detail-label">暱稱</span><span class="detail-value">${d.nickname||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">性別</span><span class="detail-value">${genderMap[d.gender]||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">年齡</span><span class="detail-value">${d.age||'—'} 歲</span></div>
+      <div class="detail-row"><span class="detail-label">身高</span><span class="detail-value">${d.height||'—'} cm</span></div>
+      <div class="detail-row"><span class="detail-label">縣市</span><span class="detail-value">${d.city||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">職業</span><span class="detail-value">${d.job||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">想找</span><span class="detail-value">${lookingMap[d.lookingFor]||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">目的</span><span class="detail-value">${purposeMap[d.purpose]||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">自我介紹</span><span class="detail-value">${d.bio||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">標籤</span><span class="detail-value">${(d.tags||[]).join('・')}</span></div>
+      <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${d.email||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">UID</span><span class="detail-value" style="font-size:0.6rem">${d.uid||'—'}</span></div>
+    `;
+    if(d.photos && d.photos.length){
+      html += '<div style="margin-top:0.5rem;font-size:0.7rem;color:rgba(255,255,255,0.4);">上傳照片：</div><div class="detail-photos">';
+      d.photos.forEach(url => { html += `<div class="detail-photo" onclick="openLightbox('${url}')"><img src="${url}" alt=""/></div>`; });
+      html += '</div>';
+    }
+    if(d.selfieURL){
+      html += `<div style="margin-top:0.5rem;font-size:0.7rem;color:rgba(255,255,255,0.4);">自拍驗證：</div><div class="detail-photos"><div class="detail-photo" onclick="openLightbox('${d.selfieURL}')"><img src="${d.selfieURL}" alt=""/></div></div>`;
+    }
+    document.getElementById('detailContent').innerHTML = html;
+    document.getElementById('detailModal').classList.add('show');
+  } catch(e){ console.error(e); }
+};
+
+// ── 所有用戶 ──
+let allUsersCache = [];
+let currentFilter = 'all';
+
+window.openAllUsers = async () => {
+  document.getElementById('allUsersModal').classList.add('show');
+  const listEl = document.getElementById('allUsersList');
+  listEl.innerHTML = '<div class="empty">載入中...</div>';
+
+  try{
+    const snap = await getDocs(collection(db,'users'));
+    allUsersCache = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    renderAllUsers();
+  } catch(e){
+    listEl.innerHTML = '<div class="empty">載入失敗</div>';
+    console.error(e);
+  }
+
+  // 篩選按鈕
+  document.querySelectorAll('.au-filter').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.au-filter').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderAllUsers();
+    };
+  });
+};
+
+function renderAllUsers(){
+  const listEl = document.getElementById('allUsersList');
+  const genderMap = {male:'男',female:'女',other:'多元'};
+  const statusLabel = (d) => {
+    if(d.quizComplete)  return { text:'已測驗', cls:'quiz' };
+    if(d.selfieApproved) return { text:'已通過', cls:'approved' };
+    if(d.rejected)       return { text:'已拒絕', cls:'rejected' };
+    if(d.pendingReview)  return { text:'待審核', cls:'pending' };
+    return { text:'未送審', cls:'new' };
+  };
+
+  let filtered = allUsersCache;
+  if(currentFilter === 'pending')  filtered = allUsersCache.filter(d => d.pendingReview && !d.selfieApproved);
+  if(currentFilter === 'approved') filtered = allUsersCache.filter(d => d.selfieApproved);
+  if(currentFilter === 'rejected') filtered = allUsersCache.filter(d => d.rejected);
+  if(currentFilter === 'quiz')     filtered = allUsersCache.filter(d => d.quizComplete);
+
+  if(filtered.length === 0){
+    listEl.innerHTML = '<div class="empty">沒有符合的用戶</div>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  filtered.forEach(d => {
+    const { text, cls } = statusLabel(d);
+    const row = document.createElement('div');
+    row.className = 'au-row';
+
+    // 頭像
+    const avatarEl = document.createElement(d.selfieURL ? 'img' : 'div');
+    if(d.selfieURL){
+      avatarEl.className = 'au-avatar';
+      avatarEl.src = d.selfieURL;
+      avatarEl.alt = '';
+    } else {
+      avatarEl.className = 'au-avatar-placeholder';
+      avatarEl.textContent = d.gender === 'male' ? '👨' : d.gender === 'female' ? '👩' : '🌈';
+    }
+
+    const info = document.createElement('div');
+    info.className = 'au-info';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'au-name';
+    nameEl.textContent = d.nickname || '（未設定暱稱）';
+    const metaEl = document.createElement('div');
+    metaEl.className = 'au-meta';
+    metaEl.textContent = `${genderMap[d.gender]||'?'} · ${d.age||'?'}歲 · ${d.city||'?'} · ${d.job||'?'}`;
+    info.appendChild(nameEl);
+    info.appendChild(metaEl);
+
+    const badge = document.createElement('div');
+    badge.className = `au-badge ${cls}`;
+    badge.textContent = text;
+
+    row.appendChild(avatarEl);
+    row.appendChild(info);
+    row.appendChild(badge);
+
+    // 點擊看詳細
+    row.addEventListener('click', () => {
+      document.getElementById('allUsersModal').classList.remove('show');
+      showDetail(d.uid);
+    });
+
+    listEl.appendChild(row);
+  });
+}
+
+// ── 標籤管理 ──
+let currentTags = {};
+
+async function loadTags(){
+  try{
+    const snap = await getDoc(doc(db,'settings','tags'));
+    if(snap.exists()){
+      currentTags = snap.data();
+    } else {
+      currentTags = {
+        personality:['活潑開朗','內向安靜','理性冷靜','溫柔體貼','幽默搞笑','隨和好相處','有主見','浪漫感性'],
+        lifestyle:['愛旅行','宅在家','愛運動','喜歡戶外','愛逛街','愛做料理','喜歡看電影','喜歡音樂','喜歡讀書','喜歡動漫','愛打遊戲','喜歡拍照'],
+        habit:['早起型','夜貓子','愛喝咖啡','健身控','養寵物','喜歡小酌']
+      };
+      await setDoc(doc(db,'settings','tags'), currentTags);
+    }
+    renderTags();
+  } catch(e){ console.error(e); }
+}
+
+const sectionLabels = { personality:'個性', lifestyle:'生活', habit:'習慣' };
+
+function renderTags(){
+  const container = document.getElementById('tagSections');
+  container.innerHTML = '';
+  for(const [key, tags] of Object.entries(currentTags)){
+    const label = sectionLabels[key] || key;
+    const section = document.createElement('div');
+    section.className = 'tag-section';
+    section.innerHTML = `
+      <div class="tag-header" onclick="toggleTagSection('${key}')">
+        <div><span class="tag-header-title">${label}</span><span class="tag-header-count"> (${tags.length})</span></div>
+        <span class="tag-arrow" id="arrow-${key}">▼</span>
+      </div>
+      <div class="tag-body" id="tbody-${key}">
+        <div class="tag-list" id="tlist-${key}">
+          ${tags.map(t=>`<div class="tag-item">${t} <span class="tag-del" onclick="deleteTag('${key}','${t}')">✕</span></div>`).join('')}
+        </div>
+        <div class="add-row">
+          <input class="add-input" id="tadd-${key}" placeholder="新增${label}標籤..."/>
+          <button class="add-btn" onclick="addTag('${key}')">新增</button>
+        </div>
+      </div>
+    `;
+    container.appendChild(section);
+  }
+}
+
+window.toggleTagSection = (key) => {
+  const body = document.getElementById('tbody-'+key);
+  const arrow = document.getElementById('arrow-'+key);
+  body.classList.toggle('open');
+  arrow.closest('.tag-header').classList.toggle('open');
+};
+
+window.addTag = async (key) => {
+  const input = document.getElementById('tadd-'+key);
+  const val = input.value.trim();
+  if(!val) return;
+  if(!currentTags[key]) currentTags[key] = [];
+  if(currentTags[key].includes(val)){ showToast('標籤已存在', true); return; }
+  currentTags[key].push(val);
+  try{
+    await setDoc(doc(db,'settings','tags'), currentTags);
+    renderTags();
+    showToast('✓ 已新增');
+    setTimeout(()=>{
+      document.getElementById('tbody-'+key).classList.add('open');
+      document.getElementById('arrow-'+key).closest('.tag-header').classList.add('open');
+    }, 50);
+  } catch(e){ showToast('新增失敗', true); }
+};
+
+window.deleteTag = (key, tag) => {
+  openPwModal('刪除標籤「'+tag+'」？', '請輸入管理密碼', async () => {
+    currentTags[key] = currentTags[key].filter(t => t !== tag);
+    try{
+      await setDoc(doc(db,'settings','tags'), currentTags);
+      renderTags();
+      showToast('✓ 已刪除');
+      setTimeout(()=>{
+        document.getElementById('tbody-'+key).classList.add('open');
+        document.getElementById('arrow-'+key).closest('.tag-header').classList.add('open');
+      }, 50);
+    } catch(e){ showToast('刪除失敗', true); }
+  });
+};
+
+window.addSection = async () => {
+  const key = document.getElementById('newSectionInput').value.trim();
+  const label = document.getElementById('newSectionLabel').value.trim();
+  if(!key || !label){ showToast('請填寫分類 key 和名稱', true); return; }
+  if(currentTags[key]){ showToast('此分類已存在', true); return; }
+  currentTags[key] = [];
+  sectionLabels[key] = label;
+  try{
+    await setDoc(doc(db,'settings','tags'), currentTags);
+    renderTags();
+    document.getElementById('newSectionInput').value = '';
+    document.getElementById('newSectionLabel').value = '';
+    showToast('✓ 分類已新增');
+  } catch(e){ showToast('新增失敗', true); }
+};
+
+function escapeAdminText(value=''){
+  return String(value)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+
+async function loadReports(){
+  const list = document.getElementById('reportsList');
+  list.innerHTML = '<div class="empty">載入檢舉中...</div>';
+  try{
+    const snap = await getDocs(collection(db,'reports'));
+    if(snap.empty){
+      list.innerHTML = '<div class="empty">目前沒有檢舉</div>';
+      return;
+    }
+
+    const rows = snap.docs.map(reportDoc => ({ id:reportDoc.id, data:reportDoc.data() }))
+      .sort((a,b) => {
+        const at = a.data.createdAt?.toMillis ? a.data.createdAt.toMillis() : 0;
+        const bt = b.data.createdAt?.toMillis ? b.data.createdAt.toMillis() : 0;
+        return bt - at;
+      });
+
+    list.innerHTML = rows.map(item => {
+      const d = item.data;
+      const status = d.status === 'resolved' ? '已處理' : '待處理';
+      return `
+        <div class="review-card" id="report-${item.id}">
+          <div class="rc-name">檢舉原因：${escapeAdminText(d.reason || '未填寫')}</div>
+          <div class="rc-detail">
+            檢舉人：${escapeAdminText(d.reporterUid || '—')}<br/>
+            被檢舉人：${escapeAdminText(d.reportedUid || '—')}<br/>
+            狀態：${status}
+          </div>
+          <div class="rc-btns" style="margin-top:0.7rem;">
+            <button class="rc-btn rc-detail-btn" data-report-detail="${item.id}">查看對話</button>
+            <button class="rc-btn rc-approve" data-report-resolve="${item.id}">標記已處理</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('[data-report-detail]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const report = rows.find(item => item.id === btn.dataset.reportDetail);
+        showToast(report?.data?.matchId ? `Match ID：${report.data.matchId}` : '沒有對話 ID');
+      });
+    });
+    list.querySelectorAll('[data-report-resolve]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await updateDoc(doc(db,'reports',btn.dataset.reportResolve), {
+          status: 'resolved',
+          resolvedAt: serverTimestamp()
+        });
+        showToast('✓ 已標記處理');
+        loadReports();
+      });
+    });
+  } catch(e){
+    console.error(e);
+    list.innerHTML = '<div class="empty">檢舉載入失敗</div>';
+  }
+}
+
+// ── 題庫管理（本機編輯 / 匯出）──
+let editableQuizBank = JSON.parse(JSON.stringify(QUIZ_BANK));
+let selectedQuizGender = 'male';
+let selectedQuizIndex = 0;
+
+function getSelectedQuizList(){
+  if(!editableQuizBank[selectedQuizGender]) editableQuizBank[selectedQuizGender] = [];
+  return editableQuizBank[selectedQuizGender];
+}
+
+function renderQuizManager(){
+  const genderSelect = document.getElementById('quizGenderSelect');
+  if(!genderSelect) return;
+  genderSelect.value = selectedQuizGender;
+  renderQuizList();
+  renderQuizEditor();
+}
+
+function renderQuizList(){
+  const listEl = document.getElementById('quizList');
+  const list = getSelectedQuizList().slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  listEl.innerHTML = '';
+
+  list.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.className = 'quiz-item' + (index === selectedQuizIndex ? ' active' : '');
+    const title = document.createElement('div');
+    title.className = 'quiz-item-title';
+    title.textContent = `Q${item.order || index + 1}. ${item.title || '未命名題目'}`;
+    const meta = document.createElement('div');
+    meta.className = 'quiz-item-meta';
+    meta.textContent = `${item.category || '未分類'} · ${item.dimension || '未設定'} · ${item.section || '-'}`;
+    row.appendChild(title);
+    row.appendChild(meta);
+    row.addEventListener('click', () => {
+      selectedQuizIndex = index;
+      renderQuizList();
+      renderQuizEditor();
+    });
+    listEl.appendChild(row);
+  });
+}
+
+function renderQuizEditor(){
+  const editor = document.getElementById('quizEditor');
+  const list = getSelectedQuizList().slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  const item = list[selectedQuizIndex] || list[0] || null;
+  editor.value = item ? JSON.stringify(item, null, 2) : '';
+}
+
+document.getElementById('quizGenderSelect')?.addEventListener('change', (e) => {
+  selectedQuizGender = e.target.value;
+  selectedQuizIndex = 0;
+  renderQuizManager();
+});
+
+document.getElementById('quizAddBtn')?.addEventListener('click', () => {
+  const list = getSelectedQuizList();
+  const nextOrder = list.reduce((max, item) => Math.max(max, item.order || 0), 0) + 1;
+  list.push({
+    id: `${selectedQuizGender}_q${String(nextOrder).padStart(2,'0')}`,
+    order: nextOrder,
+    category: '新題目',
+    dimension: 'custom',
+    title: '請輸入題目',
+    desc: '選最接近你想法的答案。',
+    section: nextOrder <= 15 ? 'self' : 'expectation',
+    type: 'single',
+    active: true,
+    options: [
+      { key:'A', value:'A', text:'選項 A' },
+      { key:'B', value:'B', text:'選項 B' }
+    ],
+    neutralOption: null
+  });
+  selectedQuizIndex = list.length - 1;
+  renderQuizManager();
+});
+
+document.getElementById('quizApplyBtn')?.addEventListener('click', () => {
+  try{
+    const updated = JSON.parse(document.getElementById('quizEditor').value);
+    const list = getSelectedQuizList();
+    const sorted = list.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+    const current = sorted[selectedQuizIndex];
+    const targetIndex = list.findIndex(item => item.id === current?.id);
+    if(targetIndex >= 0) list[targetIndex] = updated;
+    else list.push(updated);
+    renderQuizManager();
+    showToast('✓ 已套用到暫存題庫');
+  } catch(e){
+    showToast('JSON 格式錯誤', true);
+    console.error(e);
+  }
+});
+
+document.getElementById('quizExportBtn')?.addEventListener('click', () => {
+  const exportBox = document.getElementById('quizExportBox');
+  const exportText = document.getElementById('quizExportText');
+  exportText.value = `export const QUIZ_VERSION = '${QUIZ_VERSION}';
+
+export const QUIZ_BANK = ${JSON.stringify(editableQuizBank, null, 2)};
+
+export function getQuizQuestions(gender){
+  const key = gender === 'male' || gender === 'female' ? gender : 'other';
+  return QUIZ_BANK[key]
+    .filter(item => item.active !== false)
+    .map(item => ({ ...item, options: item.options.map(option => ({ ...option })) }))
+    .sort((a,b) => a.order - b.order);
+}
+`;
+  exportBox.classList.add('show');
+  exportText.focus();
+  exportText.select();
+  showToast('已產生匯出內容');
+});
+</script>
+</body>
+</html>

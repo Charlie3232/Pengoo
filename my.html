@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 我的</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A2A2E;display:flex;justify-content:center;overflow:hidden;}
+.wrap{width:100%;max-width:390px;height:100vh;background:#F5F0EE;position:relative;display:flex;flex-direction:column;overflow:hidden;}
+.top{height:68px;flex-shrink:0;padding:0.92rem 1.15rem 0.58rem;background:#F5F0EE;display:flex;align-items:flex-start;justify-content:space-between;}
+.eyebrow{font-size:0.62rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.14rem;}
+.title{font-size:1.25rem;font-weight:900;line-height:1.2;}
+.status-pill{height:30px;border-radius:99px;background:white;border:1px solid rgba(184,205,217,0.38);padding:0 0.62rem;display:flex;align-items:center;font-size:0.66rem;font-weight:900;color:#6B2D3E;white-space:nowrap;}
+.body{flex:1;min-height:0;overflow-y:auto;padding:0 1.15rem 5.8rem;}
+.hero{background:white;border:1px solid rgba(184,205,217,0.32);border-radius:20px;padding:1rem;box-shadow:0 12px 28px rgba(58,42,46,0.045);margin-bottom:0.78rem;}
+.profile-head{display:flex;align-items:center;gap:0.82rem;margin-bottom:0.85rem;}
+.avatar{width:62px;height:62px;border-radius:22px;background:linear-gradient(135deg,#B8CDD9,#E8B4BC);display:flex;align-items:center;justify-content:center;color:white;font-size:1.3rem;font-weight:900;flex-shrink:0;overflow:hidden;background-size:cover;background-position:center;}
+.avatar.has-photo{color:transparent;}
+.main-info{flex:1;min-width:0;}
+.name-row{display:flex;align-items:center;gap:0.45rem;margin-bottom:0.2rem;}
+.name{font-size:1.06rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.age{font-size:0.75rem;font-weight:900;color:#6B2D3E;background:rgba(232,180,188,0.18);border-radius:99px;padding:0.15rem 0.44rem;flex-shrink:0;}
+.meta{font-size:0.74rem;font-weight:760;color:rgba(58,42,46,0.52);line-height:1.5;}
+.bio{font-size:0.78rem;font-weight:750;line-height:1.65;color:rgba(58,42,46,0.64);background:rgba(184,205,217,0.11);border-radius:14px;padding:0.72rem 0.78rem;}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.78rem;}
+.stat{background:white;border:1px solid rgba(184,205,217,0.28);border-radius:15px;padding:0.78rem 0.5rem;text-align:center;}
+.stat-num{font-size:1.12rem;font-weight:900;color:#C8545A;line-height:1;}
+.stat-lbl{font-size:0.62rem;font-weight:800;color:rgba(58,42,46,0.42);margin-top:0.24rem;}
+.section{margin-bottom:0.78rem;}
+.section-title{font-size:0.72rem;font-weight:900;color:#7A9BB5;letter-spacing:0.08em;margin:0 0 0.45rem 0.08rem;}
+.card{background:white;border:1px solid rgba(184,205,217,0.3);border-radius:18px;padding:0.86rem;box-shadow:0 8px 20px rgba(58,42,46,0.032);}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0.52rem;}
+.kv{background:rgba(245,240,238,0.78);border-radius:13px;padding:0.62rem 0.66rem;min-height:56px;}
+.kv-label{font-size:0.62rem;font-weight:900;color:rgba(58,42,46,0.38);margin-bottom:0.2rem;}
+.kv-value{font-size:0.76rem;font-weight:850;color:#3A2A2E;line-height:1.35;word-break:break-word;}
+.tags{display:flex;flex-wrap:wrap;gap:0.42rem;}
+.tag{border:1px solid rgba(184,205,217,0.4);background:rgba(184,205,217,0.13);border-radius:99px;padding:0.34rem 0.62rem;font-size:0.72rem;font-weight:850;color:rgba(58,42,46,0.62);}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:0.46rem;}
+.photo{aspect-ratio:3/4;border-radius:13px;background:rgba(184,205,217,0.16);object-fit:cover;width:100%;height:100%;border:1px solid rgba(184,205,217,0.32);cursor:pointer;}
+.photo-empty{aspect-ratio:3/4;border-radius:13px;background:rgba(184,205,217,0.12);border:1px dashed rgba(184,205,217,0.44);display:flex;align-items:center;justify-content:center;color:rgba(58,42,46,0.28);font-size:1.2rem;}
+.status-card{display:flex;align-items:flex-start;gap:0.68rem;}
+.status-icon{width:42px;height:42px;border-radius:14px;background:rgba(232,180,188,0.18);display:flex;align-items:center;justify-content:center;color:#6B2D3E;font-weight:900;flex-shrink:0;}
+.status-body{flex:1;min-width:0;}
+.status-title{font-size:0.88rem;font-weight:900;margin-bottom:0.2rem;}
+.status-text{font-size:0.72rem;line-height:1.6;color:rgba(58,42,46,0.56);font-weight:740;}
+.priority-list{display:grid;gap:0.42rem;}
+.priority{display:flex;align-items:center;gap:0.52rem;background:rgba(184,205,217,0.12);border-radius:13px;padding:0.56rem 0.62rem;font-size:0.73rem;font-weight:850;color:rgba(58,42,46,0.64);}
+.priority-no{width:22px;height:22px;border-radius:50%;background:#6B2D3E;color:white;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:900;flex-shrink:0;}
+.action-list{display:grid;gap:0.52rem;}
+.action{width:100%;height:46px;border-radius:14px;border:1px solid rgba(184,205,217,0.36);background:white;color:#3A2A2E;font-size:0.8rem;font-weight:900;text-align:left;padding:0 0.82rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.action.danger{color:#B91C1C;border-color:rgba(185,28,28,0.18);background:rgba(254,226,226,0.42);}
+.arrow{color:rgba(58,42,46,0.32);font-weight:900;}
+.edit-btn{height:34px;border-radius:99px;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:0.68rem;font-weight:900;padding:0 0.72rem;cursor:pointer;}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 0.45rem 0.08rem;}
+.section-head .section-title{margin:0;}
+.sheet{display:none;position:fixed;inset:0;background:rgba(58,42,46,0.32);z-index:260;align-items:flex-end;justify-content:center;}
+.sheet.show{display:flex;}
+.sheet-panel{width:100%;max-width:390px;max-height:88vh;background:white;border-radius:22px 22px 0 0;padding:0.95rem 1.05rem calc(1.1rem + env(safe-area-inset-bottom));overflow-y:auto;}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.78rem;}
+.sheet-title{font-size:1rem;font-weight:900;}
+.sheet-close{width:32px;height:32px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;cursor:pointer;}
+.field{margin-bottom:0.68rem;}
+.field-label{font-size:0.66rem;font-weight:900;color:#7A9BB5;letter-spacing:0.08em;margin-bottom:0.32rem;}
+.input,.select,.textarea{width:100%;border-radius:13px;border:1.5px solid rgba(184,205,217,0.45);background:#F8F4F5;color:#3A2A2E;font-size:0.78rem;font-weight:800;padding:0 0.72rem;font-family:inherit;}
+.input,.select{height:42px;}
+.textarea{height:86px;padding-top:0.62rem;line-height:1.5;resize:none;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.52rem;}
+.photo-editor{display:grid;grid-template-columns:repeat(3,1fr);gap:0.46rem;margin-top:0.4rem;}
+.photo-slot{position:relative;aspect-ratio:3/4;border-radius:13px;background:rgba(184,205,217,0.12);border:1px dashed rgba(184,205,217,0.48);overflow:hidden;}
+.photo-slot img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-slot input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.slot-add{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#7A9BB5;font-size:1.4rem;font-weight:900;pointer-events:none;}
+.slot-remove{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(17,17,17,0.72);color:white;font-size:0.72rem;font-weight:900;z-index:2;}
+.save-btn{width:100%;height:48px;border-radius:14px;border:0;background:#6B2D3E;color:white;font-size:0.86rem;font-weight:900;margin-top:0.5rem;cursor:pointer;}
+.save-btn:disabled{opacity:0.5;}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:white;border-top:0.5px solid rgba(184,205,217,0.3);padding:0.5rem 0 1rem;display:flex;z-index:30;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;}
+.nav-icon{font-size:1.3rem;}
+.nav-lbl{font-size:0.6rem;font-weight:700;color:rgba(58,42,46,0.4);}
+.nav-item.active .nav-lbl{color:#6B2D3E;}
+.nav-badge{position:relative;}
+.badge{position:absolute;top:-5px;right:-10px;min-width:17px;height:17px;border-radius:99px;background:#111;color:white;font-size:0.55rem;font-weight:900;display:none;align-items:center;justify-content:center;padding:0 0.25rem;}
+.toast{position:fixed;top:5rem;left:50%;transform:translateX(-50%);background:#3A2A2E;color:white;padding:0.6rem 1.1rem;border-radius:99px;font-size:0.76rem;font-weight:800;z-index:200;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:300;align-items:center;justify-content:center;}
+.lightbox.show{display:flex;}
+.lightbox img{max-width:92%;max-height:84%;object-fit:contain;border-radius:14px;}
+.loading{position:fixed;inset:0;background:#F5F0EE;z-index:400;display:flex;align-items:center;justify-content:center;}
+.spin{width:38px;height:38px;border-radius:50%;border:4px solid rgba(184,205,217,0.3);border-top-color:#B8CDD9;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="loading" id="loading"><div class="spin"></div></div>
+<div class="toast" id="toast"></div>
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt="照片預覽"/></div>
+<div class="sheet" id="editSheet">
+  <div class="sheet-panel">
+    <div class="sheet-head">
+      <div class="sheet-title">編輯個人資料</div>
+      <button class="sheet-close" id="editClose" type="button">×</button>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <div class="field-label">年齡</div>
+        <input class="input" id="editAge" type="number" min="18" max="65">
+      </div>
+      <div class="field">
+        <div class="field-label">身高</div>
+        <input class="input" id="editHeight" type="number" min="140" max="220">
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <div class="field-label">居住地</div>
+        <select class="select" id="editCity"></select>
+      </div>
+      <div class="field">
+        <div class="field-label">感情目的</div>
+        <select class="select" id="editPurpose">
+          <option value="serious">尋找伴侶</option>
+          <option value="casual">交朋友</option>
+          <option value="open">隨緣看看</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">職業</div>
+      <input class="input" id="editJob" placeholder="例如 科技業">
+    </div>
+    <div class="field">
+      <div class="field-label">自我介紹</div>
+      <textarea class="textarea" id="editBio" maxlength="80"></textarea>
+    </div>
+    <div class="field">
+      <div class="field-label">個人標籤（用逗號分隔，最多 6 個）</div>
+      <input class="input" id="editTags" placeholder="溫柔體貼, 喜歡咖啡, 愛散步">
+    </div>
+    <div class="field">
+      <div class="field-label">照片牆（最多 6 張）</div>
+      <div class="photo-editor" id="photoEditor"></div>
+    </div>
+    <button class="save-btn" id="saveProfileBtn" type="button">儲存修改</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">PENGOO MY</div>
+      <h1 class="title">我的</h1>
+    </div>
+    <div class="status-pill" id="statusPill">載入中</div>
+  </header>
+
+  <main class="body">
+    <section class="hero">
+      <div class="profile-head">
+        <div class="avatar" id="avatar">P</div>
+        <div class="main-info">
+          <div class="name-row">
+            <div class="name" id="nickname">Pengoo 用戶</div>
+            <div class="age" id="age">--</div>
+          </div>
+          <div class="meta" id="meta">--</div>
+        </div>
+      </div>
+      <div class="bio" id="bio">載入中...</div>
+      <button class="edit-btn" id="editProfileBtn" type="button" style="margin-top:0.78rem;">編輯資料與照片</button>
+    </section>
+
+    <section class="stats">
+      <div class="stat"><div class="stat-num" id="matchCount">0</div><div class="stat-lbl">配對成功</div></div>
+      <div class="stat"><div class="stat-num" id="unreadCount">0</div><div class="stat-lbl">未讀訊息</div></div>
+      <div class="stat"><div class="stat-num" id="photoCount">0</div><div class="stat-lbl">個人照片</div></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div class="section-title">基本資料</div><button class="edit-btn" type="button" data-edit-open>編輯</button></div>
+      <div class="card">
+        <div class="grid" id="infoGrid"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div class="section-title">個人標籤</div><button class="edit-btn" type="button" data-edit-open>編輯</button></div>
+      <div class="card">
+        <div class="tags" id="tags"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div class="section-title">照片牆</div><button class="edit-btn" type="button" data-edit-open>編輯</button></div>
+      <div class="card">
+        <div class="photos" id="photos"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">測驗狀態</div>
+      <div class="card status-card">
+        <div class="status-icon" id="quizIcon">?</div>
+        <div class="status-body">
+          <div class="status-title" id="quizTitle">載入中</div>
+          <div class="status-text" id="quizText">正在確認你的測驗狀態。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="prioritySection" style="display:none;">
+      <div class="section-title">配對優先項目</div>
+      <div class="card">
+        <div class="priority-list" id="priorityList"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">帳號</div>
+      <div class="action-list">
+        <button class="action" id="homeBtn"><span>回到主頁查看目前狀態</span><span class="arrow">›</span></button>
+        <button class="action danger" id="logoutBtn"><span>登出目前帳號</span><span class="arrow">›</span></button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="nav">
+    <div class="nav-item" data-page="home"><div class="nav-icon">🏠</div><div class="nav-lbl">主頁</div></div>
+    <div class="nav-item" data-page="match"><div class="nav-icon">💕</div><div class="nav-lbl">配對</div></div>
+    <div class="nav-item" data-page="chat"><div class="nav-badge"><div class="nav-icon">💬</div><div class="badge" id="chatBadge">0</div></div><div class="nav-lbl">聊天</div></div>
+    <div class="nav-item active" data-page="my"><div class="nav-icon">👤</div><div class="nav-lbl">我的</div></div>
+  </nav>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js";
+import { clearDevBotUid, resolveDevUser } from './dev-impersonation.js';
+import { IMAGE_PRESETS, compressImage, imageUploadMeta } from './image-utils.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+let currentUser = null;
+let currentData = null;
+let editPhotos = [];
+let editThumbs = [];
+let editPhotoFiles = {};
+
+const loading = document.getElementById('loading');
+const toast = document.getElementById('toast');
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+const editSheet = document.getElementById('editSheet');
+const photoEditor = document.getElementById('photoEditor');
+const saveProfileBtn = document.getElementById('saveProfileBtn');
+
+const cities = ['基隆市','台北市','新北市','桃園市','新竹市','新竹縣','苗栗縣','台中市','彰化縣','南投縣','雲林縣','嘉義市','嘉義縣','台南市','高雄市','屏東縣','宜蘭縣','花蓮縣','台東縣','澎湖縣','金門縣','連江縣'];
+cities.forEach(city => {
+  const option = document.createElement('option');
+  option.value = city;
+  option.textContent = city;
+  document.getElementById('editCity').appendChild(option);
+});
+
+const labelMap = {
+  gender: { male:'男生', female:'女生', other:'多元性別' },
+  lookingFor: { male:'男生', female:'女生', any:'不限' },
+  purpose: { serious:'尋找伴侶', casual:'交朋友', open:'隨緣看看' },
+  priorities: {
+    lifestyle:'生活習慣',
+    future:'未來規劃',
+    relationship:'相處模式',
+    communication:'溝通方式',
+    money:'金錢觀'
+  }
+};
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+function escapeHtml(value=''){
+  return String(value)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+
+function navTo(page){
+  const pageMap = { home:'home.html', match:'match.html', chat:'chat.html', my:'my.html' };
+  if(pageMap[page] && page !== 'my') window.PengooTransition?.go(pageMap[page]) || (window.location.href = pageMap[page]);
+}
+
+function formatDate(value){
+  if(!value?.toDate) return '--';
+  const date = value.toDate();
+  return `${date.getFullYear()}/${String(date.getMonth()+1).padStart(2,'0')}/${String(date.getDate()).padStart(2,'0')}`;
+}
+
+function getDaysLeft(value){
+  if(!value?.toDate) return null;
+  const diff = value.toDate().getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / 86400000));
+}
+
+function getStatus(data){
+  if(data.quizComplete) return { text:'已完成測驗', tone:'ok' };
+  if(data.selfieApproved) return { text:'可開始測驗', tone:'ok' };
+  if(data.rejected) return { text:'審核未通過', tone:'bad' };
+  if(data.pendingReview) return { text:'審核中', tone:'wait' };
+  return { text:'資料確認中', tone:'wait' };
+}
+
+function getProfilePhoto(data){
+  const thumbs = Array.isArray(data?.photoThumbs) ? data.photoThumbs.filter(Boolean) : [];
+  const photos = Array.isArray(data?.photos) ? data.photos.filter(Boolean) : [];
+  return thumbs[0] || photos[0] || '';
+}
+
+function parseTags(value){
+  return String(value || '')
+    .split(/[,，、]/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function setStatusPill(data){
+  const status = getStatus(data);
+  const pill = document.getElementById('statusPill');
+  pill.textContent = status.text;
+  if(status.tone === 'bad'){
+    pill.style.color = '#B91C1C';
+    pill.style.background = '#FEE2E2';
+    pill.style.borderColor = 'rgba(185,28,28,0.18)';
+  } else if(status.tone === 'wait'){
+    pill.style.color = '#B45309';
+    pill.style.background = '#FEF3C7';
+    pill.style.borderColor = 'rgba(180,83,9,0.18)';
+  }
+}
+
+function renderInfo(data){
+  const nickname = data.nickname || 'Pengoo 用戶';
+  const photos = Array.isArray(data.photos) ? data.photos : [];
+  const thumbs = Array.isArray(data.photoThumbs) ? data.photoThumbs : photos;
+  const tags = Array.isArray(data.tags) ? data.tags : [];
+  const avatar = document.getElementById('avatar');
+  const avatarPhoto = getProfilePhoto(data);
+
+  avatar.textContent = nickname.slice(0,1).toUpperCase();
+  avatar.classList.toggle('has-photo', !!avatarPhoto);
+  avatar.style.backgroundImage = avatarPhoto ? `url("${avatarPhoto}")` : '';
+  document.getElementById('nickname').textContent = nickname;
+  document.getElementById('age').textContent = data.age ? `${data.age}歲` : '--';
+  document.getElementById('meta').textContent = [data.city, data.job].filter(Boolean).join('・') || '--';
+  document.getElementById('bio').textContent = data.bio || '還沒有自我介紹。';
+  document.getElementById('matchCount').textContent = data.matchCount || 0;
+  document.getElementById('unreadCount').textContent = data.unreadCount || 0;
+  document.getElementById('photoCount').textContent = photos.length;
+
+  const unread = data.unreadCount || 0;
+  if(unread > 0){
+    const badge = document.getElementById('chatBadge');
+    badge.textContent = unread > 99 ? '99+' : unread;
+    badge.style.display = 'flex';
+  }
+
+  document.getElementById('infoGrid').innerHTML = [
+    ['性別', labelMap.gender[data.gender] || '--'],
+    ['想認識', labelMap.lookingFor[data.lookingFor] || '--'],
+    ['居住地', data.city || '--'],
+    ['身高', data.height ? `${data.height} cm` : '--'],
+    ['職業', data.job || '--'],
+    ['感情目的', labelMap.purpose[data.purpose] || '--']
+  ].map(([label, value]) => `
+    <div class="kv">
+      <div class="kv-label">${label}</div>
+      <div class="kv-value">${escapeHtml(value)}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('tags').innerHTML = tags.length
+    ? tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')
+    : '<span class="tag">尚未選擇標籤</span>';
+
+  const photoHtml = photos.length
+    ? photos.slice(0, 6).map((url, index) => `<img class="photo" src="${escapeHtml(thumbs[index] || url)}" data-full="${escapeHtml(url)}" alt="個人照片"/>`).join('')
+    : '<div class="photo-empty">無</div><div class="photo-empty">無</div><div class="photo-empty">無</div>';
+  document.getElementById('photos').innerHTML = photoHtml;
+  document.querySelectorAll('.photo').forEach(img => {
+    img.addEventListener('click', () => {
+      lightboxImg.src = img.dataset.full || img.src;
+      lightbox.classList.add('show');
+    });
+  });
+}
+
+function openEditSheet(){
+  if(!currentData) return;
+  editPhotos = Array.isArray(currentData.photos) ? currentData.photos.slice(0, 6) : [];
+  editThumbs = Array.isArray(currentData.photoThumbs) ? currentData.photoThumbs.slice(0, 6) : editPhotos.slice();
+  editPhotoFiles = {};
+
+  document.getElementById('editAge').value = currentData.age || '';
+  document.getElementById('editHeight').value = currentData.height || '';
+  document.getElementById('editCity').value = currentData.city || '台北市';
+  document.getElementById('editPurpose').value = currentData.purpose || 'open';
+  document.getElementById('editJob').value = currentData.job || '';
+  document.getElementById('editBio').value = currentData.bio || '';
+  document.getElementById('editTags').value = Array.isArray(currentData.tags) ? currentData.tags.join(', ') : '';
+  renderPhotoEditor();
+  editSheet.classList.add('show');
+}
+
+function renderPhotoEditor(){
+  photoEditor.innerHTML = '';
+  for(let i = 0; i < 6; i++){
+    const slot = document.createElement('div');
+    slot.className = 'photo-slot';
+    const preview = editPhotoFiles[i]?.preview || editThumbs[i] || editPhotos[i] || '';
+    slot.innerHTML = `
+      ${preview ? `<img src="${escapeHtml(preview)}" alt="照片 ${i + 1}">` : '<div class="slot-add">+</div>'}
+      ${preview ? '<button class="slot-remove" type="button">×</button>' : ''}
+      <input type="file" accept="image/*" data-slot="${i}">
+    `;
+    const removeBtn = slot.querySelector('.slot-remove');
+    if(removeBtn){
+      removeBtn.addEventListener('click', event => {
+        event.stopPropagation();
+        editPhotos.splice(i, 1);
+        editThumbs.splice(i, 1);
+        delete editPhotoFiles[i];
+        renderPhotoEditor();
+      });
+    }
+    slot.querySelector('input').addEventListener('change', event => {
+      const file = event.target.files?.[0];
+      if(!file) return;
+      editPhotoFiles[i] = {
+        file,
+        preview: URL.createObjectURL(file)
+      };
+      if(!editPhotos[i]) editPhotos[i] = '';
+      if(!editThumbs[i]) editThumbs[i] = '';
+      renderPhotoEditor();
+    });
+    photoEditor.appendChild(slot);
+  }
+}
+
+async function uploadEditedPhoto(file, slot){
+  const stamp = Date.now();
+  const optimizedPhoto = await compressImage(file, IMAGE_PRESETS.photo);
+  const thumbPhoto = await compressImage(file, IMAGE_PRESETS.thumb);
+  const pRef = ref(storage, `photos/${currentUser.uid}_my${slot}_${stamp}.jpg`);
+  await uploadBytes(pRef, optimizedPhoto, imageUploadMeta(file, optimizedPhoto));
+  const url = await getDownloadURL(pRef);
+  const tRef = ref(storage, `thumbs/${currentUser.uid}_my${slot}_${stamp}.jpg`);
+  await uploadBytes(tRef, thumbPhoto, imageUploadMeta(file, thumbPhoto));
+  const thumb = await getDownloadURL(tRef);
+  return { url, thumb };
+}
+
+async function saveProfileEdits(){
+  if(!currentUser || !currentData) return;
+  saveProfileBtn.disabled = true;
+  saveProfileBtn.textContent = '儲存中...';
+
+  try{
+    const age = parseInt(document.getElementById('editAge').value, 10);
+    const height = parseInt(document.getElementById('editHeight').value, 10);
+    const nextPhotos = editPhotos.slice(0, 6);
+    const nextThumbs = editThumbs.slice(0, 6);
+    const oldPhotos = Array.isArray(currentData.photos) ? currentData.photos.filter(Boolean).slice(0, 6) : [];
+    const reviewedPhotos = Array.isArray(currentData.reviewedPhotos) && currentData.reviewedPhotos.length
+      ? currentData.reviewedPhotos.filter(Boolean).slice(0, 3)
+      : oldPhotos.slice(0, 3);
+    const plannedPhotos = nextPhotos
+      .map((url, index) => editPhotoFiles[index] ? `__new_photo_${index}` : url)
+      .filter(Boolean)
+      .slice(0, 6);
+    const plannedPhotoChanged = oldPhotos.join('|') !== plannedPhotos.join('|');
+    const keptReviewedPhoto = reviewedPhotos.some(url => plannedPhotos.includes(url));
+    const needsPhotoReview = plannedPhotoChanged && reviewedPhotos.length > 0 && !keptReviewedPhoto;
+
+    if(needsPhotoReview && !confirm('你已經把原本審核通過的前三張照片都換掉了，送出後會進入重新審核中。確定儲存嗎？')){
+      return;
+    }
+
+    for(const [slotText, item] of Object.entries(editPhotoFiles)){
+      const slot = Number(slotText);
+      const uploaded = await uploadEditedPhoto(item.file, slot);
+      nextPhotos[slot] = uploaded.url;
+      nextThumbs[slot] = uploaded.thumb;
+    }
+
+    const cleanPhotos = nextPhotos.filter(Boolean).slice(0, 6);
+    const cleanThumbs = cleanPhotos.map((url, index) => nextThumbs[index] || url);
+
+    const payload = {
+      age: Number.isFinite(age) ? Math.min(65, Math.max(18, age)) : currentData.age,
+      height: Number.isFinite(height) ? Math.min(220, Math.max(140, height)) : currentData.height,
+      city: document.getElementById('editCity').value,
+      job: document.getElementById('editJob').value.trim(),
+      bio: document.getElementById('editBio').value.trim(),
+      tags: parseTags(document.getElementById('editTags').value),
+      purpose: document.getElementById('editPurpose').value,
+      photos: cleanPhotos,
+      photoThumbs: cleanThumbs,
+      updatedAt: serverTimestamp()
+    };
+    if(reviewedPhotos.length && !Array.isArray(currentData.reviewedPhotos)){
+      payload.reviewedPhotos = reviewedPhotos;
+    }
+    if(needsPhotoReview){
+      payload.pendingReview = true;
+      payload.selfieApproved = false;
+      payload.rejected = false;
+      payload.rejectionReasons = {};
+      payload.photoReviewReason = 'allReviewedPhotosReplaced';
+    }
+
+    await updateDoc(doc(db, 'users', currentUser.uid), payload);
+    currentData = { ...currentData, ...payload };
+    setStatusPill(currentData);
+    renderInfo(currentData);
+    editSheet.classList.remove('show');
+    showToast(needsPhotoReview ? '照片已送出重新審核' : '已更新個人資料');
+  } catch(e){
+    console.error(e);
+    showToast('儲存失敗，請再試一次');
+  } finally {
+    saveProfileBtn.disabled = false;
+    saveProfileBtn.textContent = '儲存修改';
+  }
+}
+
+function renderQuiz(data){
+  const quizIcon = document.getElementById('quizIcon');
+  const quizTitle = document.getElementById('quizTitle');
+  const quizText = document.getElementById('quizText');
+
+  if(data.quizComplete){
+    const daysLeft = getDaysLeft(data.quizUnlockAt);
+    quizIcon.textContent = '✓';
+    quizTitle.textContent = '交友測驗已完成';
+    if(daysLeft === 0){
+      quizText.textContent = `上次完成時間：${formatDate(data.quizCompletedAt)}。目前已可重新填寫，請到主頁查看重填入口。`;
+    } else if(daysLeft !== null){
+      quizText.textContent = `上次完成時間：${formatDate(data.quizCompletedAt)}。距離下次可重填還有 ${daysLeft} 天。`;
+    } else {
+      quizText.textContent = `上次完成時間：${formatDate(data.quizCompletedAt)}。`;
+    }
+  } else if(data.selfieApproved){
+    quizIcon.textContent = '!';
+    quizTitle.textContent = '尚未完成交友測驗';
+    quizText.textContent = '完成測驗後，Pengoo 才會開始計算雙向契合度與配對。';
+  } else {
+    quizIcon.textContent = '…';
+    quizTitle.textContent = '測驗尚未開放';
+    quizText.textContent = '通過審核後，交友測驗才會開放。';
+  }
+}
+
+function renderPriorities(data){
+  const priorities = Array.isArray(data.matchPriorities) ? data.matchPriorities : [];
+  if(!priorities.length) return;
+
+  document.getElementById('prioritySection').style.display = 'block';
+  document.getElementById('priorityList').innerHTML = priorities.map((key, index) => `
+    <div class="priority">
+      <div class="priority-no">${index + 1}</div>
+      <div>${escapeHtml(labelMap.priorities[key] || key)}</div>
+    </div>
+  `).join('');
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => navTo(item.dataset.page));
+});
+
+document.getElementById('homeBtn').addEventListener('click', () => {
+  window.PengooTransition?.go('home.html') || (window.location.href = 'home.html');
+});
+
+document.getElementById('editProfileBtn').addEventListener('click', openEditSheet);
+document.querySelectorAll('[data-edit-open]').forEach(btn => {
+  btn.addEventListener('click', openEditSheet);
+});
+document.getElementById('editClose').addEventListener('click', () => {
+  editSheet.classList.remove('show');
+});
+editSheet.addEventListener('click', event => {
+  if(event.target === editSheet) editSheet.classList.remove('show');
+});
+saveProfileBtn.addEventListener('click', saveProfileEdits);
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  if(!confirm('確定要登出目前帳號嗎？')) return;
+  try{
+    clearDevBotUid();
+    await signOut(auth);
+    window.location.href = 'index.html';
+  } catch(e){
+    console.error(e);
+    showToast('登出失敗，請再試一次');
+  }
+});
+
+lightbox.addEventListener('click', () => {
+  lightbox.classList.remove('show');
+  lightboxImg.src = '';
+});
+
+onAuthStateChanged(auth, async user => {
+  if(!user){
+    window.location.href = 'index.html';
+    return;
+  }
+
+  try{
+    const dev = await resolveDevUser(user, db, doc, getDoc);
+    currentUser = dev.user;
+    let data = dev.data;
+    if(!data){
+      const snap = await getDoc(doc(db, 'users', dev.user.uid));
+      if(!snap.exists()){
+        window.location.href = 'profile.html';
+        return;
+      }
+      data = snap.data();
+    }
+    currentData = data;
+    setStatusPill(data);
+    renderInfo(data);
+    renderQuiz(data);
+    renderPriorities(data);
+  } catch(e){
+    console.error(e);
+    showToast('資料載入失敗，請再試一次');
+  } finally {
+    loading.style.display = 'none';
+  }
+});
+</script>
+<script src="app-transition.js"></script>
+</body>
+</html>

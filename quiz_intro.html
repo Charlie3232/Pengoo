@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 💕 交友測驗</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;min-height:100vh;display:flex;justify-content:center;overflow-x:hidden;color:#3A2A2E;}
+
+.wrap{width:100%;max-width:390px;min-height:100vh;display:flex;flex-direction:column;position:relative;background:#F5F0EE;}
+.top-bar{height:56px;padding:0.8rem 1.1rem 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;background:#F5F0EE;}
+.back-btn{width:34px;height:34px;border-radius:50%;border:0.5px solid rgba(184,205,217,0.45);background:white;color:#6B2D3E;font-size:1.1rem;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;}
+.top-title{font-size:0.82rem;font-weight:900;color:rgba(58,42,46,0.62);letter-spacing:0.08em;}
+.top-spacer{width:34px;height:34px;}
+
+.body{flex:1;padding:0.2rem 1.2rem calc(1.55rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;min-height:calc(100vh - 56px);}
+.intro-step{display:none;flex:1;flex-direction:column;}
+.intro-step.active{display:flex;}
+.step-dots{display:flex;gap:6px;justify-content:center;margin:0.1rem 0 0.65rem;}
+.step-dot{width:7px;height:7px;border-radius:50%;background:rgba(184,205,217,0.45);}
+.step-dot.active{background:#6B2D3E;}
+.hero{padding:0.35rem 0 0.75rem;text-align:center;}
+.pengoo-wrap{width:92px;height:110px;margin:0 auto 0.55rem;position:relative;}
+.pengoo-svg{width:92px;height:110px;filter:drop-shadow(0 12px 20px rgba(107,45,62,0.12));animation:wobble 3.2s ease-in-out infinite;}
+@keyframes wobble{0%,100%{transform:rotate(-2deg) translateY(0);}50%{transform:rotate(2deg) translateY(-6px);}}
+.thread{position:absolute;right:-14px;top:30px;width:36px;height:30px;animation:pulse 2.8s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:.55;transform:scale(.96);}50%{opacity:1;transform:scale(1.04);}}
+
+.eyebrow{font-size:0.68rem;font-weight:900;color:#7A9BB5;letter-spacing:0.16em;margin-bottom:0.35rem;}
+.title{font-size:1.35rem;font-weight:900;line-height:1.25;color:#3A2A2E;margin-bottom:0.42rem;}
+.title span{color:#6B2D3E;}
+.sub{font-size:0.76rem;line-height:1.68;color:rgba(58,42,46,0.55);font-weight:600;max-width:290px;margin:0 auto;}
+
+.info-list{display:grid;gap:0.55rem;margin:0.3rem 0 0.75rem;}
+.info-item{background:white;border:1px solid rgba(184,205,217,0.32);border-radius:15px;padding:0.72rem 0.82rem;display:flex;gap:0.65rem;align-items:flex-start;}
+.info-icon{width:30px;height:30px;border-radius:11px;background:rgba(232,180,188,0.22);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.95rem;}
+.info-text{flex:1;min-width:0;}
+.info-title{font-size:0.78rem;font-weight:900;color:#3A2A2E;margin-bottom:0.15rem;}
+.info-desc{font-size:0.68rem;line-height:1.55;color:rgba(58,42,46,0.52);font-weight:600;}
+
+.rule-card{background:linear-gradient(135deg,rgba(232,180,188,0.16),rgba(184,205,217,0.18));border:1.5px solid rgba(184,205,217,0.35);border-radius:18px;padding:0.9rem;margin-bottom:0.75rem;}
+.rule-title{font-size:0.78rem;font-weight:900;color:#6B2D3E;margin-bottom:0.55rem;display:flex;align-items:center;gap:0.35rem;}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+.rule-chip{background:rgba(255,255,255,0.72);border:0.5px solid rgba(255,255,255,0.85);border-radius:12px;padding:0.62rem 0.55rem;text-align:center;}
+.rule-num{font-size:1.1rem;font-weight:900;color:#E8B4BC;line-height:1;}
+.rule-label{font-size:0.66rem;font-weight:800;color:rgba(58,42,46,0.52);margin-top:0.2rem;}
+
+.notice{background:white;border:1px solid rgba(232,180,188,0.35);border-radius:16px;padding:0.8rem 0.9rem;margin-bottom:0.8rem;}
+.notice-title{font-size:0.75rem;font-weight:900;color:#6B2D3E;margin-bottom:0.35rem;}
+.notice-text{font-size:0.72rem;line-height:1.7;color:rgba(58,42,46,0.56);font-weight:600;}
+
+.priority-head{padding:0.35rem 0 0.65rem;text-align:center;}
+.priority-title{font-size:1.18rem;line-height:1.32;font-weight:900;color:#3A2A2E;margin-bottom:0.42rem;}
+.priority-title span{color:#6B2D3E;}
+.priority-sub{font-size:0.72rem;line-height:1.62;color:rgba(58,42,46,0.56);font-weight:700;max-width:310px;margin:0 auto;}
+.priority-hint{background:rgba(184,205,217,0.16);border:1px solid rgba(184,205,217,0.32);border-radius:14px;padding:0.65rem 0.75rem;margin-bottom:0.65rem;font-size:0.68rem;line-height:1.55;color:rgba(58,42,46,0.58);font-weight:700;}
+.priority-list{display:grid;gap:0.48rem;min-height:0;overflow-y:auto;padding-bottom:0.45rem;overscroll-behavior:contain;}
+.priority-card{width:100%;border:1.5px solid rgba(184,205,217,0.35);border-radius:15px;background:white;padding:0.66rem 0.72rem;display:flex;align-items:center;gap:0.62rem;text-align:left;cursor:pointer;touch-action:manipulation;transition:transform .12s,border-color .12s,background .12s;}
+.priority-card:active{transform:scale(.985);}
+.priority-card.selected{border-color:rgba(232,180,188,0.92);background:rgba(232,180,188,0.12);}
+.priority-rank{width:27px;height:27px;border-radius:50%;border:1.5px solid rgba(184,205,217,0.55);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#7A9BB5;font-size:0.72rem;font-weight:900;}
+.priority-card.selected .priority-rank{background:#6B2D3E;border-color:#6B2D3E;color:white;}
+.priority-text{flex:1;min-width:0;}
+.priority-name{font-size:0.78rem;font-weight:900;color:#3A2A2E;margin-bottom:0.12rem;}
+.priority-desc{font-size:0.66rem;line-height:1.42;color:rgba(58,42,46,0.5);font-weight:700;}
+
+.actions{margin-top:auto;padding-top:0.2rem;padding-bottom:0.25rem;}
+.btn-main{width:100%;height:52px;border-radius:14px;border:none;background:#6B2D3E;color:white;font-size:0.95rem;font-weight:900;cursor:pointer;touch-action:manipulation;box-shadow:0 10px 22px rgba(107,45,62,0.18);}
+.btn-main:active{transform:scale(0.985);}
+.btn-main:disabled{opacity:0.45;cursor:not-allowed;box-shadow:none;}
+.btn-sub{width:100%;height:44px;margin-top:0.65rem;border-radius:13px;border:1.5px solid rgba(184,205,217,0.5);background:white;color:#3A5068;font-size:0.8rem;font-weight:800;cursor:pointer;touch-action:manipulation;}
+
+.toast{position:fixed;top:4.4rem;left:50%;transform:translateX(-50%);background:#3A2A2E;color:white;padding:0.6rem 1.1rem;border-radius:99px;font-size:0.76rem;font-weight:800;z-index:200;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.loading-overlay{position:fixed;inset:0;background:#F5F0EE;z-index:300;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0.9rem;}
+.spin{width:38px;height:38px;border-radius:50%;border:4px solid rgba(184,205,217,0.3);border-top-color:#B8CDD9;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:0.78rem;font-weight:800;color:rgba(58,42,46,0.5);}
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spin"></div>
+  <div class="loading-text">載入測驗資格...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="wrap">
+  <div class="top-bar">
+    <button class="back-btn" id="backBtn" aria-label="回上一頁">‹</button>
+    <div class="top-title">交友測驗</div>
+    <div class="top-spacer"></div>
+  </div>
+
+  <main class="body">
+    <div class="step-dots">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-dot" id="dot2"></div>
+      <div class="step-dot" id="dot3"></div>
+    </div>
+
+    <section class="intro-step active" id="introStep1">
+    <section class="hero">
+      <div class="pengoo-wrap">
+        <svg class="pengoo-svg" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+          <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+          <polygon points="60,0 60,28 85,28" fill="#a50e0e"/>
+          <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="none" stroke="#d4a030" stroke-width="1.5"/>
+          <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+          <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+          <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+          <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+          <ellipse cx="44" cy="62" rx="7" ry="4" fill="#e8a0a0" opacity="0.45"/>
+          <ellipse cx="76" cy="62" rx="7" ry="4" fill="#e8a0a0" opacity="0.45"/>
+          <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+          <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+          <ellipse cx="48" cy="134" rx="12" ry="5" fill="#d4a030" transform="rotate(-10 48 134)"/>
+          <ellipse cx="72" cy="134" rx="12" ry="5" fill="#d4a030" transform="rotate(10 72 134)"/>
+          <path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/>
+        </svg>
+        <svg class="thread" viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M2 30 C18 8 32 46 48 18 C54 8 61 14 61 24" fill="none" stroke="#CC1111" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="61" cy="24" r="3" fill="#CC1111"/>
+        </svg>
+      </div>
+      <div class="eyebrow">PENGOO QUIZ</div>
+      <h1 class="title">讓企鵝月老<br/><span>更懂你的心動節奏</span></h1>
+      <p class="sub">這份測驗會用來建立你的配對基準，幫你避開無效互動，找到更接近生活步調的人。</p>
+    </section>
+
+    <section class="info-list">
+      <div class="info-item">
+        <div class="info-icon">🧭</div>
+        <div class="info-text">
+          <div class="info-title">先了解你自己</div>
+          <div class="info-desc">前半段會詢問個性、生活習慣、價值觀與相處方式。</div>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon">💌</div>
+        <div class="info-text">
+          <div class="info-title">再了解你想遇見的人</div>
+          <div class="info-desc">後半段會依你的設定，詢問你期待對方具備的特質。</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button class="btn-main" id="nextIntroBtn">下一步</button>
+      <button class="btn-sub" id="laterBtn">晚點再填</button>
+    </div>
+    </section>
+
+    <section class="intro-step" id="introStep2">
+    <section class="rule-card">
+      <div class="rule-title">測驗規則</div>
+      <div class="rule-grid">
+        <div class="rule-chip">
+          <div class="rule-num">30</div>
+          <div class="rule-label">題交友測驗</div>
+        </div>
+        <div class="rule-chip">
+          <div class="rule-num">80%</div>
+          <div class="rule-label">以上才推薦</div>
+        </div>
+        <div class="rule-chip">
+          <div class="rule-num">90</div>
+          <div class="rule-label">天後可重填</div>
+        </div>
+        <div class="rule-chip">
+          <div class="rule-num">1</div>
+          <div class="rule-label">次完整送出</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="notice">
+      <div class="notice-title">小提醒</div>
+      <div class="notice-text">請依照真實感受作答，不需要選看起來最完美的答案。Pengoo 比起討好所有人，更在意你遇見合適的人。</div>
+    </section>
+
+    <div class="actions">
+      <button class="btn-main" id="priorityNextBtn">調整牽線口味</button>
+      <button class="btn-sub" id="prevIntroBtn">上一步</button>
+    </div>
+    </section>
+
+    <section class="intro-step" id="introStep3">
+      <section class="priority-head">
+        <div class="eyebrow">MATCH PRIORITY</div>
+        <h2 class="priority-title">除了第一眼心動，<br/><span>你更在意什麼？</span></h2>
+        <p class="priority-sub">外型和穿搭會固定納入配對判斷。接下來請選出你最在意的 3 個相處條件，Pengoo 會依照排序調整推薦權重。</p>
+      </section>
+
+      <div class="priority-hint">不是沒選到就不重要，而是維持基本權重。你排越前面的項目，會越影響之後的契合度。</div>
+      <div class="priority-list" id="priorityList"></div>
+
+      <div class="actions">
+        <button class="btn-main" id="startBtn" disabled>開始 30 題測驗</button>
+        <button class="btn-sub" id="prevPriorityBtn">上一步</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const loadingOverlay = document.getElementById('loadingOverlay');
+const toast = document.getElementById('toast');
+let currentUser = null;
+let introStep = 1;
+let selectedPriorities = [];
+
+const priorityOptions = [
+  { key:'lifestyle', title:'生活習慣', desc:'作息、休假、飲食和日常節奏' },
+  { key:'future', title:'未來規劃', desc:'婚姻、小孩、家庭想法和長期方向' },
+  { key:'relationship', title:'相處模式', desc:'假日安排、交友圈、親密需求和個人空間' },
+  { key:'communication', title:'溝通方式', desc:'吵架反應、修復節奏和情緒處理' },
+  { key:'money', title:'金錢觀', desc:'房車規劃、經濟狀態和生活分工' }
+];
+
+function hideLoading(){
+  loadingOverlay.style.display = 'none';
+}
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 2400);
+}
+
+document.getElementById('backBtn').onclick = () => {
+  window.location.href = 'home.html';
+};
+
+document.getElementById('laterBtn').onclick = () => {
+  window.location.href = 'home.html';
+};
+
+function showIntroStep(step){
+  introStep = step;
+  document.getElementById('introStep1').classList.toggle('active', step === 1);
+  document.getElementById('introStep2').classList.toggle('active', step === 2);
+  document.getElementById('introStep3').classList.toggle('active', step === 3);
+  document.getElementById('dot1').classList.toggle('active', step === 1);
+  document.getElementById('dot2').classList.toggle('active', step === 2);
+  document.getElementById('dot3').classList.toggle('active', step === 3);
+}
+
+function renderPriorities(){
+  const list = document.getElementById('priorityList');
+  list.innerHTML = '';
+
+  priorityOptions.forEach(item => {
+    const rank = selectedPriorities.indexOf(item.key);
+    const btn = document.createElement('button');
+    btn.className = `priority-card${rank >= 0 ? ' selected' : ''}`;
+    btn.type = 'button';
+
+    const rankEl = document.createElement('div');
+    rankEl.className = 'priority-rank';
+    rankEl.textContent = rank >= 0 ? String(rank + 1) : '+';
+
+    const text = document.createElement('div');
+    text.className = 'priority-text';
+
+    const name = document.createElement('div');
+    name.className = 'priority-name';
+    name.textContent = item.title;
+
+    const desc = document.createElement('div');
+    desc.className = 'priority-desc';
+    desc.textContent = item.desc;
+
+    text.appendChild(name);
+    text.appendChild(desc);
+    btn.appendChild(rankEl);
+    btn.appendChild(text);
+    btn.addEventListener('click', () => togglePriority(item.key));
+    list.appendChild(btn);
+  });
+
+  document.getElementById('startBtn').disabled = selectedPriorities.length !== 3;
+}
+
+function togglePriority(key){
+  const existing = selectedPriorities.indexOf(key);
+  if(existing >= 0){
+    selectedPriorities.splice(existing, 1);
+  } else if(selectedPriorities.length < 3){
+    selectedPriorities.push(key);
+  } else {
+    showToast('已經選滿 3 個囉');
+  }
+  renderPriorities();
+}
+
+document.getElementById('nextIntroBtn').onclick = () => showIntroStep(2);
+document.getElementById('prevIntroBtn').onclick = () => showIntroStep(1);
+document.getElementById('priorityNextBtn').onclick = () => showIntroStep(3);
+document.getElementById('prevPriorityBtn').onclick = () => showIntroStep(2);
+
+document.getElementById('startBtn').onclick = async () => {
+  if(!currentUser){
+    showToast('請先登入');
+    return;
+  }
+  if(selectedPriorities.length !== 3){
+    showToast('請先選出 3 個你最在意的條件');
+    return;
+  }
+
+  try{
+    document.getElementById('startBtn').disabled = true;
+    await updateDoc(doc(db,'users',currentUser.uid), {
+      matchPriorities: selectedPriorities,
+      matchPrioritiesUpdatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    window.location.href = 'quiz.html';
+  } catch(e){
+    console.error(e);
+    document.getElementById('startBtn').disabled = false;
+    showToast('儲存失敗，請再試一次');
+  }
+};
+
+renderPriorities();
+
+onAuthStateChanged(auth, async (user) => {
+  if(!user){
+    window.location.href = 'index.html';
+    return;
+  }
+
+  currentUser = user;
+
+  try{
+    const snap = await getDoc(doc(db,'users',user.uid));
+    if(!snap.exists()){
+      window.location.href = 'profile.html';
+      return;
+    }
+
+    const data = snap.data();
+    if(data.pendingReview || data.rejected || !data.selfieApproved){
+      window.location.href = 'home.html';
+      return;
+    }
+
+    if(data.quizComplete){
+      window.location.href = 'home.html';
+      return;
+    }
+
+    if(Array.isArray(data.matchPriorities)){
+      selectedPriorities = data.matchPriorities
+        .filter(key => priorityOptions.some(item => item.key === key))
+        .slice(0, 3);
+      renderPriorities();
+    }
+  } catch(e){
+    console.error(e);
+    showToast('載入失敗，請再試一次');
+  }
+
+  hideLoading();
+});
+</script>
+</body>
+</html>

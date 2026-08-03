@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 測試機器人匯入</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100%;width:100%;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A2A2E;display:flex;justify-content:center;}
+.wrap{width:100%;max-width:390px;min-height:100vh;padding:1rem 1.15rem 2rem;}
+.eyebrow{font-size:0.62rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.16rem;}
+h1{font-size:1.32rem;font-weight:900;line-height:1.22;margin-bottom:0.5rem;}
+.lead{font-size:0.78rem;line-height:1.7;color:rgba(58,42,46,0.58);font-weight:750;margin-bottom:0.9rem;}
+.card{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:18px;padding:0.92rem;box-shadow:0 10px 24px rgba(58,42,46,0.045);margin-bottom:0.78rem;}
+.title{font-size:0.88rem;font-weight:900;margin-bottom:0.42rem;}
+.text{font-size:0.73rem;line-height:1.65;color:rgba(58,42,46,0.58);font-weight:740;}
+.btn{width:100%;height:48px;border-radius:14px;border:0;background:#6B2D3E;color:white;font-size:0.86rem;font-weight:900;margin-top:0.7rem;cursor:pointer;}
+.btn.secondary{background:white;color:#3A5068;border:1.5px solid rgba(184,205,217,0.5);}
+.btn.danger{background:#FEE2E2;color:#B91C1C;border:1.5px solid rgba(185,28,28,0.18);}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.status{background:#3A2A2E;color:white;border-radius:14px;padding:0.72rem 0.82rem;font-size:0.74rem;font-weight:800;line-height:1.6;white-space:pre-wrap;display:none;margin-bottom:0.78rem;}
+.status.show{display:block;}
+.field{margin-top:0.72rem;}
+.label{font-size:0.68rem;font-weight:900;color:#7A9BB5;letter-spacing:0.08em;margin-bottom:0.38rem;}
+.select,.input,.textarea{width:100%;border-radius:13px;border:1.5px solid rgba(184,205,217,0.45);background:white;color:#3A2A2E;font-size:0.78rem;font-weight:850;padding:0 0.72rem;font-family:inherit;}
+.select,.input{height:42px;}
+.textarea{height:76px;padding-top:0.62rem;resize:none;line-height:1.45;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0.52rem;}
+.target-list{display:grid;gap:0.42rem;max-height:190px;overflow:auto;padding-right:0.1rem;}
+.target{display:flex;align-items:center;gap:0.54rem;background:rgba(184,205,217,0.12);border-radius:13px;padding:0.54rem 0.6rem;font-size:0.73rem;font-weight:850;color:rgba(58,42,46,0.68);}
+.target input{width:17px;height:17px;accent-color:#6B2D3E;flex-shrink:0;}
+.check-row{display:flex;align-items:flex-start;gap:0.54rem;background:rgba(184,205,217,0.12);border-radius:13px;padding:0.58rem 0.62rem;margin-top:0.72rem;font-size:0.72rem;font-weight:850;color:rgba(58,42,46,0.64);line-height:1.45;}
+.check-row input{width:18px;height:18px;accent-color:#6B2D3E;flex-shrink:0;margin-top:0.08rem;}
+.target-info{flex:1;min-width:0;}
+.target-name{font-weight:900;color:#3A2A2E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.target-meta{font-size:0.62rem;font-weight:760;color:rgba(58,42,46,0.45);margin-top:0.08rem;}
+.bot-list{display:grid;gap:0.48rem;}
+.bot{width:100%;display:flex;align-items:center;gap:0.58rem;background:rgba(184,205,217,0.12);border:0;border-radius:13px;padding:0.56rem 0.62rem;text-align:left;font-family:inherit;color:inherit;}
+.bot.editable{cursor:pointer;touch-action:manipulation;}
+.bot.editable:active{transform:scale(0.99);}
+.avatar{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#B8CDD9,#E8B4BC);display:flex;align-items:center;justify-content:center;color:white;font-size:0.78rem;font-weight:900;flex-shrink:0;}
+.bot-main{flex:1;min-width:0;}
+.bot-name{font-size:0.75rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bot-meta{font-size:0.62rem;font-weight:760;color:rgba(58,42,46,0.46);margin-top:0.08rem;}
+.pill{font-size:0.6rem;font-weight:900;color:#6B2D3E;background:rgba(232,180,188,0.18);border-radius:99px;padding:0.16rem 0.42rem;white-space:nowrap;}
+.warn{border-color:rgba(180,83,9,0.22);background:#FEF3C7;}
+.warn .title{color:#B45309;}
+.ok{border-color:rgba(29,107,62,0.18);background:#E6F4ED;}
+.ok .title{color:#1D6B3E;}
+.mode-tabs{display:none;}
+.mode-tab{height:36px;border-radius:12px;border:1px solid rgba(184,205,217,0.4);background:white;color:rgba(58,42,46,0.5);font-size:0.68rem;font-weight:900;}
+.mode-tab.active{background:#6B2D3E;color:white;border-color:#6B2D3E;}
+.mode-view{display:block;}
+.mode-view.active{display:block;}
+.mini-actions{display:grid;grid-template-columns:1fr 1fr;gap:0.52rem;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">PENGOO DEV TOOL</div>
+  <h1>測試機器人帳號</h1>
+  <div class="lead">這頁會建立一批已審核、已完成測驗的假用戶，讓你測配對頁、詳情頁、配對成功和月老信箱流程。</div>
+
+  <div class="status" id="status"></div>
+
+  <section class="card warn">
+    <div class="title">機器人設定</div>
+    <div class="text">可以指定機器人要契合哪些測試帳號，也可以指定機器人性別。可多選帳號；測驗答案會以第一個勾選帳號為主調整，所有勾選帳號都會先收到機器人的喜歡。</div>
+    <div class="field">
+      <div class="label">機器人性別</div>
+      <select class="select" id="botGenderSelect">
+        <option value="auto">自動依照第一個目標帳號想找的對象</option>
+        <option value="female">女生</option>
+        <option value="male">男生</option>
+        <option value="other">多元性別</option>
+      </select>
+    </div>
+    <div class="field">
+      <div class="label">契合目標帳號（可多選）</div>
+      <div class="target-list" id="targetList">
+        <div class="text">讀取測試帳號中...</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mode-view active" id="view-single">
+    <section class="card">
+      <div class="title">新增 / 編輯單一機器人</div>
+      <div class="text">填完後只會新增或更新這一個機器人。也可以在下方「目前所有機器人」點某個帳號載入編輯。</div>
+      <div class="field">
+        <div class="label">暱稱</div>
+        <input class="input" id="singleNickname" placeholder="例如 小羽">
+      </div>
+      <div class="field">
+        <div class="label">自訂 ID（選填）</div>
+        <input class="input" id="singleUid" placeholder="例如 bot_pengoo_yuna">
+      </div>
+      <div class="grid">
+        <div class="field">
+          <div class="label">年齡</div>
+          <input class="input" id="singleAge" type="number" min="18" max="65" value="27">
+        </div>
+        <div class="field">
+          <div class="label">地區</div>
+          <select class="select" id="singleCity"></select>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <div class="label">職業</div>
+          <input class="input" id="singleJob" placeholder="例如 科技業">
+        </div>
+        <div class="field">
+          <div class="label">目的</div>
+          <select class="select" id="singlePurpose">
+            <option value="serious">認真交往</option>
+            <option value="casual">先相處看看</option>
+            <option value="open">順其自然</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <div class="label">標籤（用逗號分隔）</div>
+        <input class="input" id="singleTags" placeholder="溫柔體貼, 喜歡咖啡, 愛散步">
+      </div>
+      <div class="field">
+        <div class="label">自我介紹</div>
+        <textarea class="textarea" id="singleBio" placeholder="寫一段測試用自介"></textarea>
+      </div>
+      <div class="field">
+        <div class="label">照片網址（選填，一行一張，最多 6 張）</div>
+        <textarea class="textarea" id="singlePhotos" placeholder="不填就使用預設測試圖&#10;https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"></textarea>
+      </div>
+      <label class="check-row">
+        <input id="singlePreLike" type="checkbox">
+        <span>先幫機器人對目標帳號按喜歡。想用機器人身份登入去看對方時，先不要勾。</span>
+      </label>
+      <button class="btn" id="createOneBtn">新增 / 更新這一個機器人</button>
+    </section>
+  </div>
+
+  <div class="mode-view" id="view-batch">
+    <section class="card">
+      <div class="title">批量建立測試用戶</div>
+      <div class="text">如果想快速塞滿配對頁，也可以一次寫入 12 個固定機器人。重複按會更新同一批資料。</div>
+      <button class="btn" id="seedBtn">匯入 / 更新 12 個機器人</button>
+      <button class="btn secondary" id="matchBtn">匯入後前往配對頁</button>
+    </section>
+
+    <section class="card">
+      <div class="title">重新測試用</div>
+      <div class="text">如果你已經對某些機器人按過不配對或配對，配對頁會排除他們。這個按鈕只清除「你對機器人」的操作紀錄，不會刪除真人資料。</div>
+      <button class="btn danger" id="resetBtn">清除我對機器人的操作紀錄</button>
+    </section>
+  </div>
+
+  <div class="mode-view" id="view-list">
+    <section class="card ok">
+      <div class="title">目前所有機器人</div>
+      <div class="text">點任一機器人可以載入到單一表單編輯。列表包含固定機器人和你手動新增的機器人。</div>
+      <div class="mini-actions">
+        <button class="btn secondary" id="reloadBotsBtn">重新讀取</button>
+        <button class="btn secondary" id="matchBtn2">前往配對頁</button>
+      </div>
+      <div class="bot-list" id="botList" style="margin-top:0.7rem;"></div>
+    </section>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc,
+  serverTimestamp, Timestamp
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import {
+  QUIZ_SCORING_RULES, SCORE_ACTION, getAnswerByOrder, getPriorityMultiplier
+} from './quiz-scoring.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+let currentData = null;
+const statusEl = document.getElementById('status');
+const seedBtn = document.getElementById('seedBtn');
+const resetBtn = document.getElementById('resetBtn');
+const matchBtn = document.getElementById('matchBtn');
+const matchBtn2 = document.getElementById('matchBtn2');
+const reloadBotsBtn = document.getElementById('reloadBotsBtn');
+const botGenderSelect = document.getElementById('botGenderSelect');
+const targetList = document.getElementById('targetList');
+const createOneBtn = document.getElementById('createOneBtn');
+const singlePreLike = document.getElementById('singlePreLike');
+let targetUsers = [];
+let testBots = [];
+
+const cities = ['台北市','新北市','桃園市','新竹市','台中市','台南市','高雄市','基隆市','新竹縣','苗栗縣','彰化縣','南投縣','雲林縣','嘉義市','嘉義縣','屏東縣','宜蘭縣','花蓮縣','台東縣','澎湖縣','金門縣','連江縣'];
+cities.forEach(city => {
+  const option = document.createElement('option');
+  option.value = city;
+  option.textContent = city;
+  document.getElementById('singleCity').appendChild(option);
+});
+
+const baseAnswers = {
+  q01:'B', q02:'B', q03:'A', q04:'A', q05:'B',
+  q06:'C', q07:'D', q08:'C', q09:'D', q10:'C',
+  q11:'C', q12:'D', q13:'B', q14:'B', q15:'B',
+  q16:'D', q17:'E', q18:'E', q19:'F', q20:'F',
+  q21:'E', q22:'D', q23:'D', q24:'D', q25:'E',
+  q26:'E', q27:'D', q28:'D', q29:'E', q30:'E'
+};
+
+const botSeeds = [
+  {
+    uid:'bot_pengoo_yuna', nickname:'小羽', gender:'female', age:27, city:'台北市', height:162, job:'科技業', purpose:'serious',
+    bio:'喜歡咖啡、散步和安靜的展覽，假日可以出門也可以一起放空。',
+    tags:['溫柔體貼','喜歡咖啡','愛散步','電影','慢熟','重視溝通'],
+    answers:{ q01:'B', q02:'B', q03:'A', q06:'C', q10:'B', q11:'C', q12:'D', q13:'B', q15:'B', q29:'B', q30:'B' }
+  },
+  {
+    uid:'bot_pengoo_mei', nickname:'米米', gender:'female', age:25, city:'新北市', height:158, job:'教育業', purpose:'serious',
+    bio:'生活步調穩定，喜歡小旅行和舒服的相處，希望慢慢認識對的人。',
+    tags:['內向安靜','愛旅行','喜歡讀書','重視家庭','穩定陪伴','貓派'],
+    answers:{ q01:'C', q02:'A', q03:'A', q06:'A', q07:'A', q10:'C', q12:'B', q14:'A', q15:'C', q29:'A', q30:'A' }
+  },
+  {
+    uid:'bot_pengoo_grace', nickname:'Grace', gender:'female', age:29, city:'桃園市', height:166, job:'金融業', purpose:'open',
+    bio:'工作認真但私下很好聊，喜歡美食和城市散步，不急著定義關係。',
+    tags:['理性冷靜','美食探索','城市散步','社群分享','電影','重視界線'],
+    answers:{ q01:'A', q02:'B', q03:'A', q06:'A', q07:'B', q08:'A', q09:'A', q10:'A', q11:'A', q12:'A', q30:'C' }
+  },
+  {
+    uid:'bot_pengoo_anna', nickname:'安安', gender:'female', age:31, city:'台中市', height:160, job:'醫療業', purpose:'serious',
+    bio:'排班生活但會好好安排時間，重視真誠與穩定的陪伴。',
+    tags:['溫柔體貼','排班生活','愛做料理','重視溝通','穩定陪伴','狗派'],
+    answers:{ q02:'D', q03:'B', q06:'B', q07:'C', q10:'C', q11:'C', q12:'E', q13:'C', q14:'B', q15:'B', q30:'B' }
+  },
+  {
+    uid:'bot_pengoo_rina', nickname:'Rina', gender:'female', age:24, city:'高雄市', height:164, job:'服務業', purpose:'casual',
+    bio:'個性外向，喜歡活動和新鮮感，先聊天看看頻率合不合。',
+    tags:['活潑開朗','愛旅行','喜歡戶外','社交活躍','美食探索','幽默'],
+    answers:{ q01:'A', q02:'C', q03:'B', q04:'D', q05:'B', q06:'A', q08:'A', q09:'D', q12:'A', q15:'A', q30:'C' }
+  },
+  {
+    uid:'bot_pengoo_luna', nickname:'Luna', gender:'female', age:28, city:'台南市', height:157, job:'設計業', purpose:'open',
+    bio:'喜歡穿搭、展覽和老屋咖啡，慢熟但熟了很放鬆。',
+    tags:['慢熟','穿搭','展覽','喜歡咖啡','重視質感','愛散步'],
+    answers:{ q01:'A', q02:'B', q03:'D', q06:'C', q07:'A', q09:'B', q11:'A', q12:'D', q13:'D', q15:'C', q29:'E' }
+  },
+  {
+    uid:'bot_pengoo_ray', nickname:'Ray', gender:'male', age:30, city:'台北市', height:178, job:'科技業', purpose:'serious',
+    bio:'平日工作穩定，假日喜歡運動和找好吃的店，感情裡重視溝通。',
+    tags:['理性冷靜','愛運動','科技業','美食探索','重視溝通','穩定陪伴'],
+    answers:{ q01:'B', q02:'A', q03:'A', q06:'A', q07:'D', q10:'B', q11:'C', q12:'D', q13:'B', q15:'B', q30:'B' }
+  },
+  {
+    uid:'bot_pengoo_kai', nickname:'Kai', gender:'male', age:26, city:'新竹市', height:174, job:'科技業', purpose:'open',
+    bio:'喜歡簡單舒服的相處，不太愛複雜社交，聊天頻率合很重要。',
+    tags:['內向安靜','喜歡讀書','科技業','慢熟','重視界線','咖啡'],
+    answers:{ q01:'C', q02:'C', q03:'A', q06:'B', q07:'C', q08:'D', q09:'C', q10:'C', q12:'E', q15:'D', q30:'E' }
+  },
+  {
+    uid:'bot_pengoo_hao', nickname:'浩浩', gender:'male', age:33, city:'台中市', height:181, job:'金融業', purpose:'serious',
+    bio:'生活比較有規劃，喜歡把關係經營得穩定，也願意一起努力生活。',
+    tags:['成熟穩定','金融業','重視家庭','理性冷靜','儀式感','重視承諾'],
+    answers:{ q01:'A', q02:'A', q03:'A', q06:'C', q07:'A', q10:'A', q11:'E', q12:'C', q13:'A', q14:'A', q29:'A', q30:'A' }
+  },
+  {
+    uid:'bot_pengoo_noa', nickname:'Noa', gender:'other', age:27, city:'台北市', height:170, job:'自由工作者', purpose:'open',
+    bio:'重視自在和界線，喜歡音樂、展覽、散步，也喜歡保留一點個人空間。',
+    tags:['多元友善','展覽','愛散步','重視界線','自由彈性','慢熟'],
+    answers:{ q01:'B', q02:'D', q03:'D', q06:'C', q07:'D', q08:'C', q09:'D', q10:'D', q11:'C', q12:'D', q15:'D', q30:'E' }
+  },
+  {
+    uid:'bot_pengoo_mika', nickname:'Mika', gender:'other', age:23, city:'高雄市', height:165, job:'學生', purpose:'casual',
+    bio:'喜歡輕鬆聊天和分享生活，先從朋友感開始認識也很好。',
+    tags:['活潑開朗','音樂','美食探索','社群分享','幽默','自由彈性'],
+    answers:{ q01:'C', q02:'C', q03:'D', q05:'B', q06:'A', q07:'B', q08:'A', q09:'A', q11:'A', q12:'B', q30:'D' }
+  },
+  {
+    uid:'bot_pengoo_shan', nickname:'山山', gender:'female', age:32, city:'花蓮縣', height:163, job:'自由工作者', purpose:'open',
+    bio:'喜歡自然、慢生活和真實相處，不太追求制式約會。',
+    tags:['愛旅行','自然系','慢生活','愛散步','重視真實','個人空間'],
+    answers:{ q01:'D', q02:'D', q03:'D', q06:'B', q07:'C', q08:'D', q09:'C', q10:'D', q11:'C', q12:'D', q15:'D', q29:'C', q30:'E' }
+  }
+];
+
+function mergeAnswers(extra={}){
+  return { ...baseAnswers, ...extra };
+}
+
+function photo(seed, index, size='large'){
+  const dimension = size === 'thumb' ? '180/240' : '540/720';
+  return `https://picsum.photos/seed/pengoo-${seed}-${index}/${dimension}`;
+}
+
+function answerForExpectation(expectation, fallback='B'){
+  return expectation || fallback;
+}
+
+function setAnswerByOrder(answers, order, value){
+  answers[`q${String(order).padStart(2, '0')}`] = value;
+}
+
+function scoreCandidate(result, weight){
+  if(!result) return -100000;
+  if(result.action === SCORE_ACTION.EXCLUDE) return -100000;
+  return result.score * weight;
+}
+
+function chooseBestTargetAnswer(viewerData, targetOrder){
+  const rules = QUIZ_SCORING_RULES.rules.filter(rule => rule.targetOrder === targetOrder);
+  const totals = new Map();
+
+  rules.forEach(rule => {
+    const viewerAnswer = getAnswerByOrder(viewerData.quizAnswers, rule.expectationOrder);
+    const row = rule.matrix?.[viewerAnswer];
+    if(!row) return;
+
+    const weight = rule.weight * getPriorityMultiplier(rule.priorityCategory, viewerData.matchPriorities);
+    Object.entries(row).forEach(([candidate, result]) => {
+      totals.set(candidate, (totals.get(candidate) || 0) + scoreCandidate(result, weight));
+    });
+  });
+
+  return [...totals.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+}
+
+function chooseBestExpectationAnswer(targetData, expectationOrder){
+  const rules = QUIZ_SCORING_RULES.rules.filter(rule => rule.expectationOrder === expectationOrder);
+  const totals = new Map();
+
+  rules.forEach(rule => {
+    const targetAnswer = getAnswerByOrder(targetData.quizAnswers, rule.targetOrder);
+    if(targetAnswer === undefined) return;
+
+    const weight = rule.weight;
+    Object.keys(rule.matrix || {}).forEach(candidate => {
+      const result = rule.matrix?.[candidate]?.[targetAnswer];
+      totals.set(candidate, (totals.get(candidate) || 0) + scoreCandidate(result, weight));
+    });
+  });
+
+  return [...totals.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+}
+
+function optimizeAnswersForTarget(answers, targetData){
+  if(!targetData?.quizAnswers || !Object.keys(targetData.quizAnswers).length) return answers;
+
+  const targetOrders = [...new Set(QUIZ_SCORING_RULES.rules.map(rule => rule.targetOrder))];
+  targetOrders.forEach(order => {
+    const best = chooseBestTargetAnswer(targetData, order);
+    if(best) setAnswerByOrder(answers, order, best);
+  });
+
+  const expectationOrders = [...new Set(QUIZ_SCORING_RULES.rules.map(rule => rule.expectationOrder))];
+  expectationOrders.forEach(order => {
+    const best = chooseBestExpectationAnswer(targetData, order);
+    if(best) setAnswerByOrder(answers, order, best);
+  });
+
+  return answers;
+}
+
+function createCharlieFriendlyAnswers(seedAnswers={}, targetData=currentData){
+  const mine = targetData?.quizAnswers || {};
+  const answers = { ...baseAnswers, ...seedAnswers };
+
+  if(!mine || !Object.keys(mine).length) return answers;
+
+  answers.q01 = { A:'B', B:'C', C:'A', D:'B' }[mine.q16] || answers.q01;
+  answers.q02 = { A:'A', B:'B', C:'C', D:'D', E:'B' }[mine.q17] || answers.q02;
+  answers.q03 = { A:'A', B:'B', C:'C', D:'D', E:'A' }[mine.q18] || answers.q03;
+  answers.q04 = { A:'A', B:'D', C:'C', D:'A', E:'E', F:'A' }[mine.q19] || answers.q04;
+  answers.q05 = { A:'A', B:'B', C:'C', D:'D', E:'E', F:'B' }[mine.q20] || answers.q05;
+  answers.q06 = { A:'A', B:'B', C:'C', D:'D', E:'C' }[mine.q21] || answers.q06;
+  answers.q07 = { A:'A', B:'B', C:'C', D:'D' }[mine.q22] || answers.q07;
+  answers.q08 = { A:'B', B:'C', C:'A', D:'C' }[mine.q23] || answers.q08;
+  answers.q10 = { A:'A', B:'B', C:'C', D:'C' }[mine.q24] || answers.q10;
+  answers.q12 = { A:'D', B:'D', C:'B', D:'A', E:'D' }[mine.q25] || answers.q12;
+  answers.q14 = { A:'A', B:'B', C:'C', D:'B' }[mine.q27] || answers.q14;
+
+  answers.q16 = { A:'D', B:'D', C:'D', D:'D' }[mine.q01] || 'D';
+  answers.q17 = { A:'A', B:'B', C:'C', D:'D' }[mine.q02] || 'E';
+  answers.q18 = { A:'A', B:'B', C:'C', D:'D' }[mine.q03] || 'E';
+  answers.q19 = { A:'F', B:'D', C:'C', D:'B', E:'E' }[mine.q04] || 'F';
+  answers.q20 = { A:'F', B:'B', C:'C', D:'D', E:'E' }[mine.q05] || 'F';
+  answers.q21 = { A:'A', B:'B', C:'C', D:'D' }[mine.q06] || 'E';
+  answers.q22 = { A:'A', B:'B', C:'C', D:'D' }[mine.q07] || 'D';
+  answers.q23 = { A:'C', B:'D', C:'B', D:'D' }[mine.q08] || 'D';
+  answers.q24 = { A:'A', B:'B', C:'C', D:'D' }[mine.q10] || 'D';
+  answers.q25 = 'E';
+  answers.q26 = 'E';
+  answers.q27 = { A:'A', B:'B', C:'C', D:'D' }[mine.q14] || 'D';
+  answers.q28 = answerForExpectation(mine.q28, answers.q28);
+  answers.q29 = answerForExpectation(mine.q29, answers.q29);
+  answers.q30 = answerForExpectation(mine.q30, answers.q30);
+
+  return optimizeAnswersForTarget(answers, targetData);
+}
+
+function getSelectedTargets(){
+  const checked = [...document.querySelectorAll('.target-check:checked')].map(input => input.value);
+  return targetUsers.filter(user => checked.includes(user.uid));
+}
+
+function getPrimaryTarget(){
+  return getSelectedTargets()[0] || null;
+}
+
+function getBotGender(seed, targetData=currentData){
+  const selected = botGenderSelect.value;
+  if(selected === 'male' || selected === 'female' || selected === 'other') return selected;
+  const lookingFor = targetData?.lookingFor || 'any';
+  if(lookingFor === 'male' || lookingFor === 'female') return lookingFor;
+  return seed.gender;
+}
+
+function getSharedTags(seed, targetData=currentData){
+  const mine = Array.isArray(targetData?.tags) ? targetData.tags.slice(0, 3) : [];
+  return Array.from(new Set([...mine, ...seed.tags])).slice(0, 6);
+}
+
+function createBot(seed, index, target){
+  const targetData = target?.data || currentData;
+  const now = Timestamp.now();
+  const customPhotos = Array.isArray(seed.photos) ? seed.photos.filter(Boolean).slice(0, 6) : [];
+  const photos = customPhotos.length ? customPhotos : [1,2,3].map(n => photo(seed.uid, n));
+  const photoThumbs = customPhotos.length ? customPhotos : [1,2,3].map(n => photo(seed.uid, n, 'thumb'));
+  const gender = getBotGender(seed, targetData);
+  return {
+    uid: seed.uid,
+    email: `${seed.uid}@pengoo.test`,
+    nickname: seed.nickname,
+    age: seed.age,
+    gender,
+    lookingFor: targetData?.gender || 'any',
+    city: seed.city,
+    height: seed.height,
+    job: targetData?.job || seed.job,
+    bio: seed.bio,
+    tags: getSharedTags(seed, targetData),
+    purpose: seed.purpose,
+    photos,
+    photoThumbs,
+    selfieURL: photo(`${seed.uid}-selfie`, 1),
+    selfieApproved: true,
+    pendingReview: false,
+    rejected: false,
+    rejectionReasons: {},
+    quizComplete: true,
+    quizVersion: 'v1',
+    quizScoringVersion: 'v1',
+    quizQuestionCount: 30,
+    quizCompletedAt: now,
+    quizUnlockAt: Timestamp.fromDate(new Date(Date.now() + 90 * 86400000)),
+    quizAnswers: createCharlieFriendlyAnswers(seed.answers, targetData),
+    quizScores: {},
+    matchPriorities: Array.isArray(targetData?.matchPriorities) && targetData.matchPriorities.length
+      ? targetData.matchPriorities.slice(0, 3)
+      : ['relationship','communication','lifestyle'],
+    matchPrioritiesUpdatedAt: now,
+    avatarConfig: { preset:'bot', seed:index + 1 },
+    matchCount: 0,
+    unreadCount: 0,
+    blocked: [],
+    isTestBot: true,
+    botBatch: 'pengoo_seed_v1',
+    createdAt: now,
+    updatedAt: serverTimestamp()
+  };
+}
+
+function setStatus(text){
+  statusEl.textContent = text;
+  statusEl.classList.add('show');
+}
+
+function genderText(gender){
+  if(gender === 'female') return '女';
+  if(gender === 'male') return '男';
+  return '多元';
+}
+
+function escapeText(value){
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[char]));
+}
+
+function showMode(name){
+  const target = document.getElementById(`view-${name}`);
+  if(target){
+    target.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+}
+
+function renderBotList(){
+  const botList = document.getElementById('botList');
+  if(!testBots.length){
+    botList.innerHTML = '<div class="text">目前還沒有讀到機器人。可以先到「單一」新增，或到「批量」匯入一批測試資料。</div>';
+    return;
+  }
+
+  botList.innerHTML = '';
+  testBots.forEach(user => {
+    const data = user.data || {};
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'bot editable';
+    item.innerHTML = `
+      <div class="avatar">${escapeText((data.nickname || '?').slice(0,1))}</div>
+      <div class="bot-main">
+        <div class="bot-name">${escapeText(data.nickname || user.uid)}</div>
+        <div class="bot-meta">${escapeText([data.age ? `${data.age} 歲` : '', data.city || '', data.job || ''].filter(Boolean).join('・'))}</div>
+      </div>
+      <div class="pill">${genderText(data.gender)}</div>
+    `;
+    item.addEventListener('click', () => loadBotToForm(user));
+    botList.appendChild(item);
+  });
+}
+
+async function loadTestBots(){
+  const botList = document.getElementById('botList');
+  botList.innerHTML = '<div class="text">正在讀取機器人...</div>';
+
+  try{
+    const snap = await getDocs(collection(db, 'users'));
+    testBots = snap.docs
+      .map(userDoc => ({ uid:userDoc.id, data:userDoc.data() }))
+      .filter(user => user.data?.isTestBot || user.uid.startsWith('bot_pengoo_'))
+      .sort((a,b) => String(a.data?.nickname || a.uid).localeCompare(String(b.data?.nickname || b.uid), 'zh-Hant'));
+    renderBotList();
+  } catch(e){
+    console.error(e);
+    botList.innerHTML = '<div class="text">讀取機器人失敗，請確認 Firebase 權限或稍後再試。</div>';
+  }
+}
+
+function loadBotToForm(user){
+  const data = user.data || {};
+  document.getElementById('singleNickname').value = data.nickname || '';
+  document.getElementById('singleUid').value = user.uid || '';
+  document.getElementById('singleAge').value = data.age || 27;
+  document.getElementById('singleCity').value = data.city || '台北市';
+  document.getElementById('singleJob').value = data.job || '';
+  document.getElementById('singlePurpose').value = data.purpose || 'open';
+  document.getElementById('singleTags').value = Array.isArray(data.tags) ? data.tags.join(', ') : '';
+  document.getElementById('singleBio').value = data.bio || '';
+  document.getElementById('singlePhotos').value = Array.isArray(data.photos) ? data.photos.join('\n') : '';
+  if(['female','male','other'].includes(data.gender)){
+    botGenderSelect.value = data.gender;
+  }
+  showMode('single');
+  setStatus(`已載入 ${data.nickname || user.uid}，修改後按「新增 / 更新這一個機器人」即可覆蓋。`);
+}
+
+function slugifyBotId(text){
+  const raw = String(text || '').trim().toLowerCase();
+  const ascii = raw
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  if(ascii) return `bot_pengoo_${ascii}`;
+  return `bot_pengoo_${Date.now()}`;
+}
+
+function parseTags(value){
+  return String(value || '')
+    .split(/[,，、]/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function parsePhotoUrls(value){
+  return String(value || '')
+    .split(/\r?\n/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function buildSingleSeed(){
+  const nickname = document.getElementById('singleNickname').value.trim();
+  if(!nickname) throw new Error('請先輸入暱稱');
+
+  const uidInput = document.getElementById('singleUid').value.trim();
+  const tags = parseTags(document.getElementById('singleTags').value);
+  const photos = parsePhotoUrls(document.getElementById('singlePhotos').value);
+  return {
+    uid: uidInput || slugifyBotId(nickname),
+    nickname,
+    gender: botGenderSelect.value === 'auto' ? 'female' : botGenderSelect.value,
+    age: parseInt(document.getElementById('singleAge').value, 10) || 27,
+    city: document.getElementById('singleCity').value || '台北市',
+    height: 160 + Math.floor(Math.random() * 22),
+    job: document.getElementById('singleJob').value.trim() || '自由工作者',
+    purpose: document.getElementById('singlePurpose').value || 'open',
+    bio: document.getElementById('singleBio').value.trim() || '這是測試用機器人，適合用來確認配對流程和聊天流程。',
+    tags: tags.length ? tags : ['溫柔體貼','喜歡咖啡','愛散步','重視溝通'],
+    photos,
+    answers: {}
+  };
+}
+
+async function createOneBot(){
+  if(!currentUser){
+    setStatus('請先登入後再新增。');
+    return;
+  }
+
+  const targets = getSelectedTargets();
+  if(!targets.length){
+    setStatus('請先在「契合目標帳號」清單勾選至少一個用戶，再新增機器人。');
+    return;
+  }
+
+  createOneBtn.disabled = true;
+
+  try{
+    const seed = buildSingleSeed();
+    const primaryTarget = targets[0];
+    const bot = createBot(seed, Date.now(), primaryTarget);
+    await setDoc(doc(db, 'users', bot.uid), bot, { merge:true });
+
+    for(const target of targets){
+      const actionRef = doc(db, 'matchActions', `${bot.uid}_${target.uid}`);
+      if(singlePreLike.checked){
+        await setDoc(actionRef, {
+          actorUid: bot.uid,
+          targetUid: target.uid,
+          action: 'like',
+          isTestBotAction: true,
+          botBatch: 'pengoo_single_seed',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+      } else {
+        await deleteDoc(actionRef);
+      }
+    }
+
+    setStatus(singlePreLike.checked
+      ? `完成！已新增 / 更新 ${bot.nickname}。\nID：${bot.uid}\n已先對 ${targets.length} 個目標帳號按喜歡。`
+      : `完成！已新增 / 更新 ${bot.nickname}。\nID：${bot.uid}\n沒有預先按喜歡；用機器人身份登入時可以在配對頁看到目標帳號。`);
+    document.getElementById('singleNickname').value = '';
+    document.getElementById('singleUid').value = '';
+    await loadTestBots();
+  } catch(e){
+    console.error(e);
+    setStatus(`新增失敗：${e.message || e.code || e}`);
+  } finally {
+    createOneBtn.disabled = false;
+  }
+}
+
+function renderTargetList(){
+  if(!targetUsers.length){
+    targetList.innerHTML = '<div class="text">目前沒有可選帳號。請先讓至少一個真實 / 測試用戶完成審核與測驗。</div>';
+    return;
+  }
+
+  targetList.innerHTML = targetUsers.map(user => {
+    const data = user.data;
+    const name = data.nickname || data.email || user.uid;
+    const meta = [
+      data.gender === 'female' ? '女生' : data.gender === 'male' ? '男生' : '多元',
+      data.lookingFor === 'female' ? '想找女生' : data.lookingFor === 'male' ? '想找男生' : '不限',
+      data.city || '',
+      data.quizComplete ? '已測驗' : '未測驗'
+    ].filter(Boolean).join('・');
+    return `
+      <label class="target">
+        <input class="target-check" type="checkbox" value="${user.uid}">
+        <div class="target-info">
+          <div class="target-name">${name}</div>
+          <div class="target-meta">${meta}</div>
+        </div>
+      </label>
+    `;
+  }).join('');
+}
+
+async function loadTargetUsers(){
+  try{
+    const snap = await getDocs(collection(db, 'users'));
+    targetUsers = snap.docs
+      .map(userDoc => ({ uid:userDoc.id, data:userDoc.data() }))
+      .filter(user => !user.data.isTestBot && user.data.quizComplete && user.data.selfieApproved);
+    renderTargetList();
+  } catch(e){
+    console.error(e);
+    targetList.innerHTML = '<div class="text">讀取帳號失敗，請重新整理後再試一次。</div>';
+  }
+}
+
+async function seedBots(){
+  if(!currentUser){
+    setStatus('請先登入後再匯入。');
+    return;
+  }
+
+  const targets = getSelectedTargets();
+  if(!targets.length){
+    setStatus('請先在「契合目標帳號」清單勾選至少一個用戶，再批量匯入機器人。');
+    return;
+  }
+  const primaryTarget = targets[0];
+
+  seedBtn.disabled = true;
+  setStatus(`正在匯入測試機器人...\n契合目標：${targets.map(item => item.data.nickname || item.uid).join('、')}`);
+
+  try{
+    for(let i = 0; i < botSeeds.length; i++){
+      const bot = createBot(botSeeds[i], i, primaryTarget);
+      await setDoc(doc(db, 'users', bot.uid), bot, { merge:true });
+
+      for(const target of targets){
+        await setDoc(doc(db, 'matchActions', `${bot.uid}_${target.uid}`), {
+          actorUid: bot.uid,
+          targetUid: target.uid,
+          action: 'like',
+          isTestBotAction: true,
+          botBatch: 'pengoo_seed_v1',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge:true });
+      }
+
+      setStatus(`已匯入 ${i + 1}/${botSeeds.length}：${bot.nickname}`);
+    }
+    setStatus(`完成！已依照「${primaryTarget.data.nickname || '第一個目標帳號'}」調整 ${botSeeds.length} 個機器人。\n機器人已先對 ${targets.length} 個目標帳號按喜歡；目標帳號到配對頁按「配對」就能直接成功。`);
+    await loadTestBots();
+  } catch(e){
+    console.error(e);
+    setStatus(`匯入失敗：${e.code || e.message}\n如果是 permission-denied，代表 Firestore 規則不允許前端寫入其他 uid，需要改用 Firebase Console 或後台權限工具匯入。`);
+  } finally {
+    seedBtn.disabled = false;
+  }
+}
+
+async function resetMyBotActions(){
+  if(!currentUser){
+    setStatus('請先登入後再清除操作紀錄。');
+    return;
+  }
+  if(!confirm('只會清除你對 bot_pengoo_* 機器人的配對/略過紀錄，確定嗎？')) return;
+
+  resetBtn.disabled = true;
+  setStatus('正在清除你對機器人的操作紀錄...');
+
+  try{
+    const targets = getSelectedTargets();
+    const targetIds = new Set(targets.map(item => item.uid));
+    if(!targetIds.size){
+      setStatus('請先勾選要清除測試紀錄的目標用戶。');
+      return;
+    }
+    let done = 0;
+    const total = botSeeds.length * targetIds.size;
+    for(const targetUid of targetIds){
+      for(let i = 0; i < botSeeds.length; i++){
+        await deleteDoc(doc(db, 'matchActions', `${targetUid}_${botSeeds[i].uid}`));
+        done += 1;
+        setStatus(`已清除 ${done}/${total}`);
+      }
+    }
+    setStatus('完成！可以回配對頁重新測試同一批機器人。');
+  } catch(e){
+    console.error(e);
+    setStatus(`清除失敗：${e.code || e.message}`);
+  } finally {
+    resetBtn.disabled = false;
+  }
+}
+
+seedBtn.addEventListener('click', seedBots);
+createOneBtn.addEventListener('click', createOneBot);
+resetBtn.addEventListener('click', resetMyBotActions);
+matchBtn.addEventListener('click', () => window.location.href = 'match.html');
+matchBtn2.addEventListener('click', () => window.location.href = 'match.html');
+reloadBotsBtn.addEventListener('click', loadTestBots);
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if(!user){
+    currentData = null;
+    setStatus('目前未登入，請先到 index.html 登入測試帳號。');
+    renderBotList();
+    return;
+  }
+
+  getDoc(doc(db, 'users', user.uid)).then(snap => {
+    currentData = snap.exists() ? snap.data() : null;
+    setStatus(currentData
+      ? `已登入：${currentData.nickname || user.email || user.uid}。請在清單勾選要讓機器人契合的目標用戶。`
+      : '已登入，但找不到 users 文件，請先完成基本資料。');
+    loadTargetUsers();
+    loadTestBots();
+  }).catch(e => {
+    console.error(e);
+    setStatus('讀取目前登入者資料失敗。');
+  });
+});
+
+renderBotList();
+</script>
+</body>
+</html>

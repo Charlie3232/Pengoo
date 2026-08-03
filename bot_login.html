@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 測試登入</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100%;width:100%;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A2A2E;display:flex;justify-content:center;}
+.wrap{width:100%;max-width:390px;min-height:100vh;padding:1rem 1.15rem 2rem;}
+.eyebrow{font-size:0.62rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.16rem;}
+h1{font-size:1.32rem;font-weight:900;line-height:1.2;margin-bottom:0.45rem;}
+.lead{font-size:0.76rem;line-height:1.7;color:rgba(58,42,46,0.58);font-weight:750;margin-bottom:0.9rem;}
+.card{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:18px;padding:0.92rem;box-shadow:0 10px 24px rgba(58,42,46,0.045);margin-bottom:0.78rem;}
+.title{font-size:0.88rem;font-weight:900;margin-bottom:0.42rem;}
+.text{font-size:0.73rem;line-height:1.65;color:rgba(58,42,46,0.58);font-weight:740;}
+.input{width:100%;height:44px;border-radius:13px;border:1.5px solid rgba(184,205,217,0.45);background:#F8F4F5;color:#3A2A2E;font-size:0.78rem;font-weight:850;padding:0 0.72rem;font-family:inherit;margin-top:0.6rem;}
+.btn{width:100%;height:48px;border-radius:14px;border:0;background:#6B2D3E;color:white;font-size:0.86rem;font-weight:900;margin-top:0.7rem;cursor:pointer;touch-action:manipulation;}
+.btn.secondary{background:white;color:#3A5068;border:1.5px solid rgba(184,205,217,0.5);}
+.btn.danger{background:#FEE2E2;color:#B91C1C;border:1.5px solid rgba(185,28,28,0.18);}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:0.52rem;}
+.status{background:#3A2A2E;color:white;border-radius:14px;padding:0.72rem 0.82rem;font-size:0.74rem;font-weight:800;line-height:1.6;white-space:pre-wrap;display:none;margin-bottom:0.78rem;}
+.status.show{display:block;}
+.bot-list{display:grid;gap:0.48rem;max-height:360px;overflow-y:auto;padding-right:0.1rem;}
+.bot{width:100%;display:flex;align-items:center;gap:0.58rem;background:rgba(184,205,217,0.12);border:0;border-radius:13px;padding:0.56rem 0.62rem;text-align:left;font-family:inherit;color:inherit;cursor:pointer;}
+.bot.active{background:rgba(232,180,188,0.22);box-shadow:0 0 0 1.5px rgba(107,45,62,0.22) inset;}
+.avatar{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#B8CDD9,#E8B4BC);display:flex;align-items:center;justify-content:center;color:white;font-size:0.78rem;font-weight:900;flex-shrink:0;}
+.bot-main{flex:1;min-width:0;}
+.bot-name{font-size:0.75rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bot-meta{font-size:0.62rem;font-weight:760;color:rgba(58,42,46,0.46);margin-top:0.08rem;}
+.pill{font-size:0.6rem;font-weight:900;color:#6B2D3E;background:rgba(232,180,188,0.18);border-radius:99px;padding:0.16rem 0.42rem;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">PENGOO DEV ONLY</div>
+  <h1>測試身份切換</h1>
+  <div class="lead">這頁只用來測試。你仍然要先用 Google 登入一次，接著可以切成任一測試用戶或機器人的視角去看主頁、配對、月老信箱和我的頁。</div>
+
+  <div class="status" id="status"></div>
+
+  <section class="card">
+    <div class="title">用 ID 切換</div>
+    <div class="text">輸入 users 文件 uid，例如 bot_pengoo_yuna，或直接點下面列表。</div>
+    <input class="input" id="botUidInput" placeholder="用戶 uid / 機器人 uid"/>
+    <button class="btn" id="useBotBtn" type="button">使用這個測試身份</button>
+    <button class="btn danger" id="clearBtn" type="button">取消測試身份</button>
+  </section>
+
+  <section class="card">
+    <div class="title">進入頁面</div>
+    <div class="quick">
+      <button class="btn secondary" data-go="home.html" type="button">主頁</button>
+      <button class="btn secondary" data-go="match.html" type="button">配對</button>
+      <button class="btn secondary" data-go="chat.html" type="button">月老信箱</button>
+      <button class="btn secondary" data-go="my.html" type="button">我的</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="title">目前所有可測試身份</div>
+    <div class="bot-list" id="botList">
+      <div class="text">讀取中...</div>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getDevBotUid, setDevBotUid, clearDevBotUid } from './dev-impersonation.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const statusEl = document.getElementById('status');
+const input = document.getElementById('botUidInput');
+const botList = document.getElementById('botList');
+let bots = [];
+
+function setStatus(text){
+  statusEl.textContent = text;
+  statusEl.classList.add('show');
+}
+
+function genderText(gender){
+  if(gender === 'female') return '女';
+  if(gender === 'male') return '男';
+  return '多元';
+}
+
+function escapeText(value){
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[char]));
+}
+
+async function useBot(uid){
+  const cleanUid = String(uid || '').trim();
+  if(!cleanUid){
+    setStatus('請先輸入或選擇一個測試身份 ID。');
+    return;
+  }
+
+  const snap = await getDoc(doc(db, 'users', cleanUid));
+  if(!snap.exists()){
+    setStatus('找不到這個 users 帳號。');
+    return;
+  }
+
+  const data = snap.data();
+  setDevBotUid(cleanUid);
+  input.value = cleanUid;
+  renderBots();
+  setStatus(`已切換成：${data.nickname || cleanUid}\n接著點下方頁面就可以用這個身份進入。`);
+}
+
+function renderBots(){
+  const activeUid = getDevBotUid();
+  if(!bots.length){
+    botList.innerHTML = '<div class="text">目前沒有讀到可測試身份。</div>';
+    return;
+  }
+
+  botList.innerHTML = '';
+  bots.forEach(bot => {
+    const data = bot.data;
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = `bot${bot.uid === activeUid ? ' active' : ''}`;
+    item.innerHTML = `
+      <div class="avatar">${escapeText((data.nickname || '?').slice(0,1))}</div>
+      <div class="bot-main">
+        <div class="bot-name">${escapeText(data.nickname || bot.uid)}</div>
+        <div class="bot-meta">${escapeText([bot.uid, data.age ? `${data.age} 歲` : '', data.city || ''].filter(Boolean).join('・'))}</div>
+      </div>
+      <div class="pill">${data.isTestBot || bot.uid.startsWith('bot_pengoo_') ? '機器人' : genderText(data.gender)}</div>
+    `;
+    item.addEventListener('click', () => useBot(bot.uid));
+    botList.appendChild(item);
+  });
+}
+
+async function loadBots(){
+  const snap = await getDocs(collection(db, 'users'));
+  bots = snap.docs
+    .map(userDoc => ({ uid:userDoc.id, data:userDoc.data() }))
+    .filter(user => user.data)
+    .sort((a,b) => String(a.data?.nickname || a.uid).localeCompare(String(b.data?.nickname || b.uid), 'zh-Hant'));
+  renderBots();
+}
+
+document.getElementById('useBotBtn').addEventListener('click', () => useBot(input.value).catch(e => {
+  console.error(e);
+  setStatus('切換失敗，請再試一次。');
+}));
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  clearDevBotUid();
+  input.value = '';
+  renderBots();
+  setStatus('已取消測試身份，現在會回到原本 Google 帳號視角。');
+});
+
+document.querySelectorAll('[data-go]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    window.location.href = btn.dataset.go;
+  });
+});
+
+onAuthStateChanged(auth, async user => {
+  if(!user){
+    window.location.href = 'index.html';
+    return;
+  }
+
+  input.value = getDevBotUid();
+  setStatus(input.value ? `目前測試身份：${input.value}` : '目前沒有套用測試身份。');
+  try{
+    await loadBots();
+  } catch(e){
+    console.error(e);
+    botList.innerHTML = '<div class="text">讀取機器人失敗，請確認 Firebase 權限。</div>';
+  }
+});
+</script>
+</body>
+</html>

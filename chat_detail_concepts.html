@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 月老信箱細節方案</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;min-height:100%;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#efe8e4;color:#3A2A2E;display:flex;justify-content:center;overflow-x:hidden;}
+.phone{width:100%;max-width:390px;min-height:100vh;background:#F5F0EE;position:relative;overflow:hidden;}
+.top{position:sticky;top:0;z-index:20;background:rgba(245,240,238,0.96);backdrop-filter:blur(16px);padding:0.8rem 1.05rem 0.65rem;}
+.title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:0.8rem;margin-bottom:0.68rem;}
+.eyebrow{font-size:0.62rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.1rem;}
+h1{font-size:1.26rem;font-weight:900;line-height:1.15;}
+.hint{font-size:0.62rem;font-weight:850;color:rgba(58,42,46,0.42);white-space:nowrap;}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:0.35rem;}
+.tab{border:1px solid rgba(184,205,217,0.36);background:white;color:rgba(58,42,46,0.48);height:34px;border-radius:11px;font-size:0.68rem;font-weight:900;}
+.tab.active{background:#6B2D3E;color:white;border-color:#6B2D3E;box-shadow:0 8px 20px rgba(107,45,62,0.18);}
+.screen{display:none;padding:0.88rem 1rem 5.8rem;height:calc(100vh - 6.8rem);overflow:hidden;}
+.screen.active{display:block;}
+.label{font-size:0.7rem;font-weight:900;color:#7A9BB5;margin-bottom:0.55rem;}
+.note{font-size:0.76rem;line-height:1.55;color:rgba(58,42,46,0.58);font-weight:750;margin-bottom:0.8rem;}
+.stack{display:grid;gap:0.7rem;justify-items:start;}
+.avatar{width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,#B8CDD9,#E8B4BC);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;font-weight:900;flex-shrink:0;}
+.nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:390px;background:white;border-top:1px solid rgba(184,205,217,0.28);padding:0.48rem 0 0.92rem;display:flex;z-index:30;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:rgba(58,42,46,0.38);font-size:0.6rem;font-weight:800;}
+.nav-icon{font-size:1.18rem;}
+.nav-item.active{color:#6B2D3E;}
+.badge-wrap{position:relative;}
+.badge{position:absolute;top:-6px;right:-11px;min-width:18px;height:18px;border-radius:99px;background:#111;color:white;font-size:0.54rem;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 0.25rem;}
+
+/* A */
+.mail-card{position:relative;width:calc(100% - 18px);background:white;border:1px solid rgba(184,205,217,0.3);border-radius:18px;padding:0.8rem 0.82rem 0.78rem;box-shadow:0 10px 24px rgba(58,42,46,0.05);overflow:hidden;}
+.mail-card:nth-child(even){justify-self:end;}
+.mail-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:#6B2D3E;}
+.mail-top{display:flex;gap:0.7rem;align-items:flex-start;}
+.mail-info{flex:1;min-width:0;}
+.name-row{display:flex;justify-content:space-between;gap:0.6rem;align-items:center;margin-bottom:0.18rem;}
+.name{font-size:0.88rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.time{font-size:0.62rem;font-weight:850;color:rgba(58,42,46,0.35);white-space:nowrap;}
+.score-chip{display:inline-flex;border-radius:99px;background:rgba(232,180,188,0.2);color:#6B2D3E;font-size:0.62rem;font-weight:900;padding:0.14rem 0.42rem;margin-bottom:0.32rem;}
+.preview{font-size:0.72rem;line-height:1.45;font-weight:900;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.seal{position:absolute;right:0.82rem;bottom:0.72rem;min-width:22px;height:22px;border-radius:99px;background:#111;color:white;font-size:0.66rem;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 0.35rem;}
+.mail-read{opacity:0.72;}
+.mail-read::before{background:rgba(184,205,217,0.5);}
+.mail-read .preview,.mail-read .name{color:rgba(58,42,46,0.48);}
+
+/* B */
+.chat-panel{height:100%;display:flex;flex-direction:column;}
+.profile-head{background:white;border:1px solid rgba(184,205,217,0.32);border-radius:18px;padding:0.75rem 0.78rem;display:flex;align-items:center;gap:0.68rem;margin-bottom:0.72rem;box-shadow:0 8px 18px rgba(58,42,46,0.035);}
+.profile-title{font-size:0.92rem;font-weight:900;}
+.profile-sub{font-size:0.66rem;font-weight:850;color:#6B2D3E;margin-top:0.12rem;}
+.messages{flex:1;min-height:0;display:flex;flex-direction:column;gap:0.52rem;overflow:hidden;}
+.bubble{max-width:78%;border-radius:16px;padding:0.6rem 0.72rem;font-size:0.75rem;line-height:1.55;font-weight:750;}
+.bubble.other{align-self:flex-start;background:white;color:rgba(58,42,46,0.72);border-bottom-left-radius:6px;box-shadow:0 6px 16px rgba(58,42,46,0.035);}
+.bubble.me{align-self:flex-end;background:#6B2D3E;color:white;border-bottom-right-radius:6px;}
+.soft-line{display:flex;align-items:center;gap:0.55rem;color:#7A9BB5;font-size:0.62rem;font-weight:900;margin:0.08rem 0;}
+.soft-line::before,.soft-line::after{content:'';height:1px;background:rgba(184,205,217,0.48);flex:1;}
+.composer{height:46px;border-radius:15px;background:white;border:1.5px solid rgba(184,205,217,0.45);display:flex;align-items:center;gap:0.55rem;padding:0 0.42rem 0 0.8rem;margin-top:0.65rem;}
+.composer span{flex:1;font-size:0.74rem;font-weight:760;color:rgba(58,42,46,0.38);}
+.send{width:38px;height:36px;border-radius:12px;background:#6B2D3E;color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.78rem;}
+
+/* C */
+.match-note{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:20px;padding:0.9rem;box-shadow:0 12px 28px rgba(58,42,46,0.055);}
+.thread{display:flex;align-items:center;justify-content:center;gap:0.55rem;margin-bottom:0.8rem;}
+.thread .avatar{width:50px;height:50px;border-radius:17px;}
+.redline{height:3px;width:62px;background:#C8545A;border-radius:99px;position:relative;}
+.redline::before,.redline::after{content:'';position:absolute;width:8px;height:8px;border-radius:50%;background:#C8545A;top:50%;transform:translateY(-50%);}
+.redline::before{left:-2px;}.redline::after{right:-2px;}
+.reason-title{font-size:0.98rem;font-weight:900;text-align:center;margin-bottom:0.28rem;}
+.reason-copy{font-size:0.73rem;line-height:1.6;color:rgba(58,42,46,0.58);font-weight:750;text-align:center;margin-bottom:0.8rem;}
+.reason-list{display:grid;gap:0.45rem;}
+.reason-item{display:flex;gap:0.48rem;align-items:flex-start;background:rgba(184,205,217,0.13);border-radius:13px;padding:0.55rem 0.62rem;font-size:0.7rem;font-weight:850;color:rgba(58,42,46,0.66);}
+.dot{width:18px;height:18px;border-radius:99px;background:#1D6B3E;color:white;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:900;flex-shrink:0;margin-top:0.02rem;}
+.ice-title{font-size:0.78rem;font-weight:900;margin:0.8rem 0 0.5rem;color:#6B2D3E;}
+.ice{border:1px solid rgba(232,180,188,0.38);background:rgba(232,180,188,0.13);border-radius:14px;padding:0.62rem 0.68rem;font-size:0.72rem;font-weight:850;line-height:1.45;color:#6B2D3E;}
+
+/* D */
+.empty-card{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 0.6rem 2rem;}
+.penguin{width:96px;height:96px;border-radius:30px;background:linear-gradient(135deg,rgba(232,180,188,0.26),rgba(184,205,217,0.32));display:flex;align-items:center;justify-content:center;font-size:2.2rem;color:#6B2D3E;margin-bottom:1rem;}
+.empty-title{font-size:1.12rem;font-weight:900;margin-bottom:0.5rem;}
+.empty-text{font-size:0.76rem;line-height:1.7;color:rgba(58,42,46,0.58);font-weight:750;margin-bottom:1rem;}
+.progress{width:100%;display:grid;gap:0.48rem;}
+.step{background:white;border:1px solid rgba(184,205,217,0.28);border-radius:14px;padding:0.62rem 0.7rem;display:flex;align-items:center;gap:0.52rem;text-align:left;font-size:0.73rem;font-weight:850;color:rgba(58,42,46,0.62);}
+.step-mark{width:22px;height:22px;border-radius:99px;background:#1D6B3E;color:white;font-size:0.62rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step.wait .step-mark{background:#B8CDD9;}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header class="top">
+    <div class="title-row">
+      <div>
+        <div class="eyebrow">CHAT DETAIL</div>
+        <h1>月老信箱方案</h1>
+      </div>
+      <div class="hint">點選切換</div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-target="a">信件</button>
+      <button class="tab" data-target="b">對話</button>
+      <button class="tab" data-target="c">破冰</button>
+      <button class="tab" data-target="d">空狀態</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="screen active" id="screen-a">
+      <div class="label">方案 A：月老信件列表</div>
+      <div class="note">未讀像一封剛送到的信，黑色字比較突出；已讀退成灰色，畫面乾淨。</div>
+      <div class="stack">
+        <article class="mail-card">
+          <div class="mail-top">
+            <div class="avatar">羽</div>
+            <div class="mail-info">
+              <div class="name-row"><div class="name">小羽</div><div class="time">剛剛</div></div>
+              <div class="score-chip">92% 契合</div>
+              <div class="preview">我也很喜歡週末去咖啡廳，這句太有共鳴了</div>
+            </div>
+          </div>
+          <div class="seal">3</div>
+        </article>
+        <article class="mail-card">
+          <div class="mail-top">
+            <div class="avatar">G</div>
+            <div class="mail-info">
+              <div class="name-row"><div class="name">Grace</div><div class="time">12:40</div></div>
+              <div class="score-chip">88% 契合</div>
+              <div class="preview">你說的那間展覽我剛好也想去</div>
+            </div>
+          </div>
+          <div class="seal">1</div>
+        </article>
+        <article class="mail-card mail-read">
+          <div class="mail-top">
+            <div class="avatar">R</div>
+            <div class="mail-info">
+              <div class="name-row"><div class="name">Ray</div><div class="time">昨天</div></div>
+              <div class="score-chip">84% 契合</div>
+              <div class="preview">那我們可以先從聊天慢慢認識</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-b">
+      <div class="label">方案 B：質感對話頁</div>
+      <div class="chat-panel">
+        <div class="profile-head">
+          <div class="avatar">羽</div>
+          <div>
+            <div class="profile-title">小羽</div>
+            <div class="profile-sub">92% 契合・由月老牽線</div>
+          </div>
+        </div>
+        <div class="messages">
+          <div class="bubble other">嗨，我看到你也喜歡散步跟咖啡。</div>
+          <div class="bubble me">對，而且我很常去河濱走走。</div>
+          <div class="soft-line">未讀訊息</div>
+          <div class="bubble other">這也太剛好，我週末也常去。</div>
+          <div class="bubble other">你平常喜歡安靜一點的咖啡廳嗎？</div>
+        </div>
+        <div class="composer"><span>傳送訊息</span><div class="send">送</div></div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-c">
+      <div class="label">方案 C：配對後破冰卡</div>
+      <div class="note">第一次進聊天室先看到「為什麼牽線」和可直接點的開場句，降低尷尬感。</div>
+      <div class="match-note">
+        <div class="thread">
+          <div class="avatar">你</div>
+          <div class="redline"></div>
+          <div class="avatar">羽</div>
+        </div>
+        <div class="reason-title">月老覺得你們可以聊聊</div>
+        <div class="reason-copy">你們在生活節奏、溝通方式和未來期待上都有不錯的重疊。</div>
+        <div class="reason-list">
+          <div class="reason-item"><div class="dot">✓</div><div>都喜歡輕鬆但穩定的相處節奏</div></div>
+          <div class="reason-item"><div class="dot">✓</div><div>遇到問題都偏向冷靜後再溝通</div></div>
+          <div class="reason-item"><div class="dot">✓</div><div>共同標籤：咖啡、散步、電影</div></div>
+        </div>
+        <div class="ice-title">可以這樣開場</div>
+        <div class="ice">「我看到我們都選了喜歡散步，你平常比較喜歡城市散步還是自然一點的地方？」</div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-d">
+      <div class="label">方案 D：等待牽線空狀態</div>
+      <div class="empty-card">
+        <div class="penguin">✉</div>
+        <div class="empty-title">紅線還在路上</div>
+        <div class="empty-text">不是沒有人，而是 Pengoo 還在等雙方都達到足夠契合。新的月老信件會出現在這裡。</div>
+        <div class="progress">
+          <div class="step"><div class="step-mark">✓</div><div>已完成測驗</div></div>
+          <div class="step"><div class="step-mark">✓</div><div>正在等待雙向喜歡</div></div>
+          <div class="step wait"><div class="step-mark">○</div><div>有新紅線時會收到月老信件</div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="nav">
+    <div class="nav-item"><div class="nav-icon">⌂</div><div>主頁</div></div>
+    <div class="nav-item"><div class="nav-icon">♡</div><div>配對</div></div>
+    <div class="nav-item active"><div class="badge-wrap"><div class="nav-icon">✉</div><div class="badge">4</div></div><div>聊天</div></div>
+    <div class="nav-item"><div class="nav-icon">◦</div><div>我的</div></div>
+  </nav>
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(item => item.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`screen-${tab.dataset.target}`).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

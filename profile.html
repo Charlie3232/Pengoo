@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo 💕 建立你的檔案</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;width:100%;}
+body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+
+/* 頂部進度條 */
+.top-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;z-index:50;background:#F5F0EE;padding:0.9rem 1.5rem 0.7rem;}
+.top-bar-inner{display:flex;align-items:center;gap:0.8rem;}
+.back-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(184,205,217,0.6);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:1rem;color:#7A9BB5;transition:all 0.15s;}
+.back-btn:active{transform:scale(0.95);}
+.progress-wrap{flex:1;}
+.progress-label{display:flex;justify-content:space-between;font-size:0.68rem;font-weight:700;color:rgba(107,45,62,0.5);margin-bottom:0.3rem;}
+.progress-bar{height:5px;background:rgba(184,205,217,0.3);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#E8B4BC,#B8CDD9);transition:width 0.4s ease;}
+
+/* 主容器 */
+.wrap{position:relative;z-index:1;width:100%;max-width:390px;min-height:100vh;display:flex;flex-direction:column;padding:5rem 1.5rem 2rem;}
+
+/* 步驟 */
+.step{display:none;flex-direction:column;flex:1;}
+.step.active{display:flex;}
+
+/* 標題 */
+.step-header{margin-bottom:1.5rem;}
+.step-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:0.8rem;}
+.step-icon.pink{background:rgba(232,180,188,0.2);border:1.5px solid rgba(232,180,188,0.4);}
+.step-icon.blue{background:rgba(184,205,217,0.2);border:1.5px solid rgba(184,205,217,0.4);}
+.step-icon.purple{background:rgba(196,184,217,0.2);border:1.5px solid rgba(196,184,217,0.4);}
+.step-title{font-size:1.4rem;font-weight:900;color:#3A2A2E;line-height:1.25;margin-bottom:0.35rem;}
+.step-sub{font-size:0.8rem;color:rgba(58,42,46,0.5);line-height:1.7;}
+
+/* 輸入框 */
+.input-wrap{margin-bottom:1rem;}
+.input-label{font-size:0.72rem;font-weight:800;color:rgba(107,45,62,0.7);letter-spacing:0.05em;margin-bottom:0.5rem;display:block;}
+.text-input{width:100%;padding:0.9rem 1rem;border-radius:12px;border:2px solid rgba(184,205,217,0.4);background:white;font-size:1rem;font-weight:700;color:#3A2A2E;outline:none;transition:border-color 0.15s;font-family:'Nunito','Noto Sans TC',sans-serif;}
+.text-input:focus{border-color:#B8CDD9;}
+.text-input.error{border-color:#E8B4BC;}
+.input-hint{font-size:0.7rem;color:rgba(58,42,46,0.4);margin-top:0.35rem;}
+.char-count{font-size:0.7rem;color:rgba(58,42,46,0.35);text-align:right;margin-top:0.25rem;}
+.error-text{font-size:0.72rem;color:#C94B6A;font-weight:700;margin-top:0.35rem;display:none;}
+.error-text.show{display:block;}
+
+/* 年齡輸入 */
+.age-row{display:flex;align-items:center;gap:0.8rem;}
+.age-input{width:110px;padding:0.9rem;border-radius:12px;border:2px solid rgba(184,205,217,0.4);background:white;font-size:1.6rem;font-weight:900;color:#3A2A2E;text-align:center;outline:none;transition:border-color 0.15s;font-family:'Nunito','Noto Sans TC',sans-serif;}
+.age-input:focus{border-color:#B8CDD9;}
+.age-unit{font-size:0.9rem;font-weight:700;color:rgba(58,42,46,0.4);}
+
+/* 身高輸入 */
+.height-row{display:flex;align-items:center;gap:0.8rem;}
+.height-input{width:110px;padding:0.9rem;border-radius:12px;border:2px solid rgba(184,205,217,0.4);background:white;font-size:1.6rem;font-weight:900;color:#3A2A2E;text-align:center;outline:none;transition:border-color 0.15s;font-family:'Nunito','Noto Sans TC',sans-serif;}
+.height-input:focus{border-color:#B8CDD9;}
+.height-unit{font-size:0.9rem;font-weight:700;color:rgba(58,42,46,0.4);}
+
+/* 選項卡片 */
+.opt-list{display:flex;flex-direction:column;gap:0.6rem;}
+.opt-card{display:flex;align-items:center;gap:0.9rem;padding:0.95rem 1.1rem;border-radius:14px;border:2px solid rgba(184,205,217,0.3);background:white;cursor:pointer;transition:all 0.15s;touch-action:manipulation;}
+.opt-card:active{transform:scale(0.98);}
+.opt-card.sel-pink{border-color:#E8B4BC;background:rgba(232,180,188,0.08);}
+.opt-card.sel-blue{border-color:#B8CDD9;background:rgba(184,205,217,0.08);}
+.opt-card.sel-purple{border-color:#C4B8D9;background:rgba(196,184,217,0.08);}
+.opt-emoji{font-size:1.6rem;flex-shrink:0;}
+.opt-text{}
+.opt-name{font-size:0.95rem;font-weight:800;color:#3A2A2E;margin-bottom:0.15rem;}
+.opt-desc{font-size:0.72rem;color:rgba(58,42,46,0.45);line-height:1.5;}
+.opt-check{width:20px;height:20px;border-radius:50%;border:2px solid rgba(184,205,217,0.4);margin-left:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all 0.15s;}
+.opt-card.sel-pink .opt-check{background:#E8B4BC;border-color:#E8B4BC;color:white;}
+.opt-card.sel-blue .opt-check{background:#B8CDD9;border-color:#B8CDD9;color:white;}
+.opt-card.sel-purple .opt-check{background:#C4B8D9;border-color:#C4B8D9;color:white;}
+
+/* 縣市選單 */
+.city-select{width:100%;padding:0.9rem 1rem;border-radius:12px;border:2px solid rgba(184,205,217,0.4);background:white;font-size:1rem;font-weight:700;color:#3A2A2E;outline:none;transition:border-color 0.15s;font-family:'Nunito','Noto Sans TC',sans-serif;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23B8CDD9' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center;}
+.city-select:focus{border-color:#B8CDD9;}
+
+/* 職業選單 */
+.job-select{width:100%;padding:0.9rem 1rem;border-radius:12px;border:2px solid rgba(184,205,217,0.4);background:white;font-size:1rem;font-weight:700;color:#3A2A2E;outline:none;transition:border-color 0.15s;font-family:'Nunito','Noto Sans TC',sans-serif;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23B8CDD9' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center;}
+.job-select:focus{border-color:#B8CDD9;}
+
+/* 標籤 */
+.tags-wrap{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.8rem;}
+.tag{padding:0.5rem 0.9rem;border-radius:99px;border:1.5px solid rgba(184,205,217,0.4);background:white;font-size:0.8rem;font-weight:700;color:rgba(58,42,46,0.55);cursor:pointer;transition:all 0.15s;touch-action:manipulation;}
+.tag:active{transform:scale(0.96);}
+.tag.sel{border-color:#B8CDD9;background:rgba(184,205,217,0.2);color:#3A5068;}
+.tag.sel-max{border-color:#B8CDD9;background:rgba(184,205,217,0.2);color:#3A5068;}
+.tag-section-title{font-size:0.68rem;font-weight:800;color:rgba(107,45,62,0.5);letter-spacing:0.08em;margin-bottom:0.4rem;margin-top:0.6rem;}
+.tag-counter{font-size:0.75rem;font-weight:700;margin-bottom:0.6rem;}
+.tag-counter.ok{color:#1D8348;}
+.tag-counter.warn{color:#C94B6A;}
+
+/* 照片上傳 */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:0.8rem;}
+.photo-slot{aspect-ratio:3/4;border-radius:12px;border:2px dashed rgba(184,205,217,0.5);background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:all 0.15s;}
+.photo-slot:active{transform:scale(0.97);}
+.photo-slot.filled{border-style:solid;border-color:#B8CDD9;}
+.photo-slot.required{border-color:rgba(232,180,188,0.6);}
+.photo-slot img{width:100%;height:100%;object-fit:cover;display:none;}
+.photo-slot.filled img{display:block;}
+.photo-slot-placeholder{display:flex;flex-direction:column;align-items:center;gap:0.2rem;}
+.photo-slot.filled .photo-slot-placeholder{display:none;}
+.slot-icon{font-size:1.4rem;}
+.slot-label{font-size:0.6rem;font-weight:700;color:rgba(58,42,46,0.4);}
+.slot-req{font-size:0.55rem;color:#E8B4BC;font-weight:700;}
+.photo-del{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(107,45,62,0.7);color:white;border:none;font-size:11px;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
+.photo-slot.filled .photo-del{display:flex;}
+.photo-rules{background:rgba(184,205,217,0.1);border:1px solid rgba(184,205,217,0.3);border-radius:12px;padding:0.8rem 1rem;margin-bottom:0.8rem;}
+.photo-rules-title{font-size:0.7rem;font-weight:800;color:#7A9BB5;margin-bottom:0.4rem;}
+.photo-rule{font-size:0.7rem;color:rgba(58,42,46,0.55);line-height:1.8;display:flex;align-items:flex-start;gap:0.4rem;}
+.photo-rule::before{content:'✦';color:#B8CDD9;flex-shrink:0;}
+.photo-counter{font-size:0.75rem;font-weight:700;margin-bottom:0.4rem;}
+.photo-counter.ok{color:#1D8348;}
+.photo-counter.warn{color:#C94B6A;}
+
+/* 自拍區 */
+.selfie-area{width:100%;border-radius:18px;border:2px dashed rgba(184,205,217,0.5);background:white;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.5rem;margin-bottom:0.8rem;cursor:pointer;transition:all 0.15s;min-height:200px;position:relative;overflow:hidden;}
+.selfie-area:active{transform:scale(0.99);}
+.selfie-area.has-photo{border-style:solid;border-color:#B8CDD9;}
+.selfie-preview{width:100%;height:200px;object-fit:cover;border-radius:14px;display:none;}
+.selfie-preview.show{display:block;}
+.selfie-placeholder{display:flex;flex-direction:column;align-items:center;gap:0.5rem;text-align:center;}
+.selfie-placeholder.hide{display:none;}
+.selfie-icon{font-size:2.2rem;}
+.selfie-title{font-size:0.88rem;font-weight:800;color:#3A2A2E;}
+.selfie-hint{font-size:0.72rem;color:rgba(58,42,46,0.45);line-height:1.6;}
+.selfie-rules{background:rgba(184,205,217,0.1);border:1px solid rgba(184,205,217,0.3);border-radius:12px;padding:0.8rem 1rem;margin-bottom:0.8rem;}
+.selfie-rules-title{font-size:0.7rem;font-weight:800;color:#7A9BB5;margin-bottom:0.4rem;}
+.selfie-rule{font-size:0.7rem;color:rgba(58,42,46,0.55);line-height:1.8;display:flex;align-items:flex-start;gap:0.4rem;}
+.selfie-rule::before{content:'✦';color:#B8CDD9;flex-shrink:0;}
+
+/* 等待畫面 */
+.waiting-screen{display:flex;flex-direction:column;align-items:center;text-align:center;padding:1rem 0;flex:1;}
+.waiting-pengoo{width:90px;height:104px;animation:waitBounce 2s ease-in-out infinite;margin-bottom:1.2rem;}
+@keyframes waitBounce{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-10px) rotate(3deg);}}
+.waiting-title{font-size:1.2rem;font-weight:900;color:#3A2A2E;margin-bottom:0.5rem;}
+.waiting-sub{font-size:0.82rem;color:rgba(58,42,46,0.55);line-height:1.8;margin-bottom:1.5rem;max-width:270px;}
+.waiting-items{width:100%;background:white;border-radius:16px;border:1.5px solid rgba(184,205,217,0.3);overflow:hidden;margin-bottom:1.2rem;}
+.waiting-item{display:flex;align-items:center;gap:0.7rem;padding:0.8rem 1rem;border-bottom:1px solid rgba(184,205,217,0.15);font-size:0.8rem;font-weight:700;color:#3A2A2E;}
+.waiting-item:last-child{border-bottom:none;}
+.waiting-dot{width:7px;height:7px;border-radius:50%;background:#B8CDD9;flex-shrink:0;animation:dotPulse 1.5s ease-in-out infinite;}
+@keyframes dotPulse{0%,100%{opacity:0.4;transform:scale(0.8);}50%{opacity:1;transform:scale(1.2);}}
+.waiting-note{font-size:0.7rem;color:rgba(58,42,46,0.35);line-height:1.8;}
+
+/* 底部按鈕 */
+.bottom-area{margin-top:1.5rem;padding-top:0;}
+.btn-next{width:100%;padding:1rem;border-radius:14px;border:none;background:#6B2D3E;font-size:0.95rem;font-weight:800;color:white;cursor:pointer;touch-action:manipulation;transition:all 0.15s;margin-bottom:0.5rem;}
+.btn-next:active{transform:scale(0.98);}
+.btn-next:disabled{opacity:0.35;cursor:not-allowed;}
+
+/* Toast & Loading */
+.toast{position:fixed;top:5rem;left:50%;transform:translateX(-50%);background:#3A2A2E;color:white;padding:0.65rem 1.3rem;border-radius:99px;font-size:0.8rem;font-weight:700;z-index:200;opacity:0;transition:opacity 0.3s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(245,240,238,0.95);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:1rem;}
+.loading-overlay.show{display:flex;}
+.spin{width:42px;height:42px;border-radius:50%;border:4px solid rgba(184,205,217,0.3);border-top-color:#B8CDD9;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:0.82rem;font-weight:700;color:rgba(58,42,46,0.5);}
+
+/* 上傳動畫遮罩 */
+.upload-overlay{
+  position:absolute;inset:0;
+  background:rgba(245,240,238,0.92);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;
+  border-radius:12px;z-index:3;
+}
+.upload-overlay.show{display:flex;}
+.upload-peng{
+  width:38px;height:44px;
+  animation:upBounce 0.8s ease-in-out infinite;
+}
+@keyframes upBounce{
+  0%,100%{transform:translateY(0) rotate(-3deg);}
+  50%{transform:translateY(-8px) rotate(3deg);}
+}
+.upload-txt{font-size:10px;font-weight:700;color:#7A9BB5;}
+
+/* 隱藏 file input */
+input[type="file"]{display:none;}
+
+/* 自訂卡片式選單 */
+.custom-select-wrap{position:relative;width:100%;margin-bottom:1rem;}
+.custom-select-display{
+  width:100%;padding:0.9rem 1rem;
+  border-radius:12px;
+  border:2px solid rgba(184,205,217,0.4);
+  background:white;
+  font-size:1rem;font-weight:700;color:#3A2A2E;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;transition:border-color 0.15s;
+  font-family:'Nunito','Noto Sans TC',sans-serif;
+}
+.custom-select-display:hover{border-color:#B8CDD9;}
+.custom-select-display.open{border-color:#B8CDD9;border-bottom-left-radius:0;border-bottom-right-radius:0;}
+.custom-select-arrow{font-size:0.75rem;color:#B8CDD9;transition:transform 0.2s;flex-shrink:0;}
+.custom-select-display.open .custom-select-arrow{transform:rotate(180deg);}
+.custom-select-placeholder{color:rgba(58,42,46,0.35);}
+.custom-select-dropdown{
+  position:absolute;top:100%;left:0;right:0;
+  background:white;
+  border:2px solid #B8CDD9;
+  border-top:none;
+  border-bottom-left-radius:12px;
+  border-bottom-right-radius:12px;
+  z-index:50;
+  max-height:220px;overflow-y:auto;
+  display:none;
+}
+.custom-select-dropdown.open{display:block;}
+.custom-select-opt{
+  padding:0.75rem 1rem;
+  font-size:0.88rem;font-weight:600;color:#3A2A2E;
+  cursor:pointer;
+  border-bottom:0.5px solid rgba(184,205,217,0.2);
+  transition:background 0.1s;
+  font-family:'Nunito','Noto Sans TC',sans-serif;
+}
+.custom-select-opt:last-child{border-bottom:none;}
+.custom-select-opt:hover{background:rgba(184,205,217,0.1);}
+.custom-select-opt.selected{
+  background:rgba(184,205,217,0.15);
+  color:#3A5068;font-weight:800;
+}
+</style>
+</head>
+<body>
+
+<!-- 初始等待遮罩 -->
+<div id="initOverlay" style="position:fixed;inset:0;background:#F5F0EE;z-index:999;display:flex;align-items:center;justify-content:center;">
+  <div style="width:36px;height:36px;border-radius:50%;border:4px solid rgba(184,205,217,0.3);border-top-color:#B8CDD9;animation:spin 0.8s linear infinite;"></div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spin"></div>
+  <div class="loading-text" id="loadingText">儲存中...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- 進度條 -->
+<div class="top-bar">
+  <div class="top-bar-inner">
+    <button class="back-btn" id="backBtn" style="display:none">←</button>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="stepLabel">步驟 1 / 12</span>
+        <span id="stepName">設定暱稱</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:8%"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Step 1: 暱稱 -->
+  <div class="step active" id="step1">
+    <div class="step-header">
+      <div class="step-icon pink">✏️</div>
+      <h1 class="step-title">你想讓大家<br/>怎麼叫你？</h1>
+      <p class="step-sub">設定一個好記的暱稱，讓企鵝月老幫你找緣分</p>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">暱稱</label>
+      <input class="text-input" type="text" id="nickInput" maxlength="15" autocomplete="off"/>
+      <div class="char-count" id="charCount">0 / 8（中文）</div>
+      <p class="error-text" id="nickError"></p>
+      <p class="input-hint">中文最多 8 字・英文最多 15 字・可加表情符號・暱稱不能重複</p>
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn1" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 2: 年齡 -->
+  <div class="step" id="step2">
+    <div class="step-header">
+      <div class="step-icon blue">🎂</div>
+      <h1 class="step-title">你今年幾歲？</h1>
+      <p class="step-sub">年齡是配對的重要參考，請如實填寫</p>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">年齡</label>
+      <div class="age-row">
+        <input class="age-input" type="number" id="ageInput" placeholder="25" min="18" max="65" inputmode="numeric"/>
+        <span class="age-unit">歲</span>
+      </div>
+      <p class="error-text" id="ageError">請輸入 18–65 歲之間的年齡</p>
+      
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn2" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 3: 性別 -->
+  <div class="step" id="step3">
+    <div class="step-header">
+      <div class="step-icon pink">💕</div>
+      <h1 class="step-title">你的性別是？</h1>
+      <p class="step-sub">性別確認後無法更改，請謹慎選擇</p>
+    </div>
+    <div class="opt-list">
+      <div class="opt-card" id="g-male" onclick="selectOpt('gender','male','blue',this)">
+        <span class="opt-emoji">👨</span>
+        <div class="opt-text"><div class="opt-name">男生</div></div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-card" id="g-female" onclick="selectOpt('gender','female','pink',this)">
+        <span class="opt-emoji">👩</span>
+        <div class="opt-text"><div class="opt-name">女生</div></div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-card" id="g-other" onclick="selectOpt('gender','other','purple',this)">
+        <span class="opt-emoji">🌈</span>
+        <div class="opt-text"><div class="opt-name">多元性別</div></div>
+        <div class="opt-check"></div>
+      </div>
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn3" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 4: 想找的對象性別 -->
+  <div class="step" id="step4">
+    <div class="step-header">
+      <div class="step-icon blue">🔍</div>
+      <h1 class="step-title">你希望配對<br/>的對象？</h1>
+      <p class="step-sub">這會決定你的配對方向，確認後無法更改</p>
+    </div>
+    <div class="opt-list">
+      <div class="opt-card" onclick="selectOpt('lookingFor','female','pink',this)">
+        <span class="opt-emoji">👩</span>
+        <div class="opt-text"><div class="opt-name">女生</div></div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-card" onclick="selectOpt('lookingFor','male','blue',this)">
+        <span class="opt-emoji">👨</span>
+        <div class="opt-text"><div class="opt-name">男生</div></div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-card" onclick="selectOpt('lookingFor','any','purple',this)">
+        <span class="opt-emoji">🌈</span>
+        <div class="opt-text"><div class="opt-name">多元性別</div></div>
+        <div class="opt-check"></div>
+      </div>
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn4" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 5: 居住縣市 -->
+  <div class="step" id="step5">
+    <div class="step-header">
+      <div class="step-icon pink">📍</div>
+      <h1 class="step-title">你住在哪裡？</h1>
+      <p class="step-sub">地區是配對的重要參考之一</p>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">居住縣市</label>
+      <div class="custom-select-wrap" id="cityWrap">
+        <div class="custom-select-display" id="cityDisplay" onclick="toggleSelect('city')">
+          <span id="cityText" class="custom-select-placeholder">請選擇縣市</span>
+          <span class="custom-select-arrow">▼</span>
+        </div>
+        <div class="custom-select-dropdown" id="cityDropdown">
+          <div class="custom-select-opt" onclick="pickCity('台北市')">台北市</div>
+          <div class="custom-select-opt" onclick="pickCity('新北市')">新北市</div>
+          <div class="custom-select-opt" onclick="pickCity('基隆市')">基隆市</div>
+          <div class="custom-select-opt" onclick="pickCity('桃園市')">桃園市</div>
+          <div class="custom-select-opt" onclick="pickCity('新竹市')">新竹市</div>
+          <div class="custom-select-opt" onclick="pickCity('新竹縣')">新竹縣</div>
+          <div class="custom-select-opt" onclick="pickCity('苗栗縣')">苗栗縣</div>
+          <div class="custom-select-opt" onclick="pickCity('台中市')">台中市</div>
+          <div class="custom-select-opt" onclick="pickCity('彰化縣')">彰化縣</div>
+          <div class="custom-select-opt" onclick="pickCity('南投縣')">南投縣</div>
+          <div class="custom-select-opt" onclick="pickCity('雲林縣')">雲林縣</div>
+          <div class="custom-select-opt" onclick="pickCity('嘉義市')">嘉義市</div>
+          <div class="custom-select-opt" onclick="pickCity('嘉義縣')">嘉義縣</div>
+          <div class="custom-select-opt" onclick="pickCity('台南市')">台南市</div>
+          <div class="custom-select-opt" onclick="pickCity('高雄市')">高雄市</div>
+          <div class="custom-select-opt" onclick="pickCity('屏東縣')">屏東縣</div>
+          <div class="custom-select-opt" onclick="pickCity('宜蘭縣')">宜蘭縣</div>
+          <div class="custom-select-opt" onclick="pickCity('花蓮縣')">花蓮縣</div>
+          <div class="custom-select-opt" onclick="pickCity('台東縣')">台東縣</div>
+          <div class="custom-select-opt" onclick="pickCity('澎湖縣')">澎湖縣</div>
+          <div class="custom-select-opt" onclick="pickCity('金門縣')">金門縣</div>
+          <div class="custom-select-opt" onclick="pickCity('連江縣')">連江縣</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn5" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 6: 身高 -->
+  <div class="step" id="step6">
+    <div class="step-header">
+      <div class="step-icon blue">📏</div>
+      <h1 class="step-title">你的身高是？</h1>
+      <p class="step-sub">身高會顯示在你的配對卡片上</p>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">身高</label>
+      <div class="height-row">
+        <input class="height-input" type="number" id="heightInput" placeholder="170" min="140" max="220" inputmode="numeric" oninput="checkHeight()"/>
+        <span class="height-unit">cm</span>
+      </div>
+      <p class="error-text" id="heightError">請輸入正確的身高</p>
+      
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn6" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 7: 職業 -->
+  <div class="step" id="step7">
+    <div class="step-header">
+      <div class="step-icon pink">💼</div>
+      <h1 class="step-title">你的職業是？</h1>
+      <p class="step-sub">職業會顯示在你的配對卡片上</p>
+    </div>
+    <div class="input-wrap">
+      <label class="input-label">職業類別</label>
+      <div class="custom-select-wrap" id="jobWrap">
+        <div class="custom-select-display" id="jobDisplay" onclick="toggleSelect('job')">
+          <span id="jobText" class="custom-select-placeholder">請選擇職業</span>
+          <span class="custom-select-arrow">▼</span>
+        </div>
+        <div class="custom-select-dropdown" id="jobDropdown">
+          <div class="custom-select-opt" onclick="pickJob('金融業')">金融業</div>
+          <div class="custom-select-opt" onclick="pickJob('保險業')">保險業</div>
+          <div class="custom-select-opt" onclick="pickJob('教育業')">教育業</div>
+          <div class="custom-select-opt" onclick="pickJob('科技業')">科技業</div>
+          <div class="custom-select-opt" onclick="pickJob('醫療業')">醫療業</div>
+          <div class="custom-select-opt" onclick="pickJob('法律業')">法律業</div>
+          <div class="custom-select-opt" onclick="pickJob('餐飲業')">餐飲業</div>
+          <div class="custom-select-opt" onclick="pickJob('美容業')">美容業</div>
+          <div class="custom-select-opt" onclick="pickJob('美髮業')">美髮業</div>
+          <div class="custom-select-opt" onclick="pickJob('服務業')">服務業</div>
+          <div class="custom-select-opt" onclick="pickJob('電商及網路業')">電商及網路業</div>
+          <div class="custom-select-opt" onclick="pickJob('行銷業')">行銷業</div>
+          <div class="custom-select-opt" onclick="pickJob('建築工程業')">建築工程業</div>
+          <div class="custom-select-opt" onclick="pickJob('設計業')">設計業</div>
+          <div class="custom-select-opt" onclick="pickJob('公務員')">公務員</div>
+          <div class="custom-select-opt" onclick="pickJob('學生')">學生</div>
+          <div class="custom-select-opt" onclick="pickJob('自由業')">自由業</div>
+          <div class="custom-select-opt" onclick="pickJob('老闆創業')">老闆創業</div>
+          <div class="custom-select-opt" onclick="pickJob('其他')">其他</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn7" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 8: 一句話介紹 -->
+  <div class="step" id="step8">
+    <div class="step-header">
+      <div class="step-icon blue">💬</div>
+      <h1 class="step-title">用幾句話<br/>介紹你自己</h1>
+      <p class="step-sub">讓對方對你有第一印象，最多 50 個字，至少 10 個字</p>
+    </div>
+    <div class="input-wrap">
+      
+      <textarea class="text-input" id="bioInput" maxlength="50" oninput="checkBio()" style="height:160px;resize:none;line-height:1.6;"></textarea>
+      <div class="char-count" id="bioCount">0 / 50</div>
+      <p class="error-text" id="bioError"></p>
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn8" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 9: 標籤 -->
+  <div class="step" id="step9">
+    <div class="step-header">
+      <div class="step-icon pink">🏷️</div>
+      <h1 class="step-title">選擇你的標籤</h1>
+      <p class="step-sub">選 3–6 個最能代表你的標籤</p>
+    </div>
+    <div class="tag-counter warn" id="tagCounter">已選 0 個（至少選 3 個）</div>
+    <div id="tagsContainer">
+      <div class="tag-section-title">個性</div>
+      <div class="tags-wrap" id="tagsPers"></div>
+      <div class="tag-section-title">生活</div>
+      <div class="tags-wrap" id="tagsLife"></div>
+      <div class="tag-section-title">習慣</div>
+      <div class="tags-wrap" id="tagsHabit"></div>
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn9" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 10: 感情目的 -->
+  <div class="step" id="step10">
+    <div class="step-header">
+      <div class="step-icon blue">💝</div>
+      <h1 class="step-title">你來這裡的<br/>目的是？</h1>
+      <p class="step-sub">讓對方知道你對這段關係的期待</p>
+    </div>
+    <div class="opt-list">
+      <div class="opt-card" onclick="selectOpt('purpose','serious','pink',this)">
+        <span class="opt-emoji">💍</span>
+        <div class="opt-text">
+          <div class="opt-name">尋找另一半</div>
+          <div class="opt-desc">希望找到穩定的伴侶關係</div>
+        </div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-card" onclick="selectOpt('purpose','casual','blue',this)">
+        <span class="opt-emoji">☕</span>
+        <div class="opt-text">
+          <div class="opt-name">單純交朋友</div>
+          <div class="opt-desc">無特定目的，單純聊聊認識新朋友</div>
+        </div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-card" onclick="selectOpt('purpose','open','purple',this)">
+        <span class="opt-emoji">✨</span>
+        <div class="opt-text">
+          <div class="opt-name">隨緣就好</div>
+          <div class="opt-desc">不設限，遇到對的人什麼都有可能</div>
+        </div>
+        <div class="opt-check"></div>
+      </div>
+    </div>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn10" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 11: 上傳照片 -->
+  <div class="step" id="step11">
+    <div class="step-header">
+      <div class="step-icon pink">🖼️</div>
+      <h1 class="step-title">上傳你的照片</h1>
+      <p class="step-sub">至少 3 張，最多 6 張，要有臉且清晰</p>
+    </div>
+    <div class="photo-rules">
+      <div class="photo-rules-title">📋 照片規則</div>
+      <div class="photo-rule">至少要有 3 張，最多上傳 6 張</div>
+      <div class="photo-rule">每張照片都要清楚看到臉部</div>
+      <div class="photo-rule">不能使用他人照片或明星圖片</div>
+      <div class="photo-rule">照片清晰，不能太暗或模糊</div>
+    </div>
+    <div class="photo-counter warn" id="photoCounter">已上傳 0 張（至少需要 3 張）</div>
+    <div class="photo-grid" id="photoGrid">
+      <div class="photo-slot required" id="slot0" onclick="triggerPhotoUpload(0)">
+        <img id="photo0" src="" alt=""/>
+        <div class="photo-slot-placeholder">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">必填</div>
+        </div>
+        <button class="photo-del" onclick="deletePhoto(event,0)">✕</button>
+      <div class="upload-overlay" id="uploading0">
+        <svg class="upload-peng" viewBox="0 0 120 140">
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+          <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+          <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+          <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+          <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+          <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+          <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+          <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+          <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+          <path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/>
+        </svg>
+        <div class="upload-txt">上傳中...</div>
+      </div>
+      </div>
+      <div class="photo-slot required" id="slot1" onclick="triggerPhotoUpload(1)">
+        <img id="photo1" src="" alt=""/>
+        <div class="photo-slot-placeholder">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">必填</div>
+        </div>
+        <button class="photo-del" onclick="deletePhoto(event,1)">✕</button>
+      <div class="upload-overlay" id="uploading1">
+        <svg class="upload-peng" viewBox="0 0 120 140">
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+          <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+          <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+          <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+          <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+          <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+          <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+          <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+          <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+          <path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/>
+        </svg>
+        <div class="upload-txt">上傳中...</div>
+      </div>
+      </div>
+      <div class="photo-slot required" id="slot2" onclick="triggerPhotoUpload(2)">
+        <img id="photo2" src="" alt=""/>
+        <div class="photo-slot-placeholder">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">必填</div>
+        </div>
+        <button class="photo-del" onclick="deletePhoto(event,2)">✕</button>
+      <div class="upload-overlay" id="uploading2">
+        <svg class="upload-peng" viewBox="0 0 120 140">
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+          <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+          <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+          <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+          <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+          <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+          <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+          <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+          <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+          <path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/>
+        </svg>
+        <div class="upload-txt">上傳中...</div>
+      </div>
+      </div>
+      <div class="photo-slot" id="slot3" onclick="triggerPhotoUpload(3)">
+        <img id="photo3" src="" alt=""/>
+        <div class="photo-slot-placeholder">
+          <div class="slot-icon">➕</div>
+          <div class="slot-label">選填</div>
+        </div>
+        <button class="photo-del" onclick="deletePhoto(event,3)">✕</button>
+      <div class="upload-overlay" id="uploading3">
+        <svg class="upload-peng" viewBox="0 0 120 140">
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+          <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+          <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+          <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+          <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+          <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+          <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+          <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+          <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+          <path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/>
+        </svg>
+        <div class="upload-txt">上傳中...</div>
+      </div>
+      </div>
+      <div class="photo-slot" id="slot4" onclick="triggerPhotoUpload(4)">
+        <img id="photo4" src="" alt=""/>
+        <div class="photo-slot-placeholder">
+          <div class="slot-icon">➕</div>
+          <div class="slot-label">選填</div>
+        </div>
+        <button class="photo-del" onclick="deletePhoto(event,4)">✕</button>
+      <div class="upload-overlay" id="uploading4">
+        <svg class="upload-peng" viewBox="0 0 120 140">
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+          <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+          <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+          <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+          <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+          <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+          <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+          <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+          <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+          <path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/>
+        </svg>
+        <div class="upload-txt">上傳中...</div>
+      </div>
+      </div>
+      <div class="photo-slot" id="slot5" onclick="triggerPhotoUpload(5)">
+        <img id="photo5" src="" alt=""/>
+        <div class="photo-slot-placeholder">
+          <div class="slot-icon">➕</div>
+          <div class="slot-label">選填</div>
+        </div>
+        <button class="photo-del" onclick="deletePhoto(event,5)">✕</button>
+      <div class="upload-overlay" id="uploading5">
+        <svg class="upload-peng" viewBox="0 0 120 140">
+          <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+          <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+          <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+          <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+          <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+          <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+          <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+          <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+          <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+          <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+          <path d="M60 112 Q57 108 53 108 Q48 108 48 113 Q48 118 60 124 Q72 118 72 113 Q72 108 67 108 Q63 108 60 112Z" fill="#FFB6C1" opacity="0.8"/>
+        </svg>
+        <div class="upload-txt">上傳中...</div>
+      </div>
+      </div>
+    </div>
+    <input type="file" id="photoInput" accept="image/*"/>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn11" disabled>下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 12: 自拍驗證 -->
+  <div class="step" id="step12">
+    <div class="step-header">
+      <div class="step-icon blue">📸</div>
+      <h1 class="step-title">最後一步！<br/>真人驗證</h1>
+      <p class="step-sub">拍一張即時自拍，確認你是真實的人</p>
+    </div>
+    <div class="selfie-rules">
+      <div class="selfie-rules-title">📋 自拍規則</div>
+      <div class="selfie-rule">必須即時拍攝，不能從相簿選取</div>
+      <div class="selfie-rule">清楚露出臉部，不能遮臉</div>
+      <div class="selfie-rule">光線充足，照片清晰</div>
+      <div class="selfie-rule">照片只用於真人驗證，不會公開</div>
+    </div>
+    <div class="selfie-area" id="selfieArea" onclick="takeSelfie()">
+      <img class="selfie-preview" id="selfiePreview" src="" alt="自拍預覽"/>
+      <div class="selfie-placeholder" id="selfiePlaceholder">
+        <div class="selfie-icon">🤳</div>
+        <div class="selfie-title">點擊即時拍攝</div>
+        <div class="selfie-hint">使用前置鏡頭拍攝<br/>照片只用於真人驗證，不會公開</div>
+      </div>
+    </div>
+    <input type="file" id="selfieInput" accept="image/*" capture="user"/>
+    <div class="bottom-area">
+      <button class="btn-next" id="btn12" disabled>送出審核</button>
+    </div>
+  </div>
+
+  <!-- Step 13: 等待審核 -->
+  <div class="step" id="step13">
+    <div class="waiting-screen">
+      <svg class="waiting-pengoo" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="28" rx="28" ry="7" fill="#CC1111"/>
+        <polygon points="60,0 35,28 85,28" fill="#CC1111"/>
+        <polygon points="60,0 60,28 85,28" fill="#a50e0e"/>
+        <circle cx="60" cy="2" r="5" fill="#d4a030"/>
+        <ellipse cx="60" cy="28" rx="28" ry="7" fill="none" stroke="#d4a030" stroke-width="1.5"/>
+        <ellipse cx="60" cy="98" rx="34" ry="38" fill="#1a1a1a"/>
+        <ellipse cx="60" cy="104" rx="22" ry="26" fill="#f5f0e8"/>
+        <circle cx="60" cy="55" r="28" fill="#1a1a1a"/>
+        <ellipse cx="60" cy="60" rx="18" ry="16" fill="#f5f0e8"/>
+        <circle cx="52" cy="52" r="8" fill="white"/><circle cx="52" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="54" cy="50" r="2" fill="white"/>
+        <circle cx="68" cy="52" r="8" fill="white"/><circle cx="68" cy="52" r="5.5" fill="#1a1a1a"/><circle cx="70" cy="50" r="2" fill="white"/>
+        <ellipse cx="44" cy="62" rx="7" ry="4" fill="#e8a0a0" opacity="0.45"/>
+        <ellipse cx="76" cy="62" rx="7" ry="4" fill="#e8a0a0" opacity="0.45"/>
+        <path d="M53 68 Q60 75 67 68" fill="none" stroke="#d4a030" stroke-width="2.5" stroke-linecap="round"/>
+        <ellipse cx="26" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(-15 26 100)"/>
+        <ellipse cx="94" cy="100" rx="10" ry="22" fill="#1a1a1a" transform="rotate(15 94 100)"/>
+        <ellipse cx="48" cy="134" rx="12" ry="5" fill="#d4a030" transform="rotate(-10 48 134)"/>
+        <ellipse cx="72" cy="134" rx="12" ry="5" fill="#d4a030" transform="rotate(10 72 134)"/>
+        <text x="60" y="110" text-anchor="middle" font-size="9" fill="#CC1111" font-family="serif" opacity="0.7">月老</text>
+      </svg>
+      <h2 class="waiting-title">企鵝月老審核中 🐧</h2>
+      <p class="waiting-sub">審核時間約 24 小時內完成<br/>審核通過後會立即通知你<br/>即可開始進行交友測驗</p>
+      <div class="waiting-items">
+        <div class="waiting-item"><div class="waiting-dot"></div>確認是真實本人的照片</div>
+        <div class="waiting-item"><div class="waiting-dot" style="animation-delay:0.5s"></div>確認暱稱沒有不當內容</div>
+        <div class="waiting-item"><div class="waiting-dot" style="animation-delay:1s"></div>確認基本資料完整</div>
+      </div>
+      <p class="waiting-note">每次開啟 APP 會自動確認審核狀態<br/>如有任何問題請聯絡企鵝月老</p>
+      <button class="btn-next" onclick="window.location.href='home.html'" 
+        style="margin-top:1.5rem;background:#6B2D3E;">
+        回到主頁
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp, FieldValue } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js";
+import { IMAGE_PRESETS, compressImage, imageUploadMeta } from './image-utils.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3",
+  measurementId: "G-Q2YZCTVNTN"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+let currentStep = 1;
+let currentUser = null;
+let userData = {
+  nickname:'', age:null, gender:null, lookingFor:null,
+  city:'', height:null, job:'', bio:'',
+  tags:[], purpose:null,
+  photos:[], selfieURL:null
+};
+let photoFiles = [null,null,null,null,null,null];
+let selfieFile = null;
+let isUploading = false;
+let selectedTags = [];
+
+const TOTAL_STEPS = 12;
+const stepNames = ['設定暱稱','填寫年齡','選擇性別','想找的對象','居住縣市','你的身高','職業類別','一句話介紹','個性標籤','感情目的','上傳照片','真人驗證','等待審核'];
+const stepProgress = ['8','17','25','33','42','50','58','67','75','83','91','98','100'];
+
+const selMap = {};
+const loadingOverlay = document.getElementById('loadingOverlay');
+const toast = document.getElementById('toast');
+
+function showLoading(msg){ document.getElementById('loadingText').textContent = msg||'儲存中...'; loadingOverlay.classList.add('show'); }
+function hideLoading(){ loadingOverlay.classList.remove('show'); }
+function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2500); }
+
+function goToStep(n){
+  document.getElementById('step'+currentStep).classList.remove('active');
+  currentStep = n;
+  document.getElementById('step'+currentStep).classList.add('active');
+  const isLast = n === 13;
+  document.getElementById('stepLabel').textContent = isLast ? '完成' : `步驟 ${n} / ${TOTAL_STEPS}`;
+  document.getElementById('stepName').textContent = stepNames[n-1];
+  document.getElementById('progressFill').style.width = stepProgress[n-1]+'%';
+  document.getElementById('backBtn').style.display = (n > 1 && n < 13) ? 'flex' : 'none';
+  window.scrollTo(0,0);
+}
+
+onAuthStateChanged(auth, async (user) => {
+  const initOverlay = document.getElementById('initOverlay');
+
+  if(!user){
+    window.location.href = 'index.html';
+    return;
+  }
+
+  currentUser = user;
+
+  // 檢查是否已填完資料
+  try{
+    const snap = await getDoc(doc(db,'users',user.uid));
+    if(snap.exists()){
+      const d = snap.data();
+      if(d.pendingReview || d.selfieApproved || d.quizComplete || d.rejected){
+        window.location.href = 'home.html';
+        return;
+      }
+    }
+  } catch(e){ console.error(e); }
+
+  // 需要填資料，移除遮罩顯示表單
+  if(initOverlay) initOverlay.style.display = 'none';
+  await initTags();
+});
+
+document.getElementById('backBtn').onclick = () => { if(currentStep > 1) goToStep(currentStep-1); };
+document.getElementById('backBtn').style.display = 'none';
+
+// ── 暱稱 ──
+function isChinese(s){ return /[\u4e00-\u9fff]/.test(s); }
+
+// 移除所有 emoji 後的純文字
+function removeEmoji(s){
+  return s.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FEFF}\u{1F300}-\u{1F9FF}\u{1FA00}-\u{1FAFF}]/gu,'').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g,'');
+}
+
+// 特殊符號（排除 emoji 和一般文字）
+function hasSpecial(s){
+  const noEmoji = removeEmoji(s);
+  return /[^a-zA-Z0-9\u4e00-\u9fff\s]/.test(noEmoji);
+}
+
+const nickInput = document.getElementById('nickInput');
+let nickCheckTimer = null;
+
+nickInput.addEventListener('input', ()=>{
+  const v = nickInput.value;
+  const err = document.getElementById('nickError');
+  const cc = document.getElementById('charCount');
+  const noEmoji = removeEmoji(v).trim();
+  const hasCN = isChinese(v);
+  const cnLen = v.replace(/[^\u4e00-\u9fff]/g,'').length;
+
+  if(hasCN || cnLen > 0){
+    cc.textContent = `${cnLen} / 8（中文）`;
+  } else {
+    cc.textContent = `${v.length} / 15（英文）`;
+  }
+
+  // 只有表情沒有文字
+  if(v.trim().length > 0 && noEmoji.length === 0){
+    err.textContent = '暱稱不能只有表情符號';
+    err.classList.add('show');
+    nickInput.classList.add('error');
+    document.getElementById('btn1').disabled = true;
+    return;
+  }
+
+  // 特殊符號
+  if(hasSpecial(v)){
+    err.textContent = '不能包含特殊符號';
+    err.classList.add('show');
+    nickInput.classList.add('error');
+    document.getElementById('btn1').disabled = true;
+    return;
+  }
+
+  // 中文超長
+  if(hasCN && cnLen > 8){
+    err.textContent = '中文最多 8 個字';
+    err.classList.add('show');
+    nickInput.classList.add('error');
+    document.getElementById('btn1').disabled = true;
+    return;
+  }
+
+  // 英文超長
+  if(!hasCN && v.length > 15){
+    err.textContent = '英文最多 15 個字';
+    err.classList.add('show');
+    nickInput.classList.add('error');
+    document.getElementById('btn1').disabled = true;
+    return;
+  }
+
+  err.classList.remove('show');
+  nickInput.classList.remove('error');
+  document.getElementById('btn1').disabled = v.trim().length < 1;
+});
+
+document.getElementById('btn1').onclick = async ()=>{
+  const val = nickInput.value.trim();
+  if(!val) return;
+
+  const btn = document.getElementById('btn1');
+  const err = document.getElementById('nickError');
+
+  // 檢查暱稱是否重複
+  btn.disabled = true;
+  btn.textContent = '檢查中...';
+
+  try {
+    const q = query(collection(db,'users'), where('nickname','==',val));
+    const snap = await getDocs(q);
+
+    // 過濾掉自己
+    const others = snap.docs.filter(d => d.id !== currentUser?.uid);
+
+    if(others.length > 0){
+      err.textContent = '這個暱稱已被使用，請換一個';
+      err.classList.add('show');
+      nickInput.classList.add('error');
+      btn.disabled = false;
+      btn.textContent = '下一步';
+      return;
+    }
+
+    userData.nickname = val;
+    btn.textContent = '下一步';
+    goToStep(2);
+  } catch(e){
+    console.error(e);
+    // 查詢失敗就直接過，不阻擋用戶
+    userData.nickname = val;
+    btn.textContent = '下一步';
+    goToStep(2);
+  }
+};
+
+// ── 年齡 ──
+const ageInput = document.getElementById('ageInput');
+ageInput.addEventListener('input', ()=>{
+  const v = parseInt(ageInput.value);
+  const ok = v>=18&&v<=65;
+  document.getElementById('ageError').classList.toggle('show',!ok&&ageInput.value!=='');
+  document.getElementById('btn2').disabled = !ok;
+});
+document.getElementById('btn2').onclick = ()=>{ userData.age=parseInt(ageInput.value); goToStep(3); };
+
+// ── 單選選項通用 ──
+window.selectOpt = (field, value, color, el) => {
+  const group = el.closest('.opt-list');
+  group.querySelectorAll('.opt-card').forEach(c=>{ c.className='opt-card'; c.querySelector('.opt-check').textContent=''; });
+  el.classList.add('sel-'+color);
+  el.querySelector('.opt-check').textContent='✓';
+  selMap[field] = value;
+  const btnMap = {gender:'btn3',lookingFor:'btn4',purpose:'btn10'};
+  if(btnMap[field]) document.getElementById(btnMap[field]).disabled=false;
+};
+
+document.getElementById('btn3').onclick = ()=>{ userData.gender=selMap.gender; goToStep(4); };
+document.getElementById('btn4').onclick = ()=>{ userData.lookingFor=selMap.lookingFor; goToStep(5); };
+document.getElementById('btn10').onclick = ()=>{ userData.purpose=selMap.purpose; goToStep(11); };
+
+// ── 縣市 ──
+let selectedCity = '';
+window.toggleSelect = (type)=>{
+  const display = document.getElementById(type+'Display');
+  const dropdown = document.getElementById(type+'Dropdown');
+  const isOpen = dropdown.classList.contains('open');
+  document.querySelectorAll('.custom-select-dropdown').forEach(d=>d.classList.remove('open'));
+  document.querySelectorAll('.custom-select-display').forEach(d=>d.classList.remove('open'));
+  if(!isOpen){ dropdown.classList.add('open'); display.classList.add('open'); }
+};
+window.pickCity = (val)=>{
+  selectedCity = val;
+  document.getElementById('cityText').textContent = val;
+  document.getElementById('cityText').classList.remove('custom-select-placeholder');
+  document.getElementById('cityDropdown').classList.remove('open');
+  document.getElementById('cityDisplay').classList.remove('open');
+  document.querySelectorAll('#cityDropdown .custom-select-opt').forEach(o=>{
+    o.classList.toggle('selected', o.textContent===val);
+  });
+  document.getElementById('btn5').disabled = false;
+};
+document.getElementById('btn5').onclick = ()=>{ userData.city=selectedCity; goToStep(6); };
+
+// ── 身高 ──
+window.checkHeight = ()=>{
+  const v = parseInt(document.getElementById('heightInput').value);
+  const ok = v>=140&&v<=220;
+  document.getElementById('heightError').classList.toggle('show',!ok&&document.getElementById('heightInput').value!=='');
+  document.getElementById('btn6').disabled = !ok;
+};
+document.getElementById('btn6').onclick = ()=>{ userData.height=parseInt(document.getElementById('heightInput').value); goToStep(7); };
+
+// ── 職業 ──
+let selectedJob = '';
+window.pickJob = (val)=>{
+  selectedJob = val;
+  document.getElementById('jobText').textContent = val;
+  document.getElementById('jobText').classList.remove('custom-select-placeholder');
+  document.getElementById('jobDropdown').classList.remove('open');
+  document.getElementById('jobDisplay').classList.remove('open');
+  document.querySelectorAll('#jobDropdown .custom-select-opt').forEach(o=>{
+    o.classList.toggle('selected', o.textContent===val);
+  });
+  document.getElementById('btn7').disabled = false;
+};
+document.getElementById('btn7').onclick = ()=>{ userData.job=selectedJob; goToStep(8); };
+
+// ── 一句話介紹 ──
+const bioInput = document.getElementById('bioInput');
+window.checkBio = ()=>{
+  const v = bioInput.value;
+  const len = v.trim().length;
+  document.getElementById('bioCount').textContent = `${v.length} / 50`;
+  const errEl = document.getElementById('bioError');
+  if(v.length > 0 && len < 10){
+    errEl.textContent = '至少需要 10 個字（目前 '+len+' 個字）';
+    errEl.classList.add('show');
+  } else {
+    errEl.classList.remove('show');
+  }
+  document.getElementById('btn8').disabled = len < 10;
+};
+document.getElementById('btn8').onclick = ()=>{ userData.bio=bioInput.value.trim(); goToStep(9); };
+
+// ── 標籤 ──
+const TAGS = {
+  personality:['活潑開朗','內向安靜','理性冷靜','溫柔體貼','幽默搞笑','隨和好相處','有主見','浪漫感性'],
+  lifestyle:['愛旅行','宅在家','愛運動','喜歡戶外','愛逛街','愛做料理','喜歡看電影','喜歡音樂','喜歡讀書','喜歡動漫','愛打遊戲','喜歡拍照'],
+  habit:['早起型','夜貓子','愛喝咖啡','健身控','養寵物','喜歡小酌']
+};
+
+async function initTags(){
+  let tags = TAGS;
+  try{
+    const snap = await getDoc(doc(db,'settings','tags'));
+    if(snap.exists()) tags = snap.data();
+    else await setDoc(doc(db,'settings','tags'), TAGS);
+  } catch(e){ console.log('使用預設標籤'); }
+  renderTags(tags);
+}
+
+function renderTags(tags){
+  ['personality','lifestyle','habit'].forEach(type=>{
+    const idMap = {personality:'tagsPers',lifestyle:'tagsLife',habit:'tagsHabit'};
+    const wrap = document.getElementById(idMap[type]);
+    wrap.innerHTML = '';
+    (tags[type]||[]).forEach(tag=>{
+      const el = document.createElement('div');
+      el.className = 'tag';
+      el.textContent = tag;
+      el.onclick = ()=>toggleTag(tag, el);
+      wrap.appendChild(el);
+    });
+  });
+}
+
+function toggleTag(tag, el){
+  const idx = selectedTags.indexOf(tag);
+  if(idx >= 0){
+    selectedTags.splice(idx,1);
+    el.classList.remove('sel','sel-max');
+  } else {
+    if(selectedTags.length >= 6){ showToast('最多選 6 個標籤'); return; }
+    selectedTags.push(tag);
+    el.classList.add(selectedTags.length===6?'sel-max':'sel');
+  }
+  updateTagCounter();
+}
+
+function updateTagCounter(){
+  const n = selectedTags.length;
+  const el = document.getElementById('tagCounter');
+  if(n < 3){ el.textContent=`已選 ${n} 個（至少選 3 個）`; el.className='tag-counter warn'; }
+  else if(n <= 6){ el.textContent=`已選 ${n} 個 ✓`; el.className='tag-counter ok'; }
+  document.getElementById('btn9').disabled = n < 3;
+}
+
+document.getElementById('btn9').onclick = ()=>{ userData.tags=selectedTags; goToStep(10); };
+
+// ── 照片 ──
+let currentSlot = 0;
+let photosUploaded = 0;
+
+window.triggerPhotoUpload = (slot)=>{
+  if(isUploading){ showToast('請等待目前照片上傳完成'); return; }
+  currentSlot = slot;
+  document.getElementById('photoInput').click();
+};
+
+window.deletePhoto = (e, slot)=>{
+  e.stopPropagation();
+  document.getElementById('photo'+slot).src='';
+  document.getElementById('slot'+slot).classList.remove('filled');
+  document.getElementById('uploading'+slot).classList.remove('show');
+  photoFiles[slot] = null;
+  photosUploaded = photoFiles.filter(f=>f!==null).length;
+  updatePhotoCounter();
+};
+
+document.getElementById('photoInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file || !currentUser) return;
+
+  // 先顯示預覽
+  const url = URL.createObjectURL(file);
+  document.getElementById('photo'+currentSlot).src = url;
+  document.getElementById('slot'+currentSlot).classList.add('filled');
+
+  // 顯示上傳動畫，鎖定所有格子
+  isUploading = true;
+  const slot = document.getElementById('slot'+currentSlot);
+  document.getElementById('uploading'+currentSlot).classList.add('show');
+  document.getElementById('btn11').disabled = true;
+
+  try {
+    const optimizedPhoto = await compressImage(file, IMAGE_PRESETS.photo);
+    const thumbPhoto = await compressImage(file, IMAGE_PRESETS.thumb);
+
+    // 上傳到 Firebase Storage
+    const stamp = Date.now();
+    const pRef = ref(storage, `photos/${currentUser.uid}_${currentSlot}_${stamp}.jpg`);
+    await uploadBytes(pRef, optimizedPhoto, imageUploadMeta(file, optimizedPhoto));
+    const downloadURL = await getDownloadURL(pRef);
+    const tRef = ref(storage, `thumbs/${currentUser.uid}_${currentSlot}_${stamp}.jpg`);
+    await uploadBytes(tRef, thumbPhoto, imageUploadMeta(file, thumbPhoto));
+    const thumbURL = await getDownloadURL(tRef);
+
+    // 上傳成功，解鎖格子
+    isUploading = false;
+    photoFiles[currentSlot] = { url: downloadURL, thumb: thumbURL };
+    document.getElementById('uploading'+currentSlot).classList.remove('show');
+    photosUploaded = photoFiles.filter(f=>f!==null).length;
+    updatePhotoCounter();
+    showToast('照片上傳成功 ✓');
+  } catch(err) {
+    // 上傳失敗，解鎖格子
+    isUploading = false;
+    document.getElementById('photo'+currentSlot).src = '';
+    slot.classList.remove('filled');
+    document.getElementById('uploading'+currentSlot).classList.remove('show');
+    showToast('上傳失敗，請再試一次');
+    console.error(err);
+  }
+  e.target.value='';
+});
+
+function updatePhotoCounter(){
+  const el = document.getElementById('photoCounter');
+  if(photosUploaded < 3){ el.textContent=`已上傳 ${photosUploaded} 張（至少需要 3 張）`; el.className='photo-counter warn'; }
+  else{ el.textContent=`已上傳 ${photosUploaded} 張 ✓`; el.className='photo-counter ok'; }
+  document.getElementById('btn11').disabled = photosUploaded < 3;
+}
+
+document.getElementById('btn11').onclick = ()=>{ goToStep(12); };
+
+// ── 自拍 ──
+window.takeSelfie = ()=>{ document.getElementById('selfieInput').click(); };
+
+document.getElementById('selfieInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  selfieFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('selfiePreview').src = url;
+  document.getElementById('selfiePreview').classList.add('show');
+  document.getElementById('selfiePlaceholder').classList.add('hide');
+  document.getElementById('selfieArea').classList.add('has-photo');
+  document.getElementById('btn12').disabled = false;
+});
+
+document.getElementById('btn12').onclick = async ()=>{
+  if(!selfieFile||!currentUser) return;
+  document.getElementById('btn12').disabled = true;
+  document.getElementById('btn12').textContent = '上傳中...';
+  showLoading('上傳中，請稍候...');
+  try{
+    // 上傳自拍
+    const selfieRef = ref(storage,`selfies/${currentUser.uid}_${Date.now()}.jpg`);
+    const optimizedSelfie = await compressImage(selfieFile, IMAGE_PRESETS.selfie);
+    await uploadBytes(selfieRef, optimizedSelfie, imageUploadMeta(selfieFile, optimizedSelfie));
+    const selfieURL = await getDownloadURL(selfieRef);
+
+    // 照片已經上傳完畢，直接取得 URLs
+    const photoItems = photoFiles.filter(item => item !== null);
+    const photoURLs = photoItems.map(item => typeof item === 'string' ? item : item.url);
+    const photoThumbs = photoItems.map(item => typeof item === 'string' ? item : item.thumb);
+
+    // 更新 Firestore
+    // 先檢查文件是否存在，決定要不要寫 createdAt
+    const existingDoc = await getDoc(doc(db,'users',currentUser.uid));
+    const baseData = {
+      uid: currentUser.uid,
+      email: currentUser.email||'',
+      nickname: userData.nickname,
+      age: userData.age,
+      gender: userData.gender,
+      lookingFor: userData.lookingFor,
+      city: userData.city,
+      height: userData.height,
+      job: userData.job,
+      bio: userData.bio,
+      tags: userData.tags,
+      purpose: userData.purpose,
+      photos: photoURLs,
+      photoThumbs,
+      selfieURL: selfieURL,
+      selfieApproved: false,
+      profileComplete: false,
+      pendingReview: true,
+      quizComplete: false,
+      blocked: [],
+      updatedAt: serverTimestamp(),
+    };
+    // 只有第一次才寫入 createdAt
+    if(!existingDoc.exists()){
+      baseData.createdAt = serverTimestamp();
+    }
+    await setDoc(doc(db,'users',currentUser.uid), baseData, { merge: true });
+
+    hideLoading();
+    goToStep(13);
+  } catch(err){
+    hideLoading();
+    document.getElementById('btn12').disabled = false;
+    document.getElementById('btn12').textContent = '送出審核';
+    showToast('上傳失敗，請再試一次');
+    console.error(err);
+  }
+};
+document.addEventListener('click',(e)=>{
+  if(!e.target.closest('.custom-select-wrap')){
+    document.querySelectorAll('.custom-select-dropdown').forEach(d=>d.classList.remove('open'));
+    document.querySelectorAll('.custom-select-display').forEach(d=>d.classList.remove('open'));
+  }
+});
+</script>
+</body>
+</html>
