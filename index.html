@@ -386,7 +386,9 @@ onAuthStateChanged(auth, async (user) => {
       const userSnap = await getDoc(doc(db,'users',user.uid));
       if(userSnap.exists()){
         const d = userSnap.data();
-        if(d.pendingReview || d.selfieApproved || d.quizComplete || d.rejected){
+        if(d.deleted || d.adminDeleted){
+          window.location.href = 'profile.html';
+        } else if(d.pendingReview || d.selfieApproved || d.quizComplete || d.rejected){
           window.location.href = 'home.html';
         } else {
           window.location.href = 'profile.html';
@@ -432,7 +434,9 @@ document.getElementById('btnGoogle').onclick = async () => {
     } else {
       // 舊用戶 → 根據資料狀態決定去哪
       const d = userSnap.data();
-      if(d.pendingReview || d.selfieApproved || d.quizComplete || d.rejected){
+      if(d.deleted || d.adminDeleted){
+        window.location.href = 'profile.html';
+      } else if(d.pendingReview || d.selfieApproved || d.quizComplete || d.rejected){
         window.location.href = 'home.html';
       } else {
         window.location.href = 'profile.html';
