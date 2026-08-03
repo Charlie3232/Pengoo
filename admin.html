@@ -982,27 +982,10 @@ window.deleteUserAccountFromButton = (button, event) => {
     showToast('找不到要刪除的用戶 UID', true);
     return;
   }
-  if(button.dataset.confirmDelete !== 'yes'){
-    button.dataset.confirmDelete = 'yes';
-    button.classList.add('confirming');
-    button.textContent = '再點一次確認刪除';
-    showToast('再點一次紅色按鈕才會刪除');
-    clearTimeout(button._confirmTimer);
-    button._confirmTimer = setTimeout(() => {
-      button.dataset.confirmDelete = '';
-      button.classList.remove('confirming');
-      button.textContent = '刪除此用戶資料';
-    }, 4200);
-    return;
-  }
   if(uid === currentUser?.uid){
     showToast('不能在後台刪除目前登入的管理員帳號', true);
-    button.dataset.confirmDelete = '';
-    button.classList.remove('confirming');
-    button.textContent = '刪除此用戶資料';
     return;
   }
-  clearTimeout(button._confirmTimer);
   button.disabled = true;
   button.textContent = '刪除中...';
   deleteUserAccount(uid, button.dataset.deleteLabel || uid);
@@ -1029,36 +1012,19 @@ window.deleteUserAccount = (uid, label) => {
 
   (async () => {
     try{
-      await withTimeout(updateDoc(doc(db,'users',uid), {
-        adminDeleted: true,
-        deleted: true,
-        deletedAt: serverTimestamp(),
-        pendingReview: false,
-        selfieApproved: false,
-        rejected: true,
-        updatedAt: serverTimestamp()
-      }), 8000, 'soft delete timeout');
+      await withTimeout(deleteDoc(doc(db,'users',uid)), 8000, 'delete user timeout');
       showToast('✓ 已刪除此用戶');
       loadReviewList();
-      hardDeleteUserInBackground(uid);
+      cleanupDeletedUserData(uid);
     } catch(e){
       console.error(e);
-      showToast('刪除失敗，請確認 Firebase 規則允許管理員 update users', true);
+      showToast('刪除失敗，請確認 Firebase 規則允許管理員 delete users', true);
       openAllUsers();
     } finally {
       deletingUserUid = '';
     }
   })();
 };
-
-async function hardDeleteUserInBackground(uid){
-  try{
-    await deleteDoc(doc(db,'users',uid));
-  } catch(e){
-    console.warn('Hard delete user failed, kept as soft-deleted:', e);
-  }
-  cleanupDeletedUserData(uid);
-}
 
 async function cleanupDeletedUserData(uid){
   try{
