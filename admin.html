@@ -131,7 +131,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#2A2A2E;min-heigh
 .detail-photo{width:60px;height:60px;border-radius:8px;overflow:hidden;cursor:pointer;}
 .detail-photo img{width:100%;height:100%;object-fit:cover;}
 .detail-actions{display:grid;gap:0.5rem;margin-top:0.9rem;}
-.detail-delete-btn{height:42px;border:0;border-radius:12px;background:#7F1D1D;color:white;font-size:0.78rem;font-weight:900;font-family:inherit;cursor:pointer;}
+.detail-delete-btn{position:relative;z-index:2;height:42px;border:0;border-radius:12px;background:#7F1D1D;color:white;font-size:0.78rem;font-weight:900;font-family:inherit;cursor:pointer;pointer-events:auto;touch-action:manipulation;}
 .detail-delete-btn:active{transform:scale(0.98);}
 .detail-warn{font-size:0.68rem;line-height:1.55;color:rgba(255,255,255,0.42);}
 
@@ -942,7 +942,7 @@ window.showDetail = async (uid) => {
     }
     html += `
       <div class="detail-actions">
-        <button class="detail-delete-btn" id="deleteUserBtn" type="button">刪除此用戶資料</button>
+        <button class="detail-delete-btn" id="deleteUserBtn" type="button" onclick="deleteUserAccountFromButton(this,event)">刪除此用戶資料</button>
         <div class="detail-warn">會刪除 Firestore 的用戶資料、配對、聊天訊息與相關測試紀錄。Google 登入帳號若要完全移除，仍需到 Firebase Authentication 刪除。</div>
       </div>
     `;
@@ -962,12 +962,29 @@ async function deleteMatchThread(matchId){
   await deleteDoc(doc(db,'matches',matchId));
 }
 
+let deletingUserUid = '';
+
+window.deleteUserAccountFromButton = (button, event) => {
+  if(event){
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const uid = button?.dataset?.deleteUser;
+  if(!uid){
+    showToast('找不到要刪除的用戶 UID', true);
+    return;
+  }
+  deleteUserAccount(uid, button.dataset.deleteLabel || uid);
+};
+
 window.deleteUserAccount = (uid, label) => {
+  if(deletingUserUid === uid) return;
   if(uid === currentUser?.uid){
     showToast('不能在後台刪除目前登入的管理員帳號', true);
     return;
   }
   if(!confirm(`確定刪除 ${label}？\n會刪除 Firestore 的用戶資料、配對與聊天紀錄。`)) return;
+  deletingUserUid = uid;
   document.getElementById('detailModal').classList.remove('show');
 
   (async () => {
@@ -1006,6 +1023,8 @@ window.deleteUserAccount = (uid, label) => {
     } catch(e){
       console.error(e);
       showToast('刪除失敗，請確認 Firestore 規則允許管理員刪除', true);
+    } finally {
+      deletingUserUid = '';
     }
   })();
 };
