@@ -1029,35 +1029,36 @@ window.deleteUserAccount = (uid, label) => {
 
   (async () => {
     try{
-      await withTimeout(deleteDoc(doc(db,'users',uid)), 8000, 'delete user timeout');
+      await withTimeout(updateDoc(doc(db,'users',uid), {
+        adminDeleted: true,
+        deleted: true,
+        deletedAt: serverTimestamp(),
+        pendingReview: false,
+        selfieApproved: false,
+        rejected: true,
+        updatedAt: serverTimestamp()
+      }), 8000, 'soft delete timeout');
       showToast('✓ 已刪除此用戶');
       loadReviewList();
-      cleanupDeletedUserData(uid);
+      hardDeleteUserInBackground(uid);
     } catch(e){
       console.error(e);
-      try{
-        await withTimeout(updateDoc(doc(db,'users',uid), {
-          adminDeleted: true,
-          deleted: true,
-          deletedAt: serverTimestamp(),
-          pendingReview: false,
-          selfieApproved: false,
-          rejected: true,
-          updatedAt: serverTimestamp()
-        }), 8000, 'soft delete timeout');
-        showToast('已先隱藏此用戶，完整刪除需調整 Firebase 規則');
-        loadReviewList();
-        cleanupDeletedUserData(uid);
-      } catch(fallbackError){
-        console.error(fallbackError);
-        showToast('刪除失敗，請確認 Firebase 規則允許 delete 或 update', true);
-        openAllUsers();
-      }
+      showToast('刪除失敗，請確認 Firebase 規則允許管理員 update users', true);
+      openAllUsers();
     } finally {
       deletingUserUid = '';
     }
   })();
 };
+
+async function hardDeleteUserInBackground(uid){
+  try{
+    await deleteDoc(doc(db,'users',uid));
+  } catch(e){
+    console.warn('Hard delete user failed, kept as soft-deleted:', e);
+  }
+  cleanupDeletedUserData(uid);
+}
 
 async function cleanupDeletedUserData(uid){
   try{
