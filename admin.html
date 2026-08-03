@@ -957,9 +957,9 @@ window.showDetail = async (uid) => {
 
 async function deleteMatchThread(matchId){
   const messagesSnap = await getDocs(collection(db,'matches',matchId,'messages'));
-  for(const messageDoc of messagesSnap.docs){
-    await deleteDoc(doc(db,'matches',matchId,'messages',messageDoc.id));
-  }
+  await Promise.allSettled(messagesSnap.docs.map(messageDoc =>
+    deleteDoc(doc(db,'matches',matchId,'messages',messageDoc.id))
+  ));
   await deleteDoc(doc(db,'matches',matchId));
 }
 
@@ -1005,37 +1005,15 @@ window.deleteUserAccount = (uid, label) => {
 
   (async () => {
     try{
-      const matchesSnap = await getDocs(collection(db,'matches'));
-      for(const matchDoc of matchesSnap.docs){
-        const match = matchDoc.data();
-        if(Array.isArray(match.users) && match.users.includes(uid)){
-          await deleteMatchThread(matchDoc.id);
-        }
-      }
-
-      const actionsSnap = await getDocs(collection(db,'matchActions'));
-      for(const actionDoc of actionsSnap.docs){
-        const action = actionDoc.data();
-        if(action.actorUid === uid || action.targetUid === uid){
-          await deleteDoc(doc(db,'matchActions',actionDoc.id));
-        }
-      }
-
-      const reportsSnap = await getDocs(collection(db,'reports'));
-      for(const reportDoc of reportsSnap.docs){
-        const report = reportDoc.data();
-        if(report.reporterUid === uid || report.reportedUid === uid){
-          await deleteDoc(doc(db,'reports',reportDoc.id));
-        }
-      }
-
       await deleteDoc(doc(db,'users',uid));
 
       allUsersCache = allUsersCache.filter(user => user.uid !== uid);
       document.getElementById('detailModal').classList.remove('show');
       renderAllUsers();
-      showToast('✓ 已刪除此用戶資料');
+      showToast('✓ 已刪除此用戶');
       loadReviewList();
+
+      cleanupDeletedUserData(uid);
     } catch(e){
       console.error(e);
       showToast('刪除失敗，請確認 Firestore 規則允許管理員刪除', true);
@@ -1044,6 +1022,42 @@ window.deleteUserAccount = (uid, label) => {
     }
   })();
 };
+
+async function cleanupDeletedUserData(uid){
+  try{
+    const matchesSnap = await getDocs(collection(db,'matches'));
+    const matchDeletes = [];
+    for(const matchDoc of matchesSnap.docs){
+      const match = matchDoc.data();
+      if(Array.isArray(match.users) && match.users.includes(uid)){
+        matchDeletes.push(deleteMatchThread(matchDoc.id));
+      }
+    }
+    await Promise.allSettled(matchDeletes);
+
+    const actionsSnap = await getDocs(collection(db,'matchActions'));
+    const actionDeletes = [];
+    for(const actionDoc of actionsSnap.docs){
+      const action = actionDoc.data();
+      if(action.actorUid === uid || action.targetUid === uid){
+        actionDeletes.push(deleteDoc(doc(db,'matchActions',actionDoc.id)));
+      }
+    }
+    await Promise.allSettled(actionDeletes);
+
+    const reportsSnap = await getDocs(collection(db,'reports'));
+    const reportDeletes = [];
+    for(const reportDoc of reportsSnap.docs){
+      const report = reportDoc.data();
+      if(report.reporterUid === uid || report.reportedUid === uid){
+        reportDeletes.push(deleteDoc(doc(db,'reports',reportDoc.id)));
+      }
+    }
+    await Promise.allSettled(reportDeletes);
+  } catch(e){
+    console.error('Cleanup deleted user data failed:', e);
+  }
+}
 
 document.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-delete-user]');
