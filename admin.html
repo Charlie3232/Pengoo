@@ -972,6 +972,10 @@ async function deleteMatchThread(matchId){
 
 let deletingUserUid = '';
 
+function getAdminUid(){
+  return auth.currentUser?.uid || '';
+}
+
 window.deleteUserAccountFromButton = (button, event) => {
   if(event){
     event.preventDefault();
@@ -982,7 +986,7 @@ window.deleteUserAccountFromButton = (button, event) => {
     showToast('找不到要刪除的用戶 UID', true);
     return;
   }
-  if(uid === currentUser?.uid){
+  if(uid === getAdminUid()){
     showToast('不能在後台刪除目前登入的管理員帳號', true);
     return;
   }
@@ -1000,7 +1004,7 @@ function withTimeout(promise, ms, message){
 
 window.deleteUserAccount = (uid, label) => {
   if(deletingUserUid === uid) return;
-  if(uid === currentUser?.uid){
+  if(uid === getAdminUid()){
     showToast('不能在後台刪除目前登入的管理員帳號', true);
     return;
   }
