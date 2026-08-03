@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Pengoo 隱藏工具入口</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{min-height:100vh;background:#F5F0EE;color:#3A2A2E;font-family:'Nunito','Noto Sans TC',sans-serif;display:flex;justify-content:center;}
+.wrap{width:100%;max-width:430px;min-height:100vh;padding:1.2rem 1.05rem 2rem;}
+.top{padding:0.65rem 0 1.1rem;}
+.eyebrow{font-size:0.66rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.25rem;}
+h1{font-size:1.55rem;line-height:1.2;font-weight:900;color:#3A2A2E;}
+.sub{font-size:0.78rem;line-height:1.7;color:rgba(58,42,46,0.58);font-weight:750;margin-top:0.52rem;}
+.gate,.panel{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:22px;padding:1rem;box-shadow:0 14px 30px rgba(58,42,46,0.055);}
+.gate{margin-top:0.8rem;}
+.gate-title{font-size:0.92rem;font-weight:900;margin-bottom:0.5rem;}
+.input-row{display:flex;gap:0.5rem;margin-top:0.75rem;}
+input{height:44px;flex:1;border-radius:14px;border:1.5px solid rgba(184,205,217,0.58);background:#F8F4F5;padding:0 0.82rem;font-size:1rem;font-weight:850;color:#3A2A2E;outline:none;}
+button{height:44px;border:0;border-radius:14px;background:#6B2D3E;color:white;font-family:inherit;font-size:0.82rem;font-weight:900;padding:0 0.9rem;cursor:pointer;}
+.msg{min-height:1rem;margin-top:0.55rem;font-size:0.72rem;font-weight:850;color:#B91C1C;}
+.panel{display:none;margin-top:0.8rem;}
+.panel.show{display:block;}
+.section{margin-top:1rem;}
+.section:first-child{margin-top:0;}
+.section-title{font-size:0.72rem;font-weight:900;letter-spacing:0.08em;color:#7A9BB5;margin-bottom:0.5rem;}
+.grid{display:grid;gap:0.58rem;}
+.tool{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;text-decoration:none;background:#F8F4F5;border:1px solid rgba(184,205,217,0.32);border-radius:16px;padding:0.78rem 0.82rem;color:inherit;}
+.tool:active{transform:scale(0.985);}
+.tool-main{min-width:0;}
+.tool-name{font-size:0.9rem;font-weight:900;color:#3A2A2E;margin-bottom:0.16rem;}
+.tool-desc{font-size:0.68rem;line-height:1.45;font-weight:760;color:rgba(58,42,46,0.52);}
+.arrow{width:28px;height:28px;border-radius:50%;background:white;color:#6B2D3E;display:flex;align-items:center;justify-content:center;font-size:1.05rem;font-weight:900;flex-shrink:0;}
+.warn{margin-top:1rem;border-radius:16px;background:#FEF3C7;color:#92400E;padding:0.78rem 0.85rem;font-size:0.72rem;line-height:1.62;font-weight:800;}
+.home-link{display:inline-flex;align-items:center;justify-content:center;height:38px;border-radius:99px;background:white;border:1px solid rgba(184,205,217,0.42);color:#6B2D3E;text-decoration:none;font-size:0.74rem;font-weight:900;padding:0 0.82rem;margin-top:0.9rem;}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <div class="eyebrow">PENGOO PRIVATE</div>
+    <h1>隱藏工具入口</h1>
+    <p class="sub">這裡放測試、管理與診斷用頁面，不會掛在正式 APP 導航裡。</p>
+  </header>
+
+  <section class="gate" id="gate">
+    <div class="gate-title">輸入管理密碼</div>
+    <p class="sub">進入後可以快速打開後台、機器人與診斷頁。</p>
+    <div class="input-row">
+      <input id="pwInput" type="password" inputmode="numeric" autocomplete="off" placeholder="管理密碼"/>
+      <button id="unlockBtn" type="button">進入</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <section class="panel" id="panel">
+    <div class="section">
+      <div class="section-title">管理</div>
+      <div class="grid">
+        <a class="tool" href="admin.html">
+          <div class="tool-main">
+            <div class="tool-name">審核後台</div>
+            <div class="tool-desc">審核用戶、標籤管理、檢舉處理</div>
+          </div>
+          <div class="arrow">›</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">機器人測試</div>
+      <div class="grid">
+        <a class="tool" href="seed_bots.html">
+          <div class="tool-main">
+            <div class="tool-name">新增機器人</div>
+            <div class="tool-desc">建立測試帳號、指定配對對象、調整照片</div>
+          </div>
+          <div class="arrow">›</div>
+        </a>
+        <a class="tool" href="bot_login.html">
+          <div class="tool-main">
+            <div class="tool-name">機器人登入</div>
+            <div class="tool-desc">用機器人身分進入 APP 測試流程</div>
+          </div>
+          <div class="arrow">›</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">診斷</div>
+      <div class="grid">
+        <a class="tool" href="match_debug.html">
+          <div class="tool-main">
+            <div class="tool-name">配對診斷</div>
+            <div class="tool-desc">查看為什麼有配到或沒配到</div>
+          </div>
+          <div class="arrow">›</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">正式頁面快速入口</div>
+      <div class="grid">
+        <a class="tool" href="index.html">
+          <div class="tool-main">
+            <div class="tool-name">登入頁</div>
+            <div class="tool-desc">一般使用者入口</div>
+          </div>
+          <div class="arrow">›</div>
+        </a>
+        <a class="tool" href="home.html">
+          <div class="tool-main">
+            <div class="tool-name">主頁</div>
+            <div class="tool-desc">審核狀態、測驗狀態與底部導航</div>
+          </div>
+          <div class="arrow">›</div>
+        </a>
+        <a class="tool" href="match.html">
+          <div class="tool-main">
+            <div class="tool-name">配對頁</div>
+            <div class="tool-desc">查看推薦、喜歡或略過</div>
+          </div>
+          <div class="arrow">›</div>
+        </a>
+        <a class="tool" href="chat.html">
+          <div class="tool-main">
+            <div class="tool-name">月老信箱</div>
+            <div class="tool-desc">配對成功後的聊天列表與對話</div>
+          </div>
+          <div class="arrow">›</div>
+        </a>
+        <a class="tool" href="my.html">
+          <div class="tool-main">
+            <div class="tool-name">我的</div>
+            <div class="tool-desc">個人資料、照片與帳號設定</div>
+          </div>
+          <div class="arrow">›</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="warn">這個頁面只是隱藏入口與簡單密碼門，不等於真正伺服器安全。後台本身仍要保留 Google 管理員白名單與 Firebase 規則。</div>
+    <a class="home-link" href="index.html">回正式入口</a>
+  </section>
+</main>
+
+<script>
+const TOOL_PASSWORD = '1309';
+const gate = document.getElementById('gate');
+const panel = document.getElementById('panel');
+const input = document.getElementById('pwInput');
+const msg = document.getElementById('msg');
+const unlockBtn = document.getElementById('unlockBtn');
+
+function unlock(){
+  if(input.value.trim() !== TOOL_PASSWORD){
+    msg.textContent = '密碼不對，再確認一下。';
+    input.select();
+    return;
+  }
+  msg.textContent = '';
+  gate.style.display = 'none';
+  panel.classList.add('show');
+}
+
+unlockBtn.addEventListener('click', unlock);
+input.addEventListener('keydown', event => {
+  if(event.key === 'Enter') unlock();
+});
+input.focus();
+</script>
+</body>
+</html>
