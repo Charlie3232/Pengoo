@@ -100,7 +100,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#2A2A2E;min-heigh
 .quiz-export-box.show{display:block;}
 
 /* 密碼彈窗 */
-.pw-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;}
+.pw-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:260;align-items:center;justify-content:center;}
 .pw-modal.show{display:flex;}
 .pw-box{background:#3A2A2E;border-radius:18px;padding:1.5rem;width:90%;max-width:320px;text-align:center;}
 .pw-title{font-size:0.95rem;font-weight:800;color:white;margin-bottom:0.3rem;}
@@ -965,6 +965,7 @@ window.deleteUserAccount = (uid, label) => {
     showToast('不能在後台刪除目前登入的管理員帳號', true);
     return;
   }
+  document.getElementById('detailModal').classList.remove('show');
   openPwModal('刪除此用戶資料？', `將刪除 ${label} 的 Firestore 資料、配對與聊天紀錄。請輸入管理密碼。`, async () => {
     try{
       const matchesSnap = await getDocs(collection(db,'matches'));
