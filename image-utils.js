@@ -7,7 +7,29 @@ export const IMAGE_PRESETS = {
 export async function compressImage(file, preset=IMAGE_PRESETS.photo){
   if(!file || !file.type?.startsWith('image/')) return file;
 
-  const bitmap = await createImageBitmap(file);
+  let bitmap = null;
+  let objectUrl = '';
+  if('createImageBitmap' in window){
+    try{
+      bitmap = await createImageBitmap(file);
+    } catch(e){
+      bitmap = null;
+    }
+  }
+  if(!bitmap){
+    objectUrl = URL.createObjectURL(file);
+    try{
+      bitmap = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+    } catch(e){
+      if(objectUrl) URL.revokeObjectURL(objectUrl);
+      return file;
+    }
+  }
   const ratio = Math.min(
     1,
     preset.maxWidth / bitmap.width,
@@ -27,6 +49,7 @@ export async function compressImage(file, preset=IMAGE_PRESETS.photo){
   });
 
   if(bitmap.close) bitmap.close();
+  if(objectUrl) URL.revokeObjectURL(objectUrl);
   if(!blob) return file;
 
   return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
@@ -37,7 +60,7 @@ export async function compressImage(file, preset=IMAGE_PRESETS.photo){
 
 export function imageUploadMeta(originalFile, optimizedFile){
   return {
-    contentType:'image/jpeg',
+    contentType:optimizedFile?.type || originalFile?.type || 'image/jpeg',
     customMetadata:{
       originalName: originalFile?.name || '',
       originalSize: String(originalFile?.size || 0),
