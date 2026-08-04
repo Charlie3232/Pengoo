@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Pengoo 配對與聊天總覽</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{min-height:100vh;background:#F5F0EE;color:#3A2A2E;font-family:'Nunito','Noto Sans TC',sans-serif;display:flex;justify-content:center;}
+.wrap{width:100%;max-width:430px;min-height:100vh;padding:1rem 1rem 2rem;}
+.top{position:sticky;top:0;z-index:10;background:#F5F0EE;padding:0.7rem 0 0.9rem;}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:0.7rem;}
+.eyebrow{font-size:0.62rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.22rem;}
+h1{font-size:1.35rem;font-weight:900;line-height:1.2;}
+.back{height:34px;border-radius:99px;border:1px solid rgba(184,205,217,0.42);background:white;color:#6B2D3E;font-size:0.72rem;font-weight:900;padding:0 0.78rem;text-decoration:none;display:flex;align-items:center;}
+.login,.summary,.card,.empty,.thread{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:18px;box-shadow:0 12px 28px rgba(58,42,46,0.045);}
+.login{padding:1rem;margin-top:0.65rem;text-align:center;}
+.login-title{font-size:1rem;font-weight:900;margin-bottom:0.35rem;}
+.login-sub{font-size:0.74rem;line-height:1.65;color:rgba(58,42,46,0.55);font-weight:760;margin-bottom:0.8rem;}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation;}
+.primary{height:42px;border:0;border-radius:13px;background:#6B2D3E;color:white;font-size:0.8rem;font-weight:900;padding:0 1rem;}
+.ghost{height:34px;border-radius:99px;border:1px solid rgba(184,205,217,0.42);background:white;color:#3A5068;font-size:0.7rem;font-weight:900;padding:0 0.72rem;}
+.panel{display:none;}
+.panel.show{display:block;}
+.tools{display:flex;gap:0.5rem;margin-top:0.7rem;}
+.search{width:100%;height:42px;border-radius:14px;border:1.5px solid rgba(184,205,217,0.48);background:white;color:#3A2A2E;font-size:0.82rem;font-weight:800;padding:0 0.82rem;outline:none;}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem;padding:0.78rem;margin:0.7rem 0;}
+.stat{text-align:center;}
+.num{font-size:1.1rem;font-weight:900;color:#6B2D3E;}
+.lbl{font-size:0.62rem;font-weight:850;color:rgba(58,42,46,0.45);margin-top:0.1rem;}
+.list{display:grid;gap:0.72rem;}
+.card{padding:0.82rem;}
+.card-head{display:flex;justify-content:space-between;gap:0.6rem;margin-bottom:0.58rem;}
+.names{min-width:0;}
+.name-line{font-size:0.88rem;font-weight:900;color:#3A2A2E;line-height:1.45;word-break:break-word;}
+.uid-line{font-size:0.58rem;font-weight:760;color:rgba(58,42,46,0.36);line-height:1.45;word-break:break-all;margin-top:0.16rem;}
+.badge{height:26px;border-radius:99px;background:rgba(232,180,188,0.18);color:#6B2D3E;font-size:0.68rem;font-weight:900;display:flex;align-items:center;padding:0 0.55rem;flex-shrink:0;}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:0.45rem;margin-bottom:0.55rem;}
+.meta-box{border-radius:12px;background:#F8F4F5;padding:0.48rem 0.56rem;}
+.meta-k{font-size:0.58rem;font-weight:900;color:#7A9BB5;margin-bottom:0.12rem;}
+.meta-v{font-size:0.7rem;font-weight:850;color:rgba(58,42,46,0.66);line-height:1.35;word-break:break-word;}
+.last{font-size:0.72rem;line-height:1.55;color:rgba(58,42,46,0.58);font-weight:760;background:rgba(184,205,217,0.12);border-radius:12px;padding:0.55rem 0.62rem;margin-bottom:0.58rem;}
+.actions{display:flex;gap:0.5rem;}
+.danger-text{font-size:0.68rem;font-weight:850;color:#B91C1C;margin-top:0.45rem;display:none;}
+.danger-text.show{display:block;}
+.empty{padding:1.2rem;text-align:center;color:rgba(58,42,46,0.5);font-size:0.8rem;font-weight:800;line-height:1.65;}
+.thread{display:none;margin-top:0.68rem;padding:0.72rem;background:#FBFAF9;}
+.thread.show{display:block;}
+.msg{display:flex;flex-direction:column;margin-bottom:0.54rem;}
+.msg.me{align-items:flex-end;}
+.msg.other{align-items:flex-start;}
+.bubble{max-width:82%;border-radius:14px;padding:0.52rem 0.64rem;font-size:0.72rem;line-height:1.5;font-weight:760;word-break:break-word;}
+.me .bubble{background:#6B2D3E;color:white;border-bottom-right-radius:5px;}
+.other .bubble{background:white;color:#3A2A2E;border:1px solid rgba(184,205,217,0.34);border-bottom-left-radius:5px;}
+.msg-meta{font-size:0.56rem;color:rgba(58,42,46,0.36);font-weight:800;margin-top:0.12rem;}
+.toast{position:fixed;top:4.8rem;left:50%;transform:translateX(-50%);z-index:50;background:#3A2A2E;color:white;border-radius:99px;padding:0.62rem 1rem;font-size:0.74rem;font-weight:850;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<main class="wrap">
+  <header class="top">
+    <div class="bar">
+      <div>
+        <div class="eyebrow">PENGOO ADMIN TOOL</div>
+        <h1>配對與聊天總覽</h1>
+      </div>
+      <a class="back" href="tools.html">工具頁</a>
+    </div>
+  </header>
+
+  <section class="login" id="loginBox">
+    <div class="login-title">管理員登入</div>
+    <div class="login-sub">登入後可查看目前所有配對與聊天紀錄。</div>
+    <button class="primary" id="loginBtn" type="button">Google 管理員登入</button>
+  </section>
+
+  <section class="panel" id="panel">
+    <input class="search" id="searchInput" placeholder="搜尋暱稱、UID、最後訊息"/>
+    <div class="tools">
+      <button class="ghost" id="reloadBtn" type="button">重新整理</button>
+      <button class="ghost" id="logoutBtn" type="button">登出</button>
+    </div>
+    <div class="summary">
+      <div class="stat"><div class="num" id="matchCount">0</div><div class="lbl">配對</div></div>
+      <div class="stat"><div class="num" id="chatCount">0</div><div class="lbl">有聊天</div></div>
+      <div class="stat"><div class="num" id="messageCount">0</div><div class="lbl">訊息</div></div>
+    </div>
+    <div class="list" id="matchList"></div>
+  </section>
+</main>
+
+<script type="module">
+import { auth, provider, db } from './firebase-config.js';
+import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { collection, doc, getDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+const ADMIN_WHITELIST = ['kingnashmvp@yahoo.com.tw'];
+const loginBox = document.getElementById('loginBox');
+const panel = document.getElementById('panel');
+const list = document.getElementById('matchList');
+const toast = document.getElementById('toast');
+const searchInput = document.getElementById('searchInput');
+let rows = [];
+let usersMap = new Map();
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+function escapeHtml(value=''){
+  return String(value)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+
+function formatTime(value){
+  if(!value?.toDate) return '尚無';
+  const d = value.toDate();
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+async function isAdmin(user){
+  if(!user?.email) return false;
+  try{
+    const snap = await getDoc(doc(db, 'settings', 'admin'));
+    const whitelist = snap.exists() && Array.isArray(snap.data().whitelist) ? snap.data().whitelist : ADMIN_WHITELIST;
+    return whitelist.includes(user.email);
+  } catch(e){
+    console.error(e);
+    return ADMIN_WHITELIST.includes(user.email);
+  }
+}
+
+async function loadUsers(){
+  const snap = await getDocs(collection(db, 'users'));
+  usersMap = new Map();
+  snap.forEach(userDoc => usersMap.set(userDoc.id, { uid:userDoc.id, ...userDoc.data() }));
+}
+
+function userName(uid){
+  const user = usersMap.get(uid);
+  return user?.nickname || user?.email || uid;
+}
+
+function scoreText(match){
+  const a = match.displayForA ?? match.scoreForA ?? 0;
+  const b = match.displayForB ?? match.scoreForB ?? 0;
+  if(!a && !b) return '--';
+  return `${a}% / ${b}%`;
+}
+
+async function loadMatches(){
+  list.innerHTML = '<div class="empty">載入中...</div>';
+  try{
+    await loadUsers();
+    const snap = await getDocs(collection(db, 'matches'));
+    rows = snap.docs.map(matchDoc => {
+      const match = matchDoc.data();
+      const users = Array.isArray(match.users) ? match.users : [];
+      return {
+        id: matchDoc.id,
+        match,
+        userA: match.userA || users[0] || '',
+        userB: match.userB || users[1] || '',
+        messageTotal: null
+      };
+    }).sort((a,b) => {
+      const at = a.match.lastMessageAt?.toMillis ? a.match.lastMessageAt.toMillis() : 0;
+      const bt = b.match.lastMessageAt?.toMillis ? b.match.lastMessageAt.toMillis() : 0;
+      return bt - at;
+    });
+    renderRows();
+  } catch(e){
+    console.error(e);
+    list.innerHTML = '<div class="empty">載入失敗。請確認 Firestore Rules 允許管理員 read matches/messages。</div>';
+  }
+}
+
+function renderRows(){
+  const keyword = searchInput.value.trim().toLowerCase();
+  const filtered = rows.filter(row => {
+    const text = [
+      row.id,
+      row.userA,
+      row.userB,
+      userName(row.userA),
+      userName(row.userB),
+      row.match.lastMessage || ''
+    ].join(' ').toLowerCase();
+    return !keyword || text.includes(keyword);
+  });
+
+  document.getElementById('matchCount').textContent = rows.length;
+  document.getElementById('chatCount').textContent = rows.filter(row => row.match.lastMessage).length;
+  const knownMessages = rows.reduce((sum, row) => sum + (row.messageTotal || 0), 0);
+  document.getElementById('messageCount').textContent = knownMessages || '--';
+
+  if(!filtered.length){
+    list.innerHTML = '<div class="empty">沒有符合的配對</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  filtered.forEach(row => {
+    const unread = row.match.unreadBy || {};
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="names">
+          <div class="name-line">${escapeHtml(userName(row.userA))} x ${escapeHtml(userName(row.userB))}</div>
+          <div class="uid-line">${escapeHtml(row.userA)}<br/>${escapeHtml(row.userB)}</div>
+        </div>
+        <div class="badge">${escapeHtml(scoreText(row))}</div>
+      </div>
+      <div class="meta">
+        <div class="meta-box"><div class="meta-k">最後訊息</div><div class="meta-v">${escapeHtml(formatTime(row.match.lastMessageAt))}</div></div>
+        <div class="meta-box"><div class="meta-k">未讀</div><div class="meta-v">${escapeHtml(userName(row.userA))}: ${unread[row.userA] || 0}<br/>${escapeHtml(userName(row.userB))}: ${unread[row.userB] || 0}</div></div>
+      </div>
+      <div class="last">${escapeHtml(row.match.lastMessage || '尚未開始聊天')}</div>
+      <div class="actions">
+        <button class="primary" type="button" data-open-thread="${row.id}">查看聊天</button>
+      </div>
+      <div class="danger-text" id="err-${row.id}"></div>
+      <div class="thread" id="thread-${row.id}"></div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+async function openThread(matchId){
+  const row = rows.find(item => item.id === matchId);
+  const box = document.getElementById(`thread-${matchId}`);
+  const err = document.getElementById(`err-${matchId}`);
+  if(!row || !box) return;
+
+  if(box.classList.contains('show')){
+    box.classList.remove('show');
+    return;
+  }
+
+  box.classList.add('show');
+  box.innerHTML = '<div class="empty">載入聊天中...</div>';
+  if(err) err.classList.remove('show');
+
+  try{
+    const q = query(collection(db, 'matches', matchId, 'messages'), orderBy('createdAt', 'asc'));
+    const snap = await getDocs(q);
+    row.messageTotal = snap.size;
+    if(!snap.size){
+      box.innerHTML = '<div class="empty">目前沒有訊息</div>';
+      renderRows();
+      return;
+    }
+    const html = snap.docs.map(messageDoc => {
+      const msg = messageDoc.data();
+      const isA = msg.senderUid === row.userA;
+      const name = userName(msg.senderUid);
+      return `
+        <div class="msg ${isA ? 'me' : 'other'}">
+          <div class="bubble">${escapeHtml(msg.text || '')}</div>
+          <div class="msg-meta">${escapeHtml(name)} · ${escapeHtml(formatTime(msg.createdAt))}</div>
+        </div>
+      `;
+    }).join('');
+    box.innerHTML = html;
+    document.getElementById('messageCount').textContent = rows.reduce((sum, item) => sum + (item.messageTotal || 0), 0);
+  } catch(e){
+    console.error(e);
+    box.innerHTML = '';
+    if(err){
+      err.textContent = '聊天載入失敗，請確認 Firestore Rules 允許管理員讀取 messages。';
+      err.classList.add('show');
+    }
+  }
+}
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  try{
+    await signInWithPopup(auth, provider);
+  } catch(e){
+    console.error(e);
+    showToast('登入失敗');
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+document.getElementById('reloadBtn').addEventListener('click', loadMatches);
+searchInput.addEventListener('input', renderRows);
+document.addEventListener('click', event => {
+  const btn = event.target.closest('[data-open-thread]');
+  if(btn) openThread(btn.dataset.openThread);
+});
+
+onAuthStateChanged(auth, async user => {
+  if(!user){
+    loginBox.style.display = 'block';
+    panel.classList.remove('show');
+    return;
+  }
+  const ok = await isAdmin(user);
+  if(!ok){
+    showToast('這個帳號不是管理員');
+    await signOut(auth);
+    return;
+  }
+  loginBox.style.display = 'none';
+  panel.classList.add('show');
+  loadMatches();
+});
+</script>
+</body>
+</html>
