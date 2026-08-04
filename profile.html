@@ -128,6 +128,9 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;min-heigh
 .selfie-icon{font-size:2.2rem;}
 .selfie-title{font-size:0.88rem;font-weight:800;color:#3A2A2E;}
 .selfie-hint{font-size:0.72rem;color:rgba(58,42,46,0.45);line-height:1.6;}
+.selfie-status{display:none;margin:-0.15rem 0 0.85rem;padding:0.62rem 0.75rem;border-radius:12px;background:rgba(29,107,62,0.09);border:1px solid rgba(29,107,62,0.16);color:#1D6B3E;font-size:0.74rem;font-weight:850;line-height:1.5;text-align:center;}
+.selfie-status.show{display:block;}
+.selfie-status.warn{background:rgba(180,83,9,0.1);border-color:rgba(180,83,9,0.18);color:#B45309;}
 .selfie-rules{background:rgba(184,205,217,0.1);border:1px solid rgba(184,205,217,0.3);border-radius:12px;padding:0.8rem 1rem;margin-bottom:0.8rem;}
 .selfie-rules-title{font-size:0.7rem;font-weight:800;color:#7A9BB5;margin-bottom:0.4rem;}
 .selfie-rule{font-size:0.7rem;color:rgba(58,42,46,0.55);line-height:1.8;display:flex;align-items:flex-start;gap:0.4rem;}
@@ -744,6 +747,7 @@ input[type="file"]{display:none;}
       </div>
     </div>
     <input type="file" id="selfieInput" accept="image/*" capture="user"/>
+    <div class="selfie-status" id="selfieStatus">自拍已準備完成，可以送出審核。</div>
     <div class="bottom-area">
       <button class="btn-next" id="btn12" disabled>送出審核</button>
     </div>
@@ -793,7 +797,7 @@ input[type="file"]{display:none;}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp, FieldValue } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js";
 import { IMAGE_PRESETS, compressImage, imageUploadMeta } from './image-utils.js';
 
@@ -1212,11 +1216,29 @@ function updatePhotoCounter(){
 document.getElementById('btn11').onclick = ()=>{ goToStep(12); };
 
 // ── 自拍 ──
-window.takeSelfie = ()=>{ document.getElementById('selfieInput').click(); };
+window.takeSelfie = ()=>{
+  const input = document.getElementById('selfieInput');
+  input.value = '';
+  document.getElementById('selfieStatus').className = 'selfie-status warn show';
+  document.getElementById('selfieStatus').textContent = '相機開啟中，拍完後請等預覽出現。';
+  input.click();
+};
 
 document.getElementById('selfieInput').addEventListener('change', (e)=>{
   const file = e.target.files[0];
-  if(!file) return;
+  const status = document.getElementById('selfieStatus');
+  if(!file){
+    status.className = 'selfie-status warn show';
+    status.textContent = '沒有取得照片，請再拍一次。';
+    return;
+  }
+  if(!file.type.startsWith('image/')){
+    selfieFile = null;
+    document.getElementById('btn12').disabled = true;
+    status.className = 'selfie-status warn show';
+    status.textContent = '這個檔案不是照片，請重新拍攝。';
+    return;
+  }
   selfieFile = file;
   const url = URL.createObjectURL(file);
   document.getElementById('selfiePreview').src = url;
@@ -1224,19 +1246,36 @@ document.getElementById('selfieInput').addEventListener('change', (e)=>{
   document.getElementById('selfiePlaceholder').classList.add('hide');
   document.getElementById('selfieArea').classList.add('has-photo');
   document.getElementById('btn12').disabled = false;
+  document.getElementById('btn12').textContent = '送出審核';
+  status.className = 'selfie-status show';
+  status.textContent = '自拍已準備完成，可以送出審核。';
 });
 
 document.getElementById('btn12').onclick = async ()=>{
-  if(!selfieFile||!currentUser) return;
-  document.getElementById('btn12').disabled = true;
-  document.getElementById('btn12').textContent = '上傳中...';
-  showLoading('上傳中，請稍候...');
+  if(!currentUser){
+    showToast('登入狀態失效，請重新登入');
+    return;
+  }
+  if(!selfieFile){
+    showToast('請先完成自拍驗證');
+    return;
+  }
+  const btn12 = document.getElementById('btn12');
+  const status = document.getElementById('selfieStatus');
+  btn12.disabled = true;
+  btn12.textContent = '上傳中...';
+  status.className = 'selfie-status warn show';
+  status.textContent = '正在上傳自拍，請不要關閉頁面。';
+  showLoading('正在上傳自拍...');
   try{
     // 上傳自拍
     const selfieRef = ref(storage,`selfies/${currentUser.uid}_${Date.now()}.jpg`);
+    showLoading('正在壓縮自拍...');
     const optimizedSelfie = await compressImage(selfieFile, IMAGE_PRESETS.selfie);
+    showLoading('正在上傳自拍...');
     await uploadBytes(selfieRef, optimizedSelfie, imageUploadMeta(selfieFile, optimizedSelfie));
     const selfieURL = await getDownloadURL(selfieRef);
+    showLoading('正在送出審核...');
 
     // 照片已經上傳完畢，直接取得 URLs
     const photoItems = photoFiles.filter(item => item !== null);
@@ -1276,12 +1315,16 @@ document.getElementById('btn12').onclick = async ()=>{
     await setDoc(doc(db,'users',currentUser.uid), baseData, { merge: true });
 
     hideLoading();
+    status.className = 'selfie-status show';
+    status.textContent = '送出成功，等待企鵝月老審核。';
     goToStep(13);
   } catch(err){
     hideLoading();
-    document.getElementById('btn12').disabled = false;
-    document.getElementById('btn12').textContent = '送出審核';
-    showToast('上傳失敗，請再試一次');
+    btn12.disabled = false;
+    btn12.textContent = '重新送出審核';
+    status.className = 'selfie-status warn show';
+    status.textContent = '送出失敗，請確認網路穩定後再按一次。';
+    showToast('送出失敗，請再試一次');
     console.error(err);
   }
 };
