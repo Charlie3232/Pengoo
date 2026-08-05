@@ -145,7 +145,13 @@ function getEventTitle(type){
     fallback_redirect_error: '改用跳轉登入也失敗',
     redirect_no_result: '跳轉回來但沒有登入成功',
     redirect_result_error: '跳轉回來後登入失敗',
-    route_user_error: '登入後讀取用戶資料失敗'
+    route_user_error: '登入後讀取用戶資料失敗',
+    email_login_start: '使用者開始 Email 登入',
+    email_login_success: 'Email 登入成功',
+    email_login_error: 'Email 登入失敗',
+    email_signup_start: '使用者開始 Email 註冊',
+    email_signup_success: 'Email 註冊成功',
+    email_signup_error: 'Email 註冊失敗'
   };
   return map[type] || type || '未知事件';
 }
@@ -160,6 +166,8 @@ function explainEvent(row){
 
   if(!isErrorType(type)){
     if(type === 'popup_success') return { tone:'ok', title:'登入成功', text:'這筆只是成功紀錄，不需要處理。' };
+    if(type === 'email_login_success' || type === 'email_signup_success') return { tone:'ok', title:'Email 登入正常', text:'使用者已透過 Email 進入，不需要處理。' };
+    if(type === 'email_login_start' || type === 'email_signup_start') return { tone:'ok', title:'Email 流程開始', text:'使用者有按 Email 登入或註冊。這筆不是錯誤。' };
     if(type === 'login_fallback_redirect') return { tone:'warn', title:'彈窗被擋，所以改用跳轉登入', text:'通常發生在手機瀏覽器或瀏覽器擋彈窗。只要後面有成功登入，這不是大問題。' };
     if(type === 'redirect_no_result') return { tone:'bad', title:'Google 回來了，但 Firebase 沒拿到登入結果', text:'這就會讓使用者看起來一直回到登入首頁。常見原因是 Safari 隱私模式、LINE/IG/FB 內建瀏覽器、阻擋網站暫存，或瀏覽器清掉登入狀態。請使用者用 Safari/Chrome 正常模式重新開主網址。' };
     return { tone:'ok', title:'登入流程開始', text:'使用者有按登入。這筆不是錯誤，只是紀錄當時使用的登入方式。' };
