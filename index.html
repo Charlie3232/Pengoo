@@ -348,7 +348,7 @@ body{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -369,6 +369,8 @@ const provider = new GoogleAuthProvider();
 
 const loadingOverlay = document.getElementById('loadingOverlay');
 const errorMsg = document.getElementById('errorMsg');
+let handlingAuth = false;
+let redirectChecked = false;
 
 function showLoading(){ loadingOverlay.classList.add('show'); }
 function hideLoading(){ loadingOverlay.classList.remove('show'); }
@@ -378,41 +380,23 @@ function showError(msg){
   setTimeout(()=>errorMsg.classList.remove('show'), 4000);
 }
 
-// 已登入直接跳轉
-onAuthStateChanged(auth, async (user) => {
-  if(user){
-    showLoading();
-    try{
-      const userSnap = await getDoc(doc(db,'users',user.uid));
-      if(userSnap.exists()){
-        const d = userSnap.data();
-        if(d.deleted || d.adminDeleted){
-          window.location.href = 'profile.html';
-        } else if(d.pendingReview || d.selfieApproved || d.quizComplete || d.rejected){
-          window.location.href = 'home.html';
-        } else {
-          window.location.href = 'profile.html';
-        }
-      } else {
-        window.location.href = 'profile.html';
-      }
-    } catch(e){
-      hideLoading();
-    }
-  }
-});
+function shouldUseRedirectLogin(){
+  const ua = navigator.userAgent || '';
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+  const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome/i.test(ua);
+  return isMobile || isSafari;
+}
 
-// Google 登入
-document.getElementById('btnGoogle').onclick = async () => {
+async function routeUser(user){
+  if(!user || handlingAuth) return;
+  handlingAuth = true;
   showLoading();
+
   try{
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
     const userRef = doc(db,'users',user.uid);
     const userSnap = await getDoc(userRef);
 
     if(!userSnap.exists()){
-      // 全新用戶 → 建立基本資料 → 填個人資料
       await setDoc(userRef,{
         uid: user.uid,
         displayName: user.displayName||'',
@@ -431,21 +415,73 @@ document.getElementById('btnGoogle').onclick = async () => {
         blocked: [],
       });
       window.location.href = 'profile.html';
-    } else {
-      // 舊用戶 → 根據資料狀態決定去哪
-      const d = userSnap.data();
-      if(d.deleted || d.adminDeleted){
-        window.location.href = 'profile.html';
-      } else if(d.pendingReview || d.selfieApproved || d.quizComplete || d.rejected){
-        window.location.href = 'home.html';
-      } else {
-        window.location.href = 'profile.html';
-      }
+      return;
     }
+
+    const d = userSnap.data();
+    if(d.deleted || d.adminDeleted){
+      window.location.href = 'profile.html';
+    } else if(d.pendingReview || d.selfieApproved || d.quizComplete || d.rejected){
+      window.location.href = 'home.html';
+    } else {
+      window.location.href = 'profile.html';
+    }
+  } catch(e){
+    console.error(e);
+    handlingAuth = false;
+    hideLoading();
+    showError('登入資料讀取失敗，請重新整理後再試一次');
+  }
+}
+
+async function handleRedirectLoginResult(){
+  try{
+    const result = await getRedirectResult(auth);
+    redirectChecked = true;
+    if(result?.user) await routeUser(result.user);
+  } catch(err){
+    redirectChecked = true;
+    hideLoading();
+    console.error(err);
+    showError('Google 登入沒有完成，請回到主網址後再試一次');
+  }
+}
+
+handleRedirectLoginResult();
+
+// 已登入直接跳轉
+onAuthStateChanged(auth, async (user) => {
+  if(!user || handlingAuth) return;
+  if(!redirectChecked){
+    setTimeout(() => {
+      if(auth.currentUser && !handlingAuth) routeUser(auth.currentUser);
+    }, 350);
+    return;
+  }
+  routeUser(user);
+});
+
+// Google 登入
+document.getElementById('btnGoogle').onclick = async () => {
+  showLoading();
+  try{
+    if(shouldUseRedirectLogin()){
+      await signInWithRedirect(auth, provider);
+      return;
+    }
+    const result = await signInWithPopup(auth, provider);
+    await routeUser(result.user);
   } catch(err){
     hideLoading();
     if(err.code==='auth/popup-closed-by-user') return;
-    if(err.code==='auth/popup-blocked') showError('請允許彈出視窗，或檢查瀏覽器設定');
+    if(err.code==='auth/popup-blocked'){
+      try{
+        await signInWithRedirect(auth, provider);
+      } catch(redirectErr){
+        console.error(redirectErr);
+        showError('請用 Safari 或 Chrome 開啟後再登入');
+      }
+    }
     else showError('登入失敗，請再試一次');
     console.error(err);
   }
