@@ -41,8 +41,17 @@ button{font-family:inherit;cursor:pointer;touch-action:manipulation;}
 .badge.bad{background:#FEE2E2;color:#B91C1C;}
 .funnel{display:grid;gap:0.34rem;margin-top:0.55rem;}
 .row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0.5rem;border-radius:11px;background:#F8F4F5;padding:0.46rem 0.55rem;}
+.row.clickable{cursor:pointer;touch-action:manipulation;}
+.row.clickable:active{transform:scale(0.99);}
 .row-k{font-size:0.68rem;font-weight:850;color:rgba(58,42,46,0.58);}
 .row-v{font-size:0.72rem;font-weight:900;color:#3A2A2E;}
+.drill{display:none;margin-top:-0.12rem;border-radius:12px;background:white;border:1px solid rgba(184,205,217,0.28);overflow:hidden;}
+.drill.show{display:block;}
+.drill-item{padding:0.52rem 0.58rem;border-bottom:1px solid rgba(184,205,217,0.18);}
+.drill-item:last-child{border-bottom:none;}
+.drill-name{font-size:0.7rem;font-weight:900;color:#3A2A2E;line-height:1.45;}
+.drill-meta{font-size:0.58rem;font-weight:760;color:rgba(58,42,46,0.4);word-break:break-all;line-height:1.45;}
+.drill-reason{font-size:0.64rem;font-weight:760;color:rgba(58,42,46,0.62);line-height:1.45;margin-top:0.18rem;}
 .reason{margin-top:0.58rem;border-radius:12px;background:rgba(184,205,217,0.12);padding:0.58rem 0.62rem;font-size:0.68rem;font-weight:760;line-height:1.55;color:rgba(58,42,46,0.62);}
 .empty{padding:1.2rem;text-align:center;color:rgba(58,42,46,0.5);font-size:0.8rem;font-weight:800;line-height:1.65;}
 .toast{position:fixed;top:4.8rem;left:50%;transform:translateX(-50%);z-index:50;background:#3A2A2E;color:white;border-radius:99px;padding:0.62rem 1rem;font-size:0.74rem;font-weight:850;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;}
@@ -158,46 +167,86 @@ function analyzeUser(viewer){
     lowScore: 0,
     recommended: 0
   };
+  const groups = {
+    total: [],
+    self: [],
+    alreadyActed: [],
+    notReady: [],
+    blocked: [],
+    gender: [],
+    hardExclude: [],
+    lowScore: [],
+    recommended: []
+  };
   const lowExamples = [];
   const hardExamples = [];
 
+  function pushGroup(key, target, reason='', match=null){
+    groups[key].push({
+      uid: target.uid,
+      nickname: target.nickname || '未命名',
+      city: target.city || '',
+      gender: target.gender || '',
+      lookingFor: target.lookingFor || '',
+      reason,
+      scoreA: match ? Math.round(match.scoreForA.rawScore) : null,
+      scoreB: match ? Math.round(match.scoreForB.rawScore) : null
+    });
+  }
+
   users.forEach(target => {
-    if(target.uid === viewer.uid){ counts.self++; return; }
-    if(acted.has(target.uid)){ counts.alreadyActed++; return; }
+    pushGroup('total', target, '全部用戶');
+    if(target.uid === viewer.uid){ counts.self++; pushGroup('self', target, '這是目前分析的本人'); return; }
+    if(acted.has(target.uid)){ counts.alreadyActed++; pushGroup('alreadyActed', target, '已經喜歡或略過'); return; }
     if(!target.selfieApproved || !target.quizComplete || target.pendingReview || target.rejected || target.adminBlocked || target.blocked === true || !target.quizAnswers || target.deleted || target.adminDeleted){
       counts.notReady++;
+      const reasons = [];
+      if(!target.selfieApproved) reasons.push('未審核通過');
+      if(!target.quizComplete) reasons.push('未完成測驗');
+      if(target.pendingReview) reasons.push('審核中');
+      if(target.rejected) reasons.push('審核未通過');
+      if(target.adminBlocked || target.blocked === true) reasons.push('被封鎖');
+      if(!target.quizAnswers) reasons.push('沒有測驗答案');
+      if(target.deleted || target.adminDeleted) reasons.push('已刪除');
+      pushGroup('notReady', target, reasons.join('、') || '資料狀態不可推薦');
       return;
     }
     const myBlocked = Array.isArray(viewer.blocked) ? viewer.blocked : [];
     const theirBlocked = Array.isArray(target.blocked) ? target.blocked : [];
     if(myBlocked.includes(target.uid) || theirBlocked.includes(viewer.uid)){
       counts.blocked++;
+      pushGroup('blocked', target, myBlocked.includes(target.uid) ? '你封鎖了對方' : '對方封鎖了你');
       return;
     }
     const gender = isGenderCompatible(viewer, target);
     if(!gender.ok){
       counts.gender++;
+      pushGroup('gender', target, gender.label);
       return;
     }
     const match = calculateMutualMatch(viewer, target);
     if(match.scoreForA.excluded || match.scoreForB.excluded){
       counts.hardExclude++;
+      const reason = match.scoreForA.excludeRule?.dimension || match.scoreForB.excludeRule?.dimension || '硬性條件';
+      pushGroup('hardExclude', target, reason, match);
       if(hardExamples.length < 2){
-        hardExamples.push(`${target.nickname || target.uid}：${match.scoreForA.excludeRule?.dimension || match.scoreForB.excludeRule?.dimension || '硬性條件'}`);
+        hardExamples.push(`${target.nickname || target.uid}：${reason}`);
       }
       return;
     }
     if(!match.recommended){
       counts.lowScore++;
+      pushGroup('lowScore', target, `你看 ${Math.round(match.scoreForA.rawScore)} / 對方看 ${Math.round(match.scoreForB.rawScore)}`, match);
       if(lowExamples.length < 2){
         lowExamples.push(`${target.nickname || target.uid}：你看 ${Math.round(match.scoreForA.rawScore)} / 對方看 ${Math.round(match.scoreForB.rawScore)}`);
       }
       return;
     }
     counts.recommended++;
+    pushGroup('recommended', target, `你看 ${Math.round(match.scoreForA.rawScore)} / 對方看 ${Math.round(match.scoreForB.rawScore)}`, match);
   });
 
-  return { counts, lowExamples, hardExamples };
+  return { counts, groups, lowExamples, hardExamples };
 }
 
 async function loadData(){
@@ -239,13 +288,15 @@ function render(){
   list.innerHTML = filtered.map(item => {
     const u = item.user;
     const c = item.result.counts;
+    const g = item.result.groups;
     const badgeClass = c.recommended ? 'ok' : c.lowScore || c.hardExclude || c.gender ? 'warn' : 'bad';
     const examples = [
       ...item.result.hardExamples.map(t => `硬性排除：${t}`),
       ...item.result.lowExamples.map(t => `分數不足：${t}`)
     ];
+    const drill = (key) => renderDrill(item, key);
     return `
-      <article class="card">
+      <article class="card" data-card-uid="${escapeHtml(u.uid)}">
         <div class="card-head">
           <div>
             <div class="name">${escapeHtml(u.nickname || '未命名')} · ${escapeHtml(u.city || '')}</div>
@@ -254,20 +305,40 @@ function render(){
           <div class="badge ${badgeClass}">${c.recommended} 可推薦</div>
         </div>
         <div class="funnel">
-          <div class="row"><div class="row-k">全部用戶</div><div class="row-v">${c.total}</div></div>
-          <div class="row"><div class="row-k">自己</div><div class="row-v">-${c.self}</div></div>
-          <div class="row"><div class="row-k">已喜歡 / 已略過</div><div class="row-v">-${c.alreadyActed}</div></div>
-          <div class="row"><div class="row-k">未審核 / 未測驗 / 被封鎖</div><div class="row-v">-${c.notReady}</div></div>
-          <div class="row"><div class="row-k">互相封鎖</div><div class="row-v">-${c.blocked}</div></div>
-          <div class="row"><div class="row-k">性別互選不符</div><div class="row-v">-${c.gender}</div></div>
-          <div class="row"><div class="row-k">硬性條件排除</div><div class="row-v">-${c.hardExclude}</div></div>
-          <div class="row"><div class="row-k">雙向未達 ${MATCH_SCORE_CONFIG.recommendationRule.threshold}</div><div class="row-v">-${c.lowScore}</div></div>
-          <div class="row"><div class="row-k">最後可推薦</div><div class="row-v">${c.recommended}</div></div>
+          <div class="row clickable" data-drill="total"><div class="row-k">全部用戶</div><div class="row-v">${c.total}</div></div>${drill('total')}
+          <div class="row clickable" data-drill="self"><div class="row-k">自己</div><div class="row-v">-${c.self}</div></div>${drill('self')}
+          <div class="row clickable" data-drill="alreadyActed"><div class="row-k">已喜歡 / 已略過</div><div class="row-v">-${c.alreadyActed}</div></div>${drill('alreadyActed')}
+          <div class="row clickable" data-drill="notReady"><div class="row-k">未審核 / 未測驗 / 被封鎖</div><div class="row-v">-${c.notReady}</div></div>${drill('notReady')}
+          <div class="row clickable" data-drill="blocked"><div class="row-k">互相封鎖</div><div class="row-v">-${c.blocked}</div></div>${drill('blocked')}
+          <div class="row clickable" data-drill="gender"><div class="row-k">性別互選不符</div><div class="row-v">-${c.gender}</div></div>${drill('gender')}
+          <div class="row clickable" data-drill="hardExclude"><div class="row-k">硬性條件排除</div><div class="row-v">-${c.hardExclude}</div></div>${drill('hardExclude')}
+          <div class="row clickable" data-drill="lowScore"><div class="row-k">雙向未達 ${MATCH_SCORE_CONFIG.recommendationRule.threshold}</div><div class="row-v">-${c.lowScore}</div></div>${drill('lowScore')}
+          <div class="row clickable" data-drill="recommended"><div class="row-k">最後可推薦</div><div class="row-v">${c.recommended}</div></div>${drill('recommended')}
         </div>
         <div class="reason">${examples.length ? escapeHtml(examples.join('\n')) : '目前沒有明顯排除範例。'}</div>
       </article>
     `;
   }).join('');
+}
+
+function renderDrill(item, key){
+  const rows = item.result.groups?.[key] || [];
+  const viewerName = item.user.nickname || item.user.uid;
+  if(!rows.length){
+    return `<div class="drill" data-drill-box="${key}"><div class="drill-item"><div class="drill-reason">沒有名單</div></div></div>`;
+  }
+  return `
+    <div class="drill" data-drill-box="${key}">
+      ${rows.slice(0, 80).map(row => `
+        <div class="drill-item">
+          <div class="drill-name">${escapeHtml(row.nickname)} · ${escapeHtml(row.city || '')}</div>
+          <div class="drill-meta">${escapeHtml(row.uid)} · ${escapeHtml(row.gender || '?')} / 找 ${escapeHtml(row.lookingFor || '?')}</div>
+          <div class="drill-reason">${escapeHtml(row.reason || '')}${row.scoreA !== null ? ` · ${escapeHtml(viewerName)}看${row.scoreA} / 對方看${row.scoreB}` : ''}</div>
+        </div>
+      `).join('')}
+      ${rows.length > 80 ? `<div class="drill-item"><div class="drill-reason">還有 ${rows.length - 80} 人未顯示</div></div>` : ''}
+    </div>
+  `;
 }
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -281,6 +352,13 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 document.getElementById('reloadBtn').addEventListener('click', loadData);
 searchInput.addEventListener('input', render);
+list.addEventListener('click', event => {
+  const row = event.target.closest('[data-drill]');
+  if(!row) return;
+  const card = row.closest('.card');
+  const box = card?.querySelector(`[data-drill-box="${row.dataset.drill}"]`);
+  if(box) box.classList.toggle('show');
+});
 
 onAuthStateChanged(auth, async user => {
   if(!user){
