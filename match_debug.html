@@ -48,7 +48,7 @@ button.light{background:white;color:#3A5068;border:1.5px solid rgba(184,205,217,
 <div class="wrap">
   <div class="eyebrow">PENGOO DEBUG</div>
   <h1>配對診斷</h1>
-  <div class="lead">這頁會檢查目前登入帳號、機器人是否存在、性別互選、是否被略過、雙向分數是否超過 80。</div>
+  <div class="lead">這頁會檢查目前登入帳號、機器人是否存在、性別互選、是否被略過、雙向分數是否超過 75。</div>
   <section class="card">
     <div class="title">診斷身份</div>
     <div class="text">選一個用戶後，下面會用那個人的身份檢查配對頁會看到誰。也會同步套用到配對頁。</div>
@@ -299,11 +299,11 @@ async function runDebug(){
         recommended++;
         resultLabel = '會出現';
         pillClass = 'ok';
-        reason = '通過資格檢查，雙向分數都達 80。';
+        reason = '通過資格檢查，雙向分數都達 75。';
       } else {
         resultLabel = '分數不足';
         pillClass = 'warn';
-        reason = `資格通過，但雙向分數未都達 80。你看它 ${Math.round(match.scoreForA.rawScore)}，它看你 ${Math.round(match.scoreForB.rawScore)}。`;
+        reason = `資格通過，但雙向分數未都達 75。你看它 ${Math.round(match.scoreForA.rawScore)}，它看你 ${Math.round(match.scoreForB.rawScore)}。`;
         if(match.scoreForA.excluded) reason += ` 你這邊有硬性排除：${match.scoreForA.excludeRule?.dimension || ''}`;
         if(match.scoreForB.excluded) reason += ` 它那邊有硬性排除：${match.scoreForB.excludeRule?.dimension || ''}`;
       }
