@@ -47,12 +47,22 @@ button{font-family:inherit;cursor:pointer;touch-action:manipulation;}
 .row-v{font-size:0.72rem;font-weight:900;color:#3A2A2E;}
 .drill{display:none;margin-top:-0.12rem;border-radius:12px;background:white;border:1px solid rgba(184,205,217,0.28);overflow:hidden;}
 .drill.show{display:block;}
-.drill-item{padding:0.52rem 0.58rem;border-bottom:1px solid rgba(184,205,217,0.18);}
+.drill-item{display:grid;grid-template-columns:46px 1fr;gap:0.58rem;align-items:center;padding:0.52rem 0.58rem;border-bottom:1px solid rgba(184,205,217,0.18);}
 .drill-item:last-child{border-bottom:none;}
+.drill-photo{width:46px;height:46px;border-radius:12px;object-fit:cover;background:#F8F4F5;border:1px solid rgba(184,205,217,0.34);}
+.drill-photo.empty{display:flex;align-items:center;justify-content:center;font-size:0.54rem;font-weight:900;color:rgba(58,42,46,0.34);}
 .drill-name{font-size:0.7rem;font-weight:900;color:#3A2A2E;line-height:1.45;}
 .drill-meta{font-size:0.58rem;font-weight:760;color:rgba(58,42,46,0.4);word-break:break-all;line-height:1.45;}
 .drill-reason{font-size:0.64rem;font-weight:760;color:rgba(58,42,46,0.62);line-height:1.45;margin-top:0.18rem;}
 .reason{margin-top:0.58rem;border-radius:12px;background:rgba(184,205,217,0.12);padding:0.58rem 0.62rem;font-size:0.68rem;font-weight:760;line-height:1.55;color:rgba(58,42,46,0.62);}
+.quiz-toggle{width:100%;height:36px;margin-top:0.58rem;border:0;border-radius:12px;background:#3A2A2E;color:white;font-size:0.72rem;font-weight:900;}
+.quiz-panel{display:none;margin-top:0.46rem;border:1px solid rgba(184,205,217,0.3);border-radius:14px;background:white;overflow:hidden;}
+.quiz-panel.show{display:block;}
+.qa-item{padding:0.62rem 0.68rem;border-bottom:1px solid rgba(184,205,217,0.18);}
+.qa-item:last-child{border-bottom:none;}
+.qa-title{font-size:0.68rem;font-weight:900;line-height:1.5;color:#3A2A2E;}
+.qa-answer{margin-top:0.28rem;font-size:0.66rem;font-weight:800;line-height:1.55;color:rgba(58,42,46,0.62);}
+.qa-empty{padding:0.8rem;font-size:0.72rem;font-weight:850;color:rgba(58,42,46,0.48);text-align:center;}
 .empty{padding:1.2rem;text-align:center;color:rgba(58,42,46,0.5);font-size:0.8rem;font-weight:800;line-height:1.65;}
 .toast{position:fixed;top:4.8rem;left:50%;transform:translateX(-50%);z-index:50;background:#3A2A2E;color:white;border-radius:99px;padding:0.62rem 1rem;font-size:0.74rem;font-weight:850;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;}
 .toast.show{opacity:1;}
@@ -97,6 +107,7 @@ import { auth, provider, db } from './firebase-config.js';
 import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 import { calculateMutualMatch, MATCH_SCORE_CONFIG } from './quiz-scoring.js';
+import { getQuizQuestions } from './quiz-bank.js';
 
 const ADMIN_WHITELIST = ['kingnashmvp@yahoo.com.tw'];
 const loginBox = document.getElementById('loginBox');
@@ -188,6 +199,7 @@ function analyzeUser(viewer){
       city: target.city || '',
       gender: target.gender || '',
       lookingFor: target.lookingFor || '',
+      photoURL: Array.isArray(target.photos) && target.photos.length ? target.photos[0] : '',
       reason,
       scoreA: match ? Math.round(match.scoreForA.rawScore) : null,
       scoreB: match ? Math.round(match.scoreForB.rawScore) : null
@@ -288,7 +300,6 @@ function render(){
   list.innerHTML = filtered.map(item => {
     const u = item.user;
     const c = item.result.counts;
-    const g = item.result.groups;
     const badgeClass = c.recommended ? 'ok' : c.lowScore || c.hardExclude || c.gender ? 'warn' : 'bad';
     const examples = [
       ...item.result.hardExamples.map(t => `硬性排除：${t}`),
@@ -316,27 +327,54 @@ function render(){
           <div class="row clickable" data-drill="recommended"><div class="row-k">最後可推薦</div><div class="row-v">${c.recommended}</div></div>${drill('recommended')}
         </div>
         <div class="reason">${examples.length ? escapeHtml(examples.join('\n')) : '目前沒有明顯排除範例。'}</div>
+        <button class="quiz-toggle" type="button" data-quiz="${escapeHtml(u.uid)}">查看每題回答</button>
+        ${renderQuizAnswers(u)}
       </article>
     `;
   }).join('');
+}
+
+function renderQuizAnswers(user){
+  if(!user.quizAnswers || !Object.keys(user.quizAnswers).length){
+    return `<div class="quiz-panel" data-quiz-box="${escapeHtml(user.uid)}"><div class="qa-empty">這個用戶目前沒有測驗答案</div></div>`;
+  }
+  const questions = getQuizQuestions(user.quizGenderVersion || user.gender || 'other');
+  return `
+    <div class="quiz-panel" data-quiz-box="${escapeHtml(user.uid)}">
+      ${questions.map(question => {
+        const value = user.quizAnswers[question.id] ?? user.quizAnswers[`q${String(question.order).padStart(2, '0')}`];
+        const option = question.options.find(opt => opt.key === value || opt.value === value);
+        const answerText = option ? `${option.key}. ${option.text}` : (value ? `${value}（找不到對應選項）` : '尚未回答');
+        return `
+          <div class="qa-item">
+            <div class="qa-title">Q${question.order}. ${escapeHtml(question.title)}</div>
+            <div class="qa-answer">${escapeHtml(answerText)}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
 
 function renderDrill(item, key){
   const rows = item.result.groups?.[key] || [];
   const viewerName = item.user.nickname || item.user.uid;
   if(!rows.length){
-    return `<div class="drill" data-drill-box="${key}"><div class="drill-item"><div class="drill-reason">沒有名單</div></div></div>`;
+    return `<div class="drill" data-drill-box="${key}"><div class="drill-item"><div class="drill-photo empty">無圖</div><div class="drill-reason">沒有名單</div></div></div>`;
   }
   return `
     <div class="drill" data-drill-box="${key}">
       ${rows.slice(0, 80).map(row => `
         <div class="drill-item">
-          <div class="drill-name">${escapeHtml(row.nickname)} · ${escapeHtml(row.city || '')}</div>
-          <div class="drill-meta">${escapeHtml(row.uid)} · ${escapeHtml(row.gender || '?')} / 找 ${escapeHtml(row.lookingFor || '?')}</div>
-          <div class="drill-reason">${escapeHtml(row.reason || '')}${row.scoreA !== null ? ` · ${escapeHtml(viewerName)}看${row.scoreA} / 對方看${row.scoreB}` : ''}</div>
+          ${row.photoURL ? `<img class="drill-photo" src="${escapeHtml(row.photoURL)}" alt="${escapeHtml(row.nickname)}">` : '<div class="drill-photo empty">無圖</div>'}
+          <div>
+            <div class="drill-name">${escapeHtml(row.nickname)} · ${escapeHtml(row.city || '')}</div>
+            <div class="drill-meta">${escapeHtml(row.uid)} · ${escapeHtml(row.gender || '?')} / 找 ${escapeHtml(row.lookingFor || '?')}</div>
+            <div class="drill-reason">${escapeHtml(row.reason || '')}${row.scoreA !== null ? ` · ${escapeHtml(viewerName)}看${row.scoreA} / 對方看${row.scoreB}` : ''}</div>
+          </div>
         </div>
       `).join('')}
-      ${rows.length > 80 ? `<div class="drill-item"><div class="drill-reason">還有 ${rows.length - 80} 人未顯示</div></div>` : ''}
+      ${rows.length > 80 ? `<div class="drill-item"><div class="drill-photo empty">...</div><div class="drill-reason">還有 ${rows.length - 80} 人未顯示</div></div>` : ''}
     </div>
   `;
 }
@@ -354,10 +392,18 @@ document.getElementById('reloadBtn').addEventListener('click', loadData);
 searchInput.addEventListener('input', render);
 list.addEventListener('click', event => {
   const row = event.target.closest('[data-drill]');
-  if(!row) return;
-  const card = row.closest('.card');
-  const box = card?.querySelector(`[data-drill-box="${row.dataset.drill}"]`);
-  if(box) box.classList.toggle('show');
+  if(row){
+    const card = row.closest('.card');
+    const box = card?.querySelector(`[data-drill-box="${row.dataset.drill}"]`);
+    if(box) box.classList.toggle('show');
+    return;
+  }
+  const quizBtn = event.target.closest('[data-quiz]');
+  if(quizBtn){
+    const card = quizBtn.closest('.card');
+    const box = card?.querySelector(`[data-quiz-box="${quizBtn.dataset.quiz}"]`);
+    if(box) box.classList.toggle('show');
+  }
 });
 
 onAuthStateChanged(auth, async user => {
