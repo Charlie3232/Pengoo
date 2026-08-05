@@ -97,6 +97,7 @@ const loginBox = document.getElementById('loginBox');
 const panel = document.getElementById('panel');
 const list = document.getElementById('eventList');
 const toast = document.getElementById('toast');
+const MONITOR_IGNORE_EMAILS = ['kingnashmvp@yahoo.com.tw'];
 
 function showToast(msg){
   toast.textContent = msg;
@@ -191,7 +192,9 @@ async function loadEvents(){
   try{
     const q = query(collection(db, 'loginEvents'), orderBy('createdAt', 'desc'), limit(80));
     const snap = await getDocs(q);
-    const rows = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    const rows = snap.docs
+      .map(d => ({ id:d.id, ...d.data() }))
+      .filter(row => !MONITOR_IGNORE_EMAILS.includes(String(row.email || row.detail?.email || '').toLowerCase()));
     document.getElementById('totalCount').textContent = rows.length;
     document.getElementById('errorCount').textContent = rows.filter(row => isErrorType(row.type)).length;
     document.getElementById('storageBadCount').textContent = rows.filter(row => row.client?.storageOk === false).length;
