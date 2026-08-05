@@ -466,6 +466,14 @@ async function routeUser(user){
         quizComplete: false,
         profileComplete: false,
         pendingReview: false,
+        profileProgress: {
+          step: 0,
+          label: '建立帳號',
+          status: 'account_created',
+          updatedAt: serverTimestamp()
+        },
+        lastProfileStep: 0,
+        profileDropoffStatus: 'account_created',
         createdAt: serverTimestamp(),
         lastActive: serverTimestamp(),
         matchScore: {},
