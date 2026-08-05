@@ -147,13 +147,38 @@ body{
 .btn-google:active{transform:scale(0.97);}
 .google-icon{width:20px;height:20px;flex-shrink:0;}
 
-/* 分隔 */
 .divider{
   display:flex;align-items:center;gap:0.8rem;
-  margin:0.3rem 0 0.8rem;
-  color:rgba(107,45,62,0.4);font-size:0.75rem;font-weight:700;
+  margin:0.25rem 0 0.75rem;
+  color:rgba(107,45,62,0.46);font-size:0.72rem;font-weight:800;
 }
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(107,45,62,0.15);}
+.divider::before,.divider::after{content:'';height:1px;flex:1;background:rgba(107,45,62,0.18);}
+.email-box{
+  display:grid;gap:0.55rem;
+  background:rgba(255,255,255,0.42);
+  border:1px solid rgba(255,255,255,0.42);
+  border-radius:18px;
+  padding:0.78rem;
+}
+.email-input{
+  width:100%;height:44px;
+  border:1.5px solid rgba(107,45,62,0.14);
+  border-radius:13px;background:rgba(255,255,255,0.92);
+  padding:0 0.82rem;
+  font-family:inherit;font-size:0.82rem;font-weight:800;color:#3A2A2E;
+  outline:none;
+}
+.email-input:focus{border-color:rgba(107,45,62,0.34);}
+.btn-email{
+  width:100%;height:44px;border:0;border-radius:13px;
+  background:#6B2D3E;color:white;
+  font-family:inherit;font-size:0.84rem;font-weight:900;
+  cursor:pointer;touch-action:manipulation;
+}
+.btn-email:active{transform:scale(0.98);}
+.btn-email.secondary{background:white;color:#6B2D3E;border:1.5px solid rgba(107,45,62,0.16);}
+.email-actions{display:grid;grid-template-columns:1fr;gap:0.48rem;}
+.email-note{font-size:0.66rem;font-weight:760;line-height:1.55;color:rgba(107,45,62,0.58);text-align:center;}
 
 /* 來賓瀏覽按鈕 */
 .btn-ghost{
@@ -331,6 +356,16 @@ body{
         </svg>
         使用 Google 帳號<br/>登入 / 註冊
       </button>
+      <div class="divider">或使用 Email</div>
+      <div class="email-box">
+        <input class="email-input" id="emailInput" type="email" inputmode="email" autocomplete="email" placeholder="Email"/>
+        <input class="email-input" id="passwordInput" type="password" autocomplete="current-password" placeholder="密碼（至少 6 碼）"/>
+        <div class="email-actions">
+          <button class="btn-email" id="btnEmailLogin" type="button">Email 登入</button>
+          <button class="btn-email secondary" id="btnEmailSignup" type="button">第一次使用，建立帳號</button>
+        </div>
+        <div class="email-note">Email 登入會記住狀態；下次回來通常不用重新登入。</div>
+      </div>
     </div>
 
     <div class="page-dots">
@@ -348,7 +383,7 @@ body{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -366,6 +401,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
+setPersistence(auth, browserLocalPersistence).catch(e => console.warn('Auth persistence failed:', e));
 
 const loadingOverlay = document.getElementById('loadingOverlay');
 const errorMsg = document.getElementById('errorMsg');
@@ -584,6 +620,74 @@ document.getElementById('btnGoogle').onclick = async () => {
       }
     }
     else showError('登入失敗，請再試一次');
+    console.error(err);
+  }
+};
+
+function friendlyEmailError(err){
+  const code = err.code || '';
+  if(code === 'auth/invalid-email') return 'Email 格式不正確';
+  if(code === 'auth/missing-password') return '請輸入密碼';
+  if(code === 'auth/weak-password') return '密碼至少需要 6 碼';
+  if(code === 'auth/wrong-password' || code === 'auth/invalid-credential') return 'Email 或密碼不正確';
+  if(code === 'auth/email-already-in-use') return '這個 Email 已註冊，請直接登入';
+  if(code === 'auth/too-many-requests') return '嘗試太多次，請稍後再試';
+  if(code === 'auth/operation-not-allowed') return 'Email 登入尚未在 Firebase 開啟';
+  return 'Email 登入失敗，請再試一次';
+}
+
+function getEmailForm(){
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  if(!email){
+    showError('請輸入 Email');
+    return null;
+  }
+  if(password.length < 6){
+    showError('密碼至少需要 6 碼');
+    return null;
+  }
+  return { email, password };
+}
+
+document.getElementById('btnEmailLogin').onclick = async () => {
+  const form = getEmailForm();
+  if(!form) return;
+  showLoading();
+  try{
+    logLoginEvent('email_login_start', { email: form.email });
+    const result = await signInWithEmailAndPassword(auth, form.email, form.password);
+    await logLoginEvent('email_login_success', { uid: result.user?.uid || '', email: form.email });
+    await routeUser(result.user);
+  } catch(err){
+    hideLoading();
+    await logLoginEvent('email_login_error', {
+      code: err.code || '',
+      message: err.message || String(err),
+      email: form.email
+    });
+    showError(friendlyEmailError(err));
+    console.error(err);
+  }
+};
+
+document.getElementById('btnEmailSignup').onclick = async () => {
+  const form = getEmailForm();
+  if(!form) return;
+  showLoading();
+  try{
+    logLoginEvent('email_signup_start', { email: form.email });
+    const result = await createUserWithEmailAndPassword(auth, form.email, form.password);
+    await logLoginEvent('email_signup_success', { uid: result.user?.uid || '', email: form.email });
+    await routeUser(result.user);
+  } catch(err){
+    hideLoading();
+    await logLoginEvent('email_signup_error', {
+      code: err.code || '',
+      message: err.message || String(err),
+      email: form.email
+    });
+    showError(friendlyEmailError(err));
     console.error(err);
   }
 };
