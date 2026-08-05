@@ -369,6 +369,7 @@ const provider = new GoogleAuthProvider();
 
 const loadingOverlay = document.getElementById('loadingOverlay');
 const errorMsg = document.getElementById('errorMsg');
+const MONITOR_IGNORE_EMAILS = ['kingnashmvp@yahoo.com.tw'];
 let handlingAuth = false;
 let redirectChecked = false;
 
@@ -403,12 +404,15 @@ function getClientInfo(){
 
 async function logLoginEvent(type, detail={}){
   try{
+    const email = detail.email || auth.currentUser?.email || '';
+    const uid = detail.uid || auth.currentUser?.uid || '';
+    if(MONITOR_IGNORE_EMAILS.includes(String(email).toLowerCase())) return;
     await addDoc(collection(db,'loginEvents'), {
       type,
       detail,
       client: getClientInfo(),
-      uid: auth.currentUser?.uid || '',
-      email: auth.currentUser?.email || '',
+      uid,
+      email,
       createdAt: serverTimestamp()
     });
   } catch(e){
@@ -466,7 +470,9 @@ async function routeUser(user){
     console.error(e);
     logLoginEvent('route_user_error', {
       code: e.code || '',
-      message: e.message || String(e)
+      message: e.message || String(e),
+      uid: user.uid || '',
+      email: user.email || ''
     });
     handlingAuth = false;
     hideLoading();
@@ -516,13 +522,14 @@ document.getElementById('btnGoogle').onclick = async () => {
     }
     await logLoginEvent('login_start_popup', { reason:'desktop_popup' });
     const result = await signInWithPopup(auth, provider);
-    await logLoginEvent('popup_success', { uid: result.user?.uid || '' });
+    await logLoginEvent('popup_success', { uid: result.user?.uid || '', email: result.user?.email || '' });
     await routeUser(result.user);
   } catch(err){
     hideLoading();
     await logLoginEvent('login_error', {
       code: err.code || '',
       message: err.message || String(err),
+      email: err.customData?.email || '',
       popupBlocked: err.code === 'auth/popup-blocked'
     });
     if(err.code==='auth/popup-closed-by-user') return;
