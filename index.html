@@ -551,12 +551,12 @@ document.getElementById('btnGoogle').onclick = async () => {
   showLoading();
   try{
     if(shouldUseRedirectLogin()){
-      await logLoginEvent('login_start_redirect', { reason:'mobile_or_safari' });
+      logLoginEvent('login_start_redirect', { reason:'mobile_or_safari' });
       markRedirectStarted('mobile_or_safari');
       await signInWithRedirect(auth, provider);
       return;
     }
-    await logLoginEvent('login_start_popup', { reason:'desktop_popup' });
+    logLoginEvent('login_start_popup', { reason:'desktop_popup' });
     const result = await signInWithPopup(auth, provider);
     await logLoginEvent('popup_success', { uid: result.user?.uid || '', email: result.user?.email || '' });
     await routeUser(result.user);
@@ -571,7 +571,7 @@ document.getElementById('btnGoogle').onclick = async () => {
     if(err.code==='auth/popup-closed-by-user') return;
     if(err.code==='auth/popup-blocked'){
       try{
-        await logLoginEvent('login_fallback_redirect', { reason:'popup_blocked' });
+        logLoginEvent('login_fallback_redirect', { reason:'popup_blocked' });
         markRedirectStarted('popup_blocked');
         await signInWithRedirect(auth, provider);
       } catch(redirectErr){
