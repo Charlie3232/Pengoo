@@ -35,10 +35,20 @@ button{font-family:inherit;cursor:pointer;touch-action:manipulation;}
 .type{font-size:0.82rem;font-weight:900;line-height:1.35;word-break:break-word;}
 .time{font-size:0.62rem;font-weight:850;color:rgba(58,42,46,0.4);white-space:nowrap;}
 .pill{display:inline-flex;height:24px;align-items:center;border-radius:99px;background:rgba(184,205,217,0.18);color:#3A5068;font-size:0.62rem;font-weight:900;padding:0 0.48rem;margin:0 0.32rem 0.32rem 0;}
-.pill.err{background:#FEE2E2;color:#B91C1C;}
+.pill.err{border:0;background:#FEE2E2;color:#B91C1C;}
 .block{border-radius:12px;background:#F8F4F5;padding:0.58rem 0.62rem;margin-top:0.5rem;}
 .k{font-size:0.58rem;font-weight:900;color:#7A9BB5;margin-bottom:0.18rem;}
 .v{font-size:0.68rem;font-weight:760;line-height:1.48;color:rgba(58,42,46,0.68);word-break:break-word;white-space:pre-wrap;}
+.plain{border-radius:14px;background:#F8F4F5;padding:0.68rem 0.72rem;margin-top:0.52rem;}
+.plain-title{font-size:0.78rem;font-weight:900;color:#3A2A2E;line-height:1.45;}
+.plain-text{font-size:0.7rem;font-weight:760;color:rgba(58,42,46,0.62);line-height:1.65;margin-top:0.2rem;}
+.plain.ok{background:#E6F4ED;}
+.plain.warn{background:#FEF3C7;}
+.plain.bad{background:#FEE2E2;}
+.copy-code{border:0;}
+.detail-toggle{width:100%;height:34px;margin-top:0.52rem;border:1px solid rgba(184,205,217,0.42);border-radius:12px;background:white;color:#3A5068;font-size:0.68rem;font-weight:900;}
+.detail{display:none;}
+.detail.show{display:block;}
 .empty{padding:1.2rem;text-align:center;color:rgba(58,42,46,0.5);font-size:0.8rem;font-weight:800;line-height:1.65;}
 .toast{position:fixed;top:4.8rem;left:50%;transform:translateX(-50%);z-index:50;background:#3A2A2E;color:white;border-radius:99px;padding:0.62rem 1rem;font-size:0.74rem;font-weight:850;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;}
 .toast.show{opacity:1;}
@@ -124,6 +134,58 @@ function isErrorType(type){
   return String(type || '').includes('error');
 }
 
+function getEventTitle(type){
+  const map = {
+    login_start_redirect: '使用者開始用跳轉登入',
+    login_start_popup: '使用者開始用彈窗登入',
+    popup_success: '彈窗登入成功',
+    login_error: '登入失敗',
+    login_fallback_redirect: '彈窗失敗，改用跳轉登入',
+    fallback_redirect_error: '改用跳轉登入也失敗',
+    redirect_result_error: '跳轉回來後登入失敗',
+    route_user_error: '登入後讀取用戶資料失敗'
+  };
+  return map[type] || type || '未知事件';
+}
+
+function explainEvent(row){
+  const type = row.type || '';
+  const code = row.detail?.code || '';
+  const message = row.detail?.message || '';
+  const client = row.client || {};
+  const ua = String(client.userAgent || '').toLowerCase();
+  const href = client.href || '';
+
+  if(!isErrorType(type)){
+    if(type === 'popup_success') return { tone:'ok', title:'登入成功', text:'這筆只是成功紀錄，不需要處理。' };
+    if(type === 'login_fallback_redirect') return { tone:'warn', title:'彈窗被擋，所以改用跳轉登入', text:'通常發生在手機瀏覽器或瀏覽器擋彈窗。只要後面有成功登入，這不是大問題。' };
+    return { tone:'ok', title:'登入流程開始', text:'使用者有按登入。這筆不是錯誤，只是紀錄當時使用的登入方式。' };
+  }
+
+  if(code.includes('popup-closed-by-user')){
+    return { tone:'warn', title:'使用者關掉 Google 登入視窗', text:'通常是使用者自己按返回、關閉彈窗，或沒有選 Google 帳號。請他重新按一次 Google 登入。' };
+  }
+  if(code.includes('popup-blocked')){
+    return { tone:'warn', title:'瀏覽器擋住登入彈窗', text:'請使用者改用 Safari / Chrome 正常開啟，不要在 LINE、IG、FB 內建瀏覽器裡開。' };
+  }
+  if(code.includes('unauthorized-domain') || message.includes('unauthorized-domain')){
+    return { tone:'bad', title:'這個網址還沒加入 Firebase 授權網域', text:'到 Firebase Authentication 的授權網域，把使用者正在開的網域加進去。尤其 GitHub Pages、dev tunnel、正式網域都要加。' };
+  }
+  if(code.includes('permission-denied') || message.includes('Missing or insufficient permissions')){
+    return { tone:'bad', title:'Firebase 權限規則擋住了', text:'代表登入後要讀寫 Firestore 或 Storage 時被規則擋下。通常要檢查 Firestore Rules 或 Storage Rules。' };
+  }
+  if(message.includes('missing initial state') || message.includes('sessionStorage') || client.storageOk === false){
+    return { tone:'bad', title:'手機瀏覽器暫存被擋，Google 登入回來時找不到狀態', text:'常見於 Safari 隱私模式、LINE/IG/FB 內建瀏覽器，或使用者阻擋網站追蹤。請他用 Safari/Chrome 正常開啟，關閉無痕模式後再試。' };
+  }
+  if(ua.includes('line') || ua.includes('instagram') || ua.includes('fbav') || ua.includes('fban')){
+    return { tone:'warn', title:'可能是在 App 內建瀏覽器開啟', text:'內建瀏覽器常讓 Google 登入失敗。請使用者按右上角或分享，改用 Safari / Chrome 開啟。' };
+  }
+  if(href.startsWith('file:')){
+    return { tone:'bad', title:'使用者用 file:// 開啟網頁', text:'Firebase 登入不能用直接開檔案的方式。要用 GitHub Pages、正式網址，或本機 Live Server。' };
+  }
+  return { tone:'warn', title:'登入失敗，但原因需要看錯誤碼', text:'先複製錯誤碼給我，我可以再判斷是哪一層問題。也可以看下方技術細節。' };
+}
+
 async function loadEvents(){
   list.innerHTML = '<div class="empty">載入中...</div>';
   try{
@@ -143,21 +205,30 @@ async function loadEvents(){
       const code = row.detail?.code || '';
       const message = row.detail?.message || '';
       const client = row.client || {};
+      const explain = explainEvent(row);
       return `
         <article class="card">
           <div class="card-top">
-            <div class="type">${escapeHtml(row.type || 'unknown')}</div>
+            <div class="type">${escapeHtml(getEventTitle(row.type))}</div>
             <div class="time">${escapeHtml(formatTime(row.createdAt))}</div>
           </div>
+          <div class="plain ${escapeHtml(explain.tone)}">
+            <div class="plain-title">${escapeHtml(explain.title)}</div>
+            <div class="plain-text">${escapeHtml(explain.text)}</div>
+          </div>
           <div>
-            ${code ? `<span class="pill err">${escapeHtml(code)}</span>` : ''}
-            <span class="pill">storage: ${client.storageOk === false ? '異常' : 'ok'}</span>
+            ${code ? `<button class="pill err copy-code" type="button" data-copy="${escapeHtml(code)}">複製錯誤碼：${escapeHtml(code)}</button>` : ''}
+            <span class="pill">暫存：${client.storageOk === false ? '異常' : '正常'}</span>
             ${row.email ? `<span class="pill">${escapeHtml(row.email)}</span>` : ''}
           </div>
-          ${message ? `<div class="block"><div class="k">錯誤訊息</div><div class="v">${escapeHtml(message)}</div></div>` : ''}
-          <div class="block"><div class="k">網址</div><div class="v">${escapeHtml(client.href || '')}</div></div>
-          <div class="block"><div class="k">裝置</div><div class="v">${escapeHtml(client.userAgent || '')}</div></div>
-          <div class="block"><div class="k">畫面</div><div class="v">${escapeHtml(client.viewport || '')} / ${escapeHtml(client.screen || '')}</div></div>
+          <button class="detail-toggle" type="button" data-detail="${escapeHtml(row.id)}">查看技術細節</button>
+          <div class="detail" data-detail-box="${escapeHtml(row.id)}">
+            <div class="block"><div class="k">原始事件</div><div class="v">${escapeHtml(row.type || '')}</div></div>
+            ${message ? `<div class="block"><div class="k">原始錯誤訊息</div><div class="v">${escapeHtml(message)}</div></div>` : ''}
+            <div class="block"><div class="k">網址</div><div class="v">${escapeHtml(client.href || '')}</div></div>
+            <div class="block"><div class="k">裝置</div><div class="v">${escapeHtml(client.userAgent || '')}</div></div>
+            <div class="block"><div class="k">畫面</div><div class="v">${escapeHtml(client.viewport || '')} / ${escapeHtml(client.screen || '')}</div></div>
+          </div>
         </article>
       `;
     }).join('');
@@ -177,6 +248,23 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 });
 document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 document.getElementById('reloadBtn').addEventListener('click', loadEvents);
+list.addEventListener('click', async event => {
+  const copyBtn = event.target.closest('[data-copy]');
+  if(copyBtn){
+    try{
+      await navigator.clipboard.writeText(copyBtn.dataset.copy);
+      showToast('錯誤碼已複製');
+    } catch(e){
+      showToast('複製失敗，請手動長按複製');
+    }
+    return;
+  }
+  const detailBtn = event.target.closest('[data-detail]');
+  if(detailBtn){
+    const box = detailBtn.closest('.card')?.querySelector(`[data-detail-box="${detailBtn.dataset.detail}"]`);
+    if(box) box.classList.toggle('show');
+  }
+});
 
 onAuthStateChanged(auth, async user => {
   if(!user){
