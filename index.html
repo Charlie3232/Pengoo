@@ -349,7 +349,7 @@ body{
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
@@ -378,6 +378,42 @@ function showError(msg){
   errorMsg.textContent = msg;
   errorMsg.classList.add('show');
   setTimeout(()=>errorMsg.classList.remove('show'), 4000);
+}
+
+function getClientInfo(){
+  return {
+    href: location.href,
+    referrer: document.referrer || '',
+    userAgent: navigator.userAgent || '',
+    language: navigator.language || '',
+    platform: navigator.platform || '',
+    screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+    viewport: `${window.innerWidth || 0}x${window.innerHeight || 0}`,
+    storageOk: (() => {
+      try{
+        sessionStorage.setItem('pengoo_storage_test','1');
+        sessionStorage.removeItem('pengoo_storage_test');
+        return true;
+      } catch(e){
+        return false;
+      }
+    })()
+  };
+}
+
+async function logLoginEvent(type, detail={}){
+  try{
+    await addDoc(collection(db,'loginEvents'), {
+      type,
+      detail,
+      client: getClientInfo(),
+      uid: auth.currentUser?.uid || '',
+      email: auth.currentUser?.email || '',
+      createdAt: serverTimestamp()
+    });
+  } catch(e){
+    console.warn('Login monitor write failed:', e);
+  }
 }
 
 function shouldUseRedirectLogin(){
@@ -428,6 +464,10 @@ async function routeUser(user){
     }
   } catch(e){
     console.error(e);
+    logLoginEvent('route_user_error', {
+      code: e.code || '',
+      message: e.message || String(e)
+    });
     handlingAuth = false;
     hideLoading();
     showError('登入資料讀取失敗，請重新整理後再試一次');
@@ -443,6 +483,10 @@ async function handleRedirectLoginResult(){
     redirectChecked = true;
     hideLoading();
     console.error(err);
+    logLoginEvent('redirect_result_error', {
+      code: err.code || '',
+      message: err.message || String(err)
+    });
     showError('Google 登入沒有完成，請回到主網址後再試一次');
   }
 }
@@ -466,19 +510,32 @@ document.getElementById('btnGoogle').onclick = async () => {
   showLoading();
   try{
     if(shouldUseRedirectLogin()){
+      await logLoginEvent('login_start_redirect', { reason:'mobile_or_safari' });
       await signInWithRedirect(auth, provider);
       return;
     }
+    await logLoginEvent('login_start_popup', { reason:'desktop_popup' });
     const result = await signInWithPopup(auth, provider);
+    await logLoginEvent('popup_success', { uid: result.user?.uid || '' });
     await routeUser(result.user);
   } catch(err){
     hideLoading();
+    await logLoginEvent('login_error', {
+      code: err.code || '',
+      message: err.message || String(err),
+      popupBlocked: err.code === 'auth/popup-blocked'
+    });
     if(err.code==='auth/popup-closed-by-user') return;
     if(err.code==='auth/popup-blocked'){
       try{
+        await logLoginEvent('login_fallback_redirect', { reason:'popup_blocked' });
         await signInWithRedirect(auth, provider);
       } catch(redirectErr){
         console.error(redirectErr);
+        await logLoginEvent('fallback_redirect_error', {
+          code: redirectErr.code || '',
+          message: redirectErr.message || String(redirectErr)
+        });
         showError('請用 Safari 或 Chrome 開啟後再登入');
       }
     }
