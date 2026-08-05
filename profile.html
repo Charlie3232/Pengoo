@@ -842,6 +842,29 @@ function showLoading(msg){ document.getElementById('loadingText').textContent = 
 function hideLoading(){ loadingOverlay.classList.remove('show'); }
 function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2500); }
 
+async function saveProfileProgress(step, status='in_progress', extra={}){
+  if(!currentUser) return;
+  try{
+    const label = stepNames[step-1] || '未知步驟';
+    await setDoc(doc(db,'users',currentUser.uid), {
+      uid: currentUser.uid,
+      email: currentUser.email || '',
+      profileProgress: {
+        step,
+        label,
+        status,
+        extra,
+        updatedAt: serverTimestamp()
+      },
+      lastProfileStep: step,
+      profileDropoffStatus: status,
+      updatedAt: serverTimestamp()
+    }, { merge:true });
+  } catch(e){
+    console.warn('Profile progress write failed:', e);
+  }
+}
+
 function goToStep(n){
   document.getElementById('step'+currentStep).classList.remove('active');
   currentStep = n;
@@ -852,6 +875,7 @@ function goToStep(n){
   document.getElementById('progressFill').style.width = stepProgress[n-1]+'%';
   document.getElementById('backBtn').style.display = (n > 1 && n < 13) ? 'flex' : 'none';
   window.scrollTo(0,0);
+  if(n <= TOTAL_STEPS) saveProfileProgress(n, 'in_progress');
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -878,6 +902,7 @@ onAuthStateChanged(auth, async (user) => {
 
   // 需要填資料，移除遮罩顯示表單
   if(initOverlay) initOverlay.style.display = 'none';
+  saveProfileProgress(currentStep, 'opened');
   await initTags();
 });
 
@@ -1193,6 +1218,7 @@ document.getElementById('photoInput').addEventListener('change', async (e)=>{
     document.getElementById('uploading'+currentSlot).classList.remove('show');
     photosUploaded = photoFiles.filter(f=>f!==null).length;
     updatePhotoCounter();
+    saveProfileProgress(11, photosUploaded >= 3 ? 'photos_ready' : 'photo_uploaded', { photosUploaded });
     showToast('照片上傳成功 ✓');
   } catch(err) {
     // 上傳失敗，解鎖格子
@@ -1200,6 +1226,7 @@ document.getElementById('photoInput').addEventListener('change', async (e)=>{
     document.getElementById('photo'+currentSlot).src = '';
     slot.classList.remove('filled');
     document.getElementById('uploading'+currentSlot).classList.remove('show');
+    saveProfileProgress(11, 'photo_upload_failed', { message: err.message || String(err) });
     showToast('上傳失敗，請再試一次');
     console.error(err);
   }
@@ -1249,6 +1276,7 @@ document.getElementById('selfieInput').addEventListener('change', (e)=>{
   document.getElementById('btn12').textContent = '送出審核';
   status.className = 'selfie-status show';
   status.textContent = '自拍已準備完成，可以送出審核。';
+  saveProfileProgress(12, 'selfie_ready', { fileType:file.type || '', fileSize:file.size || 0 });
 });
 
 document.getElementById('btn12').onclick = async ()=>{
@@ -1313,6 +1341,7 @@ document.getElementById('btn12').onclick = async ()=>{
       baseData.createdAt = serverTimestamp();
     }
     await setDoc(doc(db,'users',currentUser.uid), baseData, { merge: true });
+    await saveProfileProgress(12, 'submitted_review', { photos: photoURLs.length });
 
     hideLoading();
     status.className = 'selfie-status show';
@@ -1324,6 +1353,7 @@ document.getElementById('btn12').onclick = async ()=>{
     btn12.textContent = '重新送出審核';
     status.className = 'selfie-status warn show';
     status.textContent = '送出失敗，請確認網路穩定後再按一次。';
+    saveProfileProgress(12, 'submit_review_failed', { message: err.message || String(err) });
     showToast('送出失敗，請再試一次');
     console.error(err);
   }
