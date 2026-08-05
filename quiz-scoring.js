@@ -23,13 +23,13 @@ export const MATCH_SCORE_CONFIG = {
   version: SCORING_VERSION,
   totalScore: 100,
   maxDisplayPercent: 99,
-  minimumRecommendScore: 80,
+  minimumRecommendScore: 75,
   recommendationRule: {
     mode: 'mutualThreshold',
-    threshold: 80,
+    threshold: 75,
     requireBothDirections: true,
     displayScore: 'viewerScore',
-    note: '雙方各自看對方都達 80 分以上才推薦；畫面顯示目前使用者看對方的契合度，最高 99%。'
+    note: '雙方各自看對方都達 75 分以上才推薦；畫面顯示目前使用者看對方的契合度，最高 99%。'
   },
   quizMaxScore: 85,
   profileBonusMaxScore: 15,
