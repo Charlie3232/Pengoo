@@ -370,6 +370,7 @@ const provider = new GoogleAuthProvider();
 const loadingOverlay = document.getElementById('loadingOverlay');
 const errorMsg = document.getElementById('errorMsg');
 const MONITOR_IGNORE_EMAILS = ['kingnashmvp@yahoo.com.tw'];
+const REDIRECT_MARK_KEY = 'pengoo_login_redirect_started';
 let handlingAuth = false;
 let redirectChecked = false;
 
@@ -417,6 +418,22 @@ async function logLoginEvent(type, detail={}){
     });
   } catch(e){
     console.warn('Login monitor write failed:', e);
+  }
+}
+
+function markRedirectStarted(reason){
+  try{
+    localStorage.setItem(REDIRECT_MARK_KEY, JSON.stringify({ reason, at: Date.now() }));
+  } catch(e){}
+}
+
+function takeRedirectMarker(){
+  try{
+    const raw = localStorage.getItem(REDIRECT_MARK_KEY);
+    localStorage.removeItem(REDIRECT_MARK_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e){
+    return null;
   }
 }
 
@@ -481,10 +498,20 @@ async function routeUser(user){
 }
 
 async function handleRedirectLoginResult(){
+  const marker = takeRedirectMarker();
   try{
     const result = await getRedirectResult(auth);
     redirectChecked = true;
     if(result?.user) await routeUser(result.user);
+    else if(marker){
+      logLoginEvent('redirect_no_result', {
+        reason: marker.reason || '',
+        startedAt: marker.at || '',
+        message: 'Google redirect returned to the app, but Firebase did not provide a signed-in user.'
+      });
+      hideLoading();
+      showError('Google 登入沒有完成，請改用 Safari 或 Chrome 再試一次');
+    }
   } catch(err){
     redirectChecked = true;
     hideLoading();
@@ -517,6 +544,7 @@ document.getElementById('btnGoogle').onclick = async () => {
   try{
     if(shouldUseRedirectLogin()){
       await logLoginEvent('login_start_redirect', { reason:'mobile_or_safari' });
+      markRedirectStarted('mobile_or_safari');
       await signInWithRedirect(auth, provider);
       return;
     }
@@ -536,6 +564,7 @@ document.getElementById('btnGoogle').onclick = async () => {
     if(err.code==='auth/popup-blocked'){
       try{
         await logLoginEvent('login_fallback_redirect', { reason:'popup_blocked' });
+        markRedirectStarted('popup_blocked');
         await signInWithRedirect(auth, provider);
       } catch(redirectErr){
         console.error(redirectErr);
