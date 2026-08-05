@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Pengoo 用戶測驗答案</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{min-height:100vh;background:#F5F0EE;color:#3A2A2E;font-family:'Nunito','Noto Sans TC',sans-serif;display:flex;justify-content:center;}
+.wrap{width:100%;max-width:430px;min-height:100vh;padding:1rem 1rem 2rem;}
+.top{position:sticky;top:0;z-index:10;background:#F5F0EE;padding:0.7rem 0 0.9rem;}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:0.7rem;}
+.eyebrow{font-size:0.62rem;font-weight:900;letter-spacing:0.14em;color:#7A9BB5;margin-bottom:0.22rem;}
+h1{font-size:1.35rem;font-weight:900;line-height:1.2;}
+.back{height:34px;border-radius:99px;border:1px solid rgba(184,205,217,0.42);background:white;color:#6B2D3E;font-size:0.72rem;font-weight:900;padding:0 0.78rem;text-decoration:none;display:flex;align-items:center;}
+.login,.card,.empty,.summary{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:18px;box-shadow:0 12px 28px rgba(58,42,46,0.045);}
+.login{padding:1rem;margin-top:0.65rem;text-align:center;}
+.login-title{font-size:1rem;font-weight:900;margin-bottom:0.35rem;}
+.login-sub{font-size:0.74rem;line-height:1.65;color:rgba(58,42,46,0.55);font-weight:760;margin-bottom:0.8rem;}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation;}
+.primary{height:42px;border:0;border-radius:13px;background:#6B2D3E;color:white;font-size:0.8rem;font-weight:900;padding:0 1rem;}
+.ghost{height:34px;border-radius:99px;border:1px solid rgba(184,205,217,0.42);background:white;color:#3A5068;font-size:0.7rem;font-weight:900;padding:0 0.72rem;}
+.panel{display:none;}
+.panel.show{display:block;}
+.tools{display:flex;gap:0.5rem;margin-top:0.7rem;}
+.search{width:100%;height:42px;border-radius:14px;border:1.5px solid rgba(184,205,217,0.48);background:white;color:#3A2A2E;font-size:0.82rem;font-weight:800;padding:0 0.82rem;outline:none;margin-top:0.7rem;}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem;padding:0.78rem;margin:0.7rem 0;}
+.stat{text-align:center;}
+.num{font-size:1.1rem;font-weight:900;color:#6B2D3E;}
+.lbl{font-size:0.62rem;font-weight:850;color:rgba(58,42,46,0.45);margin-top:0.1rem;}
+.list{display:grid;gap:0.72rem;}
+.card{padding:0.82rem;}
+.card-head{display:grid;grid-template-columns:54px 1fr auto;align-items:center;gap:0.62rem;}
+.photo{width:54px;height:54px;border-radius:15px;object-fit:cover;background:#F8F4F5;border:1px solid rgba(184,205,217,0.34);}
+.photo.empty{display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:900;color:rgba(58,42,46,0.34);}
+.name{font-size:0.9rem;font-weight:900;line-height:1.4;}
+.meta{font-size:0.62rem;font-weight:760;color:rgba(58,42,46,0.42);line-height:1.45;word-break:break-all;margin-top:0.1rem;}
+.badge{height:28px;border-radius:99px;font-size:0.68rem;font-weight:900;display:flex;align-items:center;padding:0 0.56rem;white-space:nowrap;}
+.badge.ok{background:#E6F4ED;color:#1D6B3E;}
+.badge.warn{background:#FEF3C7;color:#B45309;}
+.toggle{width:100%;height:38px;margin-top:0.68rem;border:0;border-radius:13px;background:#3A2A2E;color:white;font-size:0.74rem;font-weight:900;}
+.answers{display:none;margin-top:0.5rem;border:1px solid rgba(184,205,217,0.3);border-radius:14px;background:white;overflow:hidden;}
+.answers.show{display:block;}
+.qa{padding:0.64rem 0.68rem;border-bottom:1px solid rgba(184,205,217,0.18);}
+.qa:last-child{border-bottom:none;}
+.q-title{font-size:0.68rem;font-weight:900;line-height:1.5;color:#3A2A2E;}
+.q-answer{margin-top:0.28rem;font-size:0.66rem;font-weight:800;line-height:1.55;color:rgba(58,42,46,0.62);}
+.empty{padding:1.2rem;text-align:center;color:rgba(58,42,46,0.5);font-size:0.8rem;font-weight:800;line-height:1.65;}
+.toast{position:fixed;top:4.8rem;left:50%;transform:translateX(-50%);z-index:50;background:#3A2A2E;color:white;border-radius:99px;padding:0.62rem 1rem;font-size:0.74rem;font-weight:850;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<main class="wrap">
+  <header class="top">
+    <div class="bar">
+      <div>
+        <div class="eyebrow">PENGOO ADMIN TOOL</div>
+        <h1>用戶測驗答案</h1>
+      </div>
+      <a class="back" href="tools.html">工具頁</a>
+    </div>
+  </header>
+
+  <section class="login" id="loginBox">
+    <div class="login-title">管理員登入</div>
+    <div class="login-sub">查看每個用戶 30 題測驗的實際回答。</div>
+    <button class="primary" id="loginBtn" type="button">Google 管理員登入</button>
+  </section>
+
+  <section class="panel" id="panel">
+    <div class="tools">
+      <button class="ghost" id="reloadBtn" type="button">重新整理</button>
+      <button class="ghost" id="logoutBtn" type="button">登出</button>
+    </div>
+    <input class="search" id="searchInput" placeholder="搜尋暱稱、UID、Email、城市"/>
+    <div class="summary">
+      <div class="stat"><div class="num" id="totalCount">0</div><div class="lbl">全部用戶</div></div>
+      <div class="stat"><div class="num" id="doneCount">0</div><div class="lbl">已測驗</div></div>
+      <div class="stat"><div class="num" id="missingCount">0</div><div class="lbl">未測驗</div></div>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+</main>
+
+<script type="module">
+import { auth, provider, db } from './firebase-config.js';
+import { signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { collection, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getQuizQuestions } from './quiz-bank.js';
+
+const ADMIN_WHITELIST = ['kingnashmvp@yahoo.com.tw'];
+const loginBox = document.getElementById('loginBox');
+const panel = document.getElementById('panel');
+const list = document.getElementById('list');
+const toast = document.getElementById('toast');
+const searchInput = document.getElementById('searchInput');
+let users = [];
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+function escapeHtml(value=''){
+  return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+}
+
+async function isAdmin(user){
+  try{
+    const snap = await getDoc(doc(db, 'settings', 'admin'));
+    const whitelist = snap.exists() && Array.isArray(snap.data().whitelist) ? snap.data().whitelist : ADMIN_WHITELIST;
+    return whitelist.includes(user.email);
+  } catch(e){
+    console.error(e);
+    return ADMIN_WHITELIST.includes(user.email);
+  }
+}
+
+async function loadData(){
+  list.innerHTML = '<div class="empty">讀取中...</div>';
+  try{
+    const snap = await getDocs(collection(db, 'users'));
+    users = snap.docs.map(d => ({ uid:d.id, ...d.data() }))
+      .sort((a,b) => (b.quizComplete === true) - (a.quizComplete === true) || String(a.nickname || '').localeCompare(String(b.nickname || ''), 'zh-Hant'));
+    render();
+  } catch(e){
+    console.error(e);
+    list.innerHTML = '<div class="empty">讀取失敗。請確認 Firestore Rules 允許管理員讀取 users。</div>';
+  }
+}
+
+function render(){
+  const keyword = searchInput.value.trim().toLowerCase();
+  const filtered = users.filter(user => {
+    const text = [user.uid, user.nickname, user.email, user.city, user.gender, user.lookingFor].join(' ').toLowerCase();
+    return !keyword || text.includes(keyword);
+  });
+  const done = users.filter(user => user.quizComplete && user.quizAnswers).length;
+  document.getElementById('totalCount').textContent = users.length;
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('missingCount').textContent = users.length - done;
+
+  if(!filtered.length){
+    list.innerHTML = '<div class="empty">沒有符合的用戶</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(user => {
+    const hasAnswers = user.quizAnswers && Object.keys(user.quizAnswers).length;
+    const photo = Array.isArray(user.photos) && user.photos.length ? user.photos[0] : '';
+    return `
+      <article class="card">
+        <div class="card-head">
+          ${photo ? `<img class="photo" src="${escapeHtml(photo)}" alt="${escapeHtml(user.nickname || 'user')}">` : '<div class="photo empty">無圖</div>'}
+          <div>
+            <div class="name">${escapeHtml(user.nickname || '未命名')} · ${escapeHtml(user.city || '')}</div>
+            <div class="meta">${escapeHtml(user.uid)}</div>
+            <div class="meta">${escapeHtml(user.email || '')}</div>
+          </div>
+          <div class="badge ${hasAnswers ? 'ok' : 'warn'}">${hasAnswers ? '已測驗' : '未測驗'}</div>
+        </div>
+        <button class="toggle" type="button" data-uid="${escapeHtml(user.uid)}">${hasAnswers ? '查看每題回答' : '沒有答案可看'}</button>
+        ${renderAnswers(user)}
+      </article>
+    `;
+  }).join('');
+}
+
+function renderAnswers(user){
+  if(!user.quizAnswers || !Object.keys(user.quizAnswers).length){
+    return `<div class="answers" data-answer-box="${escapeHtml(user.uid)}"><div class="empty">這個用戶目前沒有測驗答案。</div></div>`;
+  }
+  const questions = getQuizQuestions(user.quizGenderVersion || user.gender || 'other');
+  return `
+    <div class="answers" data-answer-box="${escapeHtml(user.uid)}">
+      ${questions.map(question => {
+        const key = `q${String(question.order).padStart(2, '0')}`;
+        const value = user.quizAnswers[question.id] ?? user.quizAnswers[key];
+        const option = question.options.find(opt => opt.key === value || opt.value === value);
+        const answerText = option ? `${option.key}. ${option.text}` : (value ? `${value}（找不到對應選項）` : '尚未回答');
+        return `
+          <div class="qa">
+            <div class="q-title">Q${question.order}. ${escapeHtml(question.title)}</div>
+            <div class="q-answer">${escapeHtml(answerText)}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  try{
+    await signInWithPopup(auth, provider);
+  } catch(e){
+    console.error(e);
+    showToast('登入失敗');
+  }
+});
+document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+document.getElementById('reloadBtn').addEventListener('click', loadData);
+searchInput.addEventListener('input', render);
+list.addEventListener('click', event => {
+  const btn = event.target.closest('[data-uid]');
+  if(!btn) return;
+  const box = btn.closest('.card')?.querySelector(`[data-answer-box="${btn.dataset.uid}"]`);
+  if(box) box.classList.toggle('show');
+});
+
+onAuthStateChanged(auth, async user => {
+  if(!user){
+    loginBox.style.display = 'block';
+    panel.classList.remove('show');
+    return;
+  }
+  const ok = await isAdmin(user);
+  if(!ok){
+    showToast('這個帳號不是管理員');
+    await signOut(auth);
+    return;
+  }
+  loginBox.style.display = 'none';
+  panel.classList.add('show');
+  loadData();
+});
+</script>
+</body>
+</html>
