@@ -340,7 +340,7 @@ body{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -363,9 +363,7 @@ setPersistence(auth, browserLocalPersistence).catch(e => console.warn('Auth pers
 const loadingOverlay = document.getElementById('loadingOverlay');
 const errorMsg = document.getElementById('errorMsg');
 const MONITOR_IGNORE_EMAILS = ['kingnashmvp@yahoo.com.tw'];
-const REDIRECT_MARK_KEY = 'pengoo_login_redirect_started';
 let handlingAuth = false;
-let redirectChecked = false;
 
 function showLoading(){ loadingOverlay.classList.add('show'); }
 function hideLoading(){ loadingOverlay.classList.remove('show'); }
@@ -412,26 +410,6 @@ async function logLoginEvent(type, detail={}){
   } catch(e){
     console.warn('Login monitor write failed:', e);
   }
-}
-
-function markRedirectStarted(reason){
-  try{
-    localStorage.setItem(REDIRECT_MARK_KEY, JSON.stringify({ reason, at: Date.now() }));
-  } catch(e){}
-}
-
-function takeRedirectMarker(){
-  try{
-    const raw = localStorage.getItem(REDIRECT_MARK_KEY);
-    localStorage.removeItem(REDIRECT_MARK_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch(e){
-    return null;
-  }
-}
-
-function shouldUseRedirectLogin(){
-  return false;
 }
 
 async function routeUser(user){
@@ -495,44 +473,9 @@ async function routeUser(user){
   }
 }
 
-async function handleRedirectLoginResult(){
-  const marker = takeRedirectMarker();
-  try{
-    const result = await getRedirectResult(auth);
-    redirectChecked = true;
-    if(result?.user) await routeUser(result.user);
-    else if(marker){
-      logLoginEvent('redirect_no_result', {
-        reason: marker.reason || '',
-        startedAt: marker.at || '',
-        message: 'Google redirect returned to the app, but Firebase did not provide a signed-in user.'
-      });
-      hideLoading();
-      showError('Google 登入沒有完成，請改用 Safari 或 Chrome 再試一次');
-    }
-  } catch(err){
-    redirectChecked = true;
-    hideLoading();
-    console.error(err);
-    logLoginEvent('redirect_result_error', {
-      code: err.code || '',
-      message: err.message || String(err)
-    });
-    showError('Google 登入沒有完成，請回到主網址後再試一次');
-  }
-}
-
-handleRedirectLoginResult();
-
 // 已登入直接跳轉
 onAuthStateChanged(auth, async (user) => {
   if(!user || handlingAuth) return;
-  if(!redirectChecked){
-    setTimeout(() => {
-      if(auth.currentUser && !handlingAuth) routeUser(auth.currentUser);
-    }, 350);
-    return;
-  }
   routeUser(user);
 });
 
@@ -556,7 +499,7 @@ document.getElementById('btnGoogle').onclick = async () => {
     if(err.code==='auth/popup-blocked'){
       showError('瀏覽器擋住登入視窗，請允許彈出視窗後再試一次');
     }
-    else showError('登入失敗，請再幫我試一次');
+    else showError('登入失敗，請再試一次');
     console.error(err);
   }
 };
