@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <meta name="robots" content="noindex,nofollow"/>
-<title>Pengoo 登入監控</title>
+<title>Pengoo 登入紀錄</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -77,7 +77,7 @@ button{font-family:inherit;cursor:pointer;touch-action:manipulation;}
     <div class="bar">
       <div>
         <div class="eyebrow">PENGOO ADMIN TOOL</div>
-        <h1>登入監控</h1>
+        <h1>登入紀錄</h1>
       </div>
       <a class="back" href="tools.html">工具頁</a>
     </div>
@@ -85,19 +85,19 @@ button{font-family:inherit;cursor:pointer;touch-action:manipulation;}
 
   <section class="login" id="loginBox">
     <div class="login-title">管理員登入</div>
-    <div class="login-sub">查看登入開始、登入失敗、redirect 回來失敗等紀錄。</div>
+    <div class="login-sub">查看曾經記錄到的登入成功、登入失敗與瀏覽器異常。</div>
     <button class="primary" id="loginBtn" type="button">Google 管理員登入</button>
   </section>
 
   <section class="panel" id="panel">
     <div class="tools">
       <button class="ghost" id="reloadBtn" type="button">重新整理</button>
-      <button class="ghost" id="autoBtn" type="button">即時更新：開</button>
+      <button class="ghost" id="autoBtn" type="button">自動更新：開</button>
       <button class="ghost" id="logoutBtn" type="button">登出</button>
     </div>
     <div class="notice">
       <div class="notice-title">看這頁的方式</div>
-      <div class="notice-text">先看紅色或黃色事件。每筆會先翻成白話原因，技術細節只是給複製錯誤碼用。</div>
+      <div class="notice-text">這頁先看紅色或黃色事件。首頁目前已暫停寫入新的登入監控，所以這裡主要用來看之前留下的登入紀錄與錯誤線索。</div>
     </div>
     <div class="summary">
       <div class="stat"><div class="num" id="totalCount">0</div><div class="lbl">總事件</div></div>
@@ -110,7 +110,7 @@ button{font-family:inherit;cursor:pointer;touch-action:manipulation;}
       <button class="chip" type="button" data-filter="error">錯誤</button>
       <button class="chip" type="button" data-filter="storage">暫存異常</button>
       <button class="chip" type="button" data-filter="popup">彈窗問題</button>
-      <button class="chip" type="button" data-filter="redirect">跳轉問題</button>
+      <button class="chip" type="button" data-filter="browser">瀏覽器問題</button>
       <button class="chip" type="button" data-filter="success">成功</button>
     </div>
     <input class="search" id="searchInput" type="search" placeholder="搜尋 Email、錯誤碼、網址或裝置"/>
@@ -202,10 +202,10 @@ function getEventTitle(type){
     login_start_popup: '使用者開始用彈窗登入',
     popup_success: '彈窗登入成功',
     login_error: '登入失敗',
-    login_fallback_redirect: '彈窗失敗，改用跳轉登入',
-    fallback_redirect_error: '改用跳轉登入也失敗',
-    redirect_no_result: '跳轉回來但沒有登入成功',
-    redirect_result_error: '跳轉回來後登入失敗',
+    login_fallback_redirect: '舊版紀錄：彈窗失敗後改用跳轉登入',
+    fallback_redirect_error: '舊版紀錄：改用跳轉登入也失敗',
+    redirect_no_result: '舊版紀錄：跳轉回來但沒有登入成功',
+    redirect_result_error: '舊版紀錄：跳轉回來後登入失敗',
     route_user_error: '登入後讀取用戶資料失敗'
   };
   return map[type] || type || '未知事件';
@@ -221,12 +221,12 @@ function explainEvent(row){
 
   if(!isErrorType(type)){
     if(type === 'popup_success') return { tone:'ok', title:'登入成功', text:'這筆只是成功紀錄，不需要處理。' };
-    if(type === 'login_fallback_redirect') return { tone:'warn', title:'彈窗被擋，所以改用跳轉登入', text:'通常發生在手機瀏覽器或瀏覽器擋彈窗。只要後面有成功登入，這不是大問題。', action:'如果同一個人後面沒有成功紀錄，再請他用 Safari 或 Chrome 正常模式開啟。' };
+    if(type === 'login_fallback_redirect') return { tone:'warn', title:'舊版登入流程曾經改用跳轉登入', text:'這是舊版首頁留下的紀錄。新版首頁已改成只用 Google 彈窗登入，理論上不會再產生這種新紀錄。', action:'如果這是很新的紀錄，代表線上仍吃到舊版 index.html，請先檢查 GitHub Pages 是否更新成功。' };
     return { tone:'ok', title:'登入流程開始', text:'使用者有按登入。這筆不是錯誤，只是紀錄當時使用的登入方式。' };
   }
 
   if(type === 'redirect_no_result'){
-    return { tone:'bad', title:'Google 回來了，但 Firebase 沒拿到登入結果', text:'這就會讓使用者看起來一直回到登入首頁。常見原因是 Safari 隱私模式、LINE/IG/FB 內建瀏覽器、阻擋網站暫存，或瀏覽器清掉登入狀態。', action:'請使用者用 Safari/Chrome 正常模式重新開主網址。如果你已改成只用 popup，後續新紀錄不應該再大量出現這種事件。' };
+    return { tone:'bad', title:'舊版跳轉登入沒有完成', text:'這是舊版 redirect 登入流程的錯誤。新版首頁已移除 redirect，所以它主要是歷史線索。', action:'如果這筆時間是新版上線後才出現，代表使用者可能還開到快取舊版頁面，請他重新整理或重新開啟主網址。' };
   }
 
   if(code.includes('popup-closed-by-user')){
@@ -258,7 +258,7 @@ function rowMatchesFilter(row){
   if(activeFilter === 'error') return isErrorType(type);
   if(activeFilter === 'storage') return row.client?.storageOk === false;
   if(activeFilter === 'popup') return type.includes('popup');
-  if(activeFilter === 'redirect') return type.includes('redirect');
+  if(activeFilter === 'browser') return row.client?.storageOk === false || type.includes('popup') || type.includes('redirect');
   if(activeFilter === 'success') return type.includes('success');
   return true;
 }
@@ -401,7 +401,7 @@ document.getElementById('logoutBtn').addEventListener('click', () => signOut(aut
 document.getElementById('reloadBtn').addEventListener('click', loadEvents);
 document.getElementById('autoBtn').addEventListener('click', event => {
   autoRefresh = !autoRefresh;
-  event.currentTarget.textContent = `即時更新：${autoRefresh ? '開' : '關'}`;
+  event.currentTarget.textContent = `自動更新：${autoRefresh ? '開' : '關'}`;
   loadEvents();
 });
 document.getElementById('filters').addEventListener('click', event => {
