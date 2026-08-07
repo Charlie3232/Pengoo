@@ -1168,6 +1168,18 @@ document.getElementById('btn9').onclick = ()=>{ userData.tags=selectedTags; goTo
 let currentSlot = 0;
 let photosUploaded = 0;
 
+function getValidPhotoItems(){
+  return photoFiles.filter(item => {
+    if(!item) return false;
+    if(typeof item === 'string') return item.trim().startsWith('http');
+    return typeof item.url === 'string' && item.url.trim().startsWith('http');
+  });
+}
+
+function syncPhotoCount(){
+  photosUploaded = getValidPhotoItems().length;
+}
+
 window.triggerPhotoUpload = (slot)=>{
   if(isUploading){ showToast('請等待目前照片上傳完成'); return; }
   currentSlot = slot;
@@ -1180,7 +1192,7 @@ window.deletePhoto = (e, slot)=>{
   document.getElementById('slot'+slot).classList.remove('filled');
   document.getElementById('uploading'+slot).classList.remove('show');
   photoFiles[slot] = null;
-  photosUploaded = photoFiles.filter(f=>f!==null).length;
+  syncPhotoCount();
   updatePhotoCounter();
 };
 
@@ -1216,7 +1228,7 @@ document.getElementById('photoInput').addEventListener('change', async (e)=>{
     isUploading = false;
     photoFiles[currentSlot] = { url: downloadURL, thumb: thumbURL };
     document.getElementById('uploading'+currentSlot).classList.remove('show');
-    photosUploaded = photoFiles.filter(f=>f!==null).length;
+    syncPhotoCount();
     updatePhotoCounter();
     saveProfileProgress(11, photosUploaded >= 3 ? 'photos_ready' : 'photo_uploaded', { photosUploaded });
     showToast('照片上傳成功 ✓');
@@ -1234,13 +1246,26 @@ document.getElementById('photoInput').addEventListener('change', async (e)=>{
 });
 
 function updatePhotoCounter(){
+  syncPhotoCount();
   const el = document.getElementById('photoCounter');
   if(photosUploaded < 3){ el.textContent=`已上傳 ${photosUploaded} 張（至少需要 3 張）`; el.className='photo-counter warn'; }
   else{ el.textContent=`已上傳 ${photosUploaded} 張 ✓`; el.className='photo-counter ok'; }
-  document.getElementById('btn11').disabled = photosUploaded < 3;
+  document.getElementById('btn11').disabled = photosUploaded < 3 || isUploading;
 }
 
-document.getElementById('btn11').onclick = ()=>{ goToStep(12); };
+document.getElementById('btn11').onclick = ()=>{
+  if(isUploading){
+    showToast('請等待照片上傳完成');
+    updatePhotoCounter();
+    return;
+  }
+  if(getValidPhotoItems().length < 3){
+    showToast('請至少上傳 3 張照片');
+    updatePhotoCounter();
+    return;
+  }
+  goToStep(12);
+};
 
 // ── 自拍 ──
 window.takeSelfie = ()=>{
@@ -1288,6 +1313,18 @@ document.getElementById('btn12').onclick = async ()=>{
     showToast('請先完成自拍驗證');
     return;
   }
+  if(isUploading){
+    showToast('請等待照片上傳完成');
+    return;
+  }
+  const validPhotoItems = getValidPhotoItems();
+  if(validPhotoItems.length < 3){
+    showToast('請至少上傳 3 張照片');
+    saveProfileProgress(12, 'submit_blocked_missing_photos', { photos: validPhotoItems.length });
+    goToStep(11);
+    updatePhotoCounter();
+    return;
+  }
   const btn12 = document.getElementById('btn12');
   const status = document.getElementById('selfieStatus');
   btn12.disabled = true;
@@ -1306,9 +1343,8 @@ document.getElementById('btn12').onclick = async ()=>{
     showLoading('正在送出審核...');
 
     // 照片已經上傳完畢，直接取得 URLs
-    const photoItems = photoFiles.filter(item => item !== null);
-    const photoURLs = photoItems.map(item => typeof item === 'string' ? item : item.url);
-    const photoThumbs = photoItems.map(item => typeof item === 'string' ? item : item.thumb);
+    const photoURLs = validPhotoItems.map(item => typeof item === 'string' ? item : item.url);
+    const photoThumbs = validPhotoItems.map(item => typeof item === 'string' ? item : (item.thumb || item.url));
 
     // 更新 Firestore
     // 先檢查文件是否存在，決定要不要寫 createdAt
