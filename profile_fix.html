@@ -356,6 +356,14 @@ let newSelfieFile = null;
 // 目前上傳中的格子 index
 let uploadingSlot = null;
 
+function getValidAllPhotoItems(){
+  return allPhotoFiles.filter(item => {
+    if(!item) return false;
+    if(typeof item === 'string') return item.trim().startsWith('http');
+    return typeof item.url === 'string' && item.url.trim().startsWith('http');
+  });
+}
+
 onAuthStateChanged(auth, async (user) => {
   if(!user){ window.location.href='index.html'; return; }
   currentUser = user;
@@ -656,21 +664,31 @@ window.delAllPhoto = (e, i) => {
 
 function updateAllCounter(){
   const el = document.getElementById('allPhotoCounter');
+  allPhotoCount = getValidAllPhotoItems().length;
   const n = allPhotoCount;
   if(n<3){ el.textContent=`已上傳 ${n} 張（至少需要 3 張）`; el.className='photo-counter warn'; }
   else{ el.textContent=`已上傳 ${n} 張 ✓`; el.className='photo-counter ok'; }
-  document.getElementById('btnSubmitAllPhotos').disabled = n < 3;
+  document.getElementById('btnSubmitAllPhotos').disabled = n < 3 || uploadingSlot !== null;
 }
 
 window.submitAllPhotos = async () => {
   if(!currentUser) return;
+  if(uploadingSlot !== null){
+    showToast('請等待照片上傳完成');
+    return;
+  }
+  const photoItems = getValidAllPhotoItems();
+  if(photoItems.length < 3){
+    showToast('請至少上傳 3 張照片');
+    updateAllCounter();
+    return;
+  }
   const btn = document.getElementById('btnSubmitAllPhotos');
   btn.disabled = true;
   showLoading('儲存中...');
   try{
-    const photoItems = allPhotoFiles.filter(f=>f!==null);
     const newPhotos = photoItems.map(item => typeof item === 'string' ? item : item.url);
-    const newThumbs = photoItems.map(item => typeof item === 'string' ? item : item.thumb);
+    const newThumbs = photoItems.map(item => typeof item === 'string' ? item : (item.thumb || item.url));
     await updateDoc(doc(db,'users',currentUser.uid), {
       photos: newPhotos,
       photoThumbs: newThumbs,
