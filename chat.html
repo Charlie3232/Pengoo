@@ -108,7 +108,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .profile-title{font-size:1rem;font-weight:900;color:#3A2A2E;}
 .profile-close{width:32px;height:32px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;}
 .profile-photos{display:flex;gap:0.45rem;overflow-x:auto;margin-bottom:0.78rem;padding-bottom:0.1rem;}
-.profile-photo{width:86px;height:116px;border-radius:14px;object-fit:cover;background:rgba(184,205,217,0.14);border:1px solid rgba(184,205,217,0.32);flex-shrink:0;}
+.profile-photo{width:86px;height:116px;border-radius:14px;object-fit:cover;background:rgba(184,205,217,0.14);border:1px solid rgba(184,205,217,0.32);flex-shrink:0;cursor:pointer;}
 .profile-block{border-radius:15px;background:rgba(184,205,217,0.1);padding:0.75rem;margin-bottom:0.62rem;}
 .profile-k{font-size:0.62rem;font-weight:900;color:#7A9BB5;letter-spacing:0.08em;margin-bottom:0.24rem;}
 .profile-v{font-size:0.76rem;line-height:1.58;font-weight:760;color:rgba(58,42,46,0.68);}
@@ -118,6 +118,15 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .safety-btn{height:42px;border-radius:13px;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:0.74rem;font-weight:900;font-family:inherit;}
 .safety-btn.danger{border-color:rgba(185,28,28,0.2);background:#FEE2E2;color:#B91C1C;}
 .safety-btn.full{grid-column:1 / -1;}
+.photo-viewer{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:360;display:none;align-items:center;justify-content:center;padding:3.2rem 0.85rem 4.2rem;}
+.photo-viewer.show{display:flex;}
+.photo-viewer-img{max-width:100%;max-height:100%;object-fit:contain;border-radius:16px;box-shadow:0 20px 48px rgba(0,0,0,0.24);}
+.photo-viewer-close,.photo-viewer-prev,.photo-viewer-next{position:absolute;border:0;background:rgba(255,255,255,0.14);color:white;backdrop-filter:blur(12px);font-family:inherit;font-weight:900;cursor:pointer;touch-action:manipulation;}
+.photo-viewer-close{top:calc(1rem + env(safe-area-inset-top));right:1rem;width:38px;height:38px;border-radius:50%;font-size:1.2rem;}
+.photo-viewer-prev,.photo-viewer-next{top:50%;transform:translateY(-50%);width:42px;height:54px;border-radius:16px;font-size:1.55rem;}
+.photo-viewer-prev{left:0.75rem;}
+.photo-viewer-next{right:0.75rem;}
+.photo-viewer-count{position:absolute;left:50%;bottom:calc(1.25rem + env(safe-area-inset-bottom));transform:translateX(-50%);height:30px;border-radius:99px;background:rgba(255,255,255,0.14);color:white;font-size:0.72rem;font-weight:900;padding:0 0.75rem;display:flex;align-items:center;backdrop-filter:blur(12px);}
 </style>
 </head>
 <body>
@@ -127,6 +136,13 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
   <div class="notify-text" id="notifyText"></div>
 </div>
 <div class="profile-sheet" id="profileSheet"></div>
+<div class="photo-viewer" id="photoViewer">
+  <button class="photo-viewer-close" id="photoViewerClose" type="button">×</button>
+  <button class="photo-viewer-prev" id="photoViewerPrev" type="button">‹</button>
+  <img class="photo-viewer-img" id="photoViewerImg" alt="照片放大預覽">
+  <button class="photo-viewer-next" id="photoViewerNext" type="button">›</button>
+  <div class="photo-viewer-count" id="photoViewerCount">1 / 1</div>
+</div>
 <div class="wrap">
   <header class="top">
     <div>
@@ -183,7 +199,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/fireba
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc,
-  serverTimestamp, increment, query, orderBy, onSnapshot, arrayUnion
+  serverTimestamp, increment, query, orderBy, onSnapshot, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 import { resolveDevUser } from './dev-impersonation.js';
 
@@ -226,6 +242,47 @@ const notifyCard = document.getElementById('notifyCard');
 const notifyTitle = document.getElementById('notifyTitle');
 const notifyText = document.getElementById('notifyText');
 const profileSheet = document.getElementById('profileSheet');
+const photoViewer = document.getElementById('photoViewer');
+const photoViewerImg = document.getElementById('photoViewerImg');
+const photoViewerCount = document.getElementById('photoViewerCount');
+let viewerPhotos = [];
+let viewerPhotoIndex = 0;
+
+function openPhotoViewer(photos, index=0){
+  viewerPhotos = Array.isArray(photos) ? photos.filter(Boolean) : [];
+  if(!viewerPhotos.length) return;
+  viewerPhotoIndex = Math.max(0, Math.min(index, viewerPhotos.length - 1));
+  renderPhotoViewer();
+  photoViewer.classList.add('show');
+}
+
+function renderPhotoViewer(){
+  if(!viewerPhotos.length) return;
+  photoViewerImg.src = viewerPhotos[viewerPhotoIndex];
+  photoViewerCount.textContent = `${viewerPhotoIndex + 1} / ${viewerPhotos.length}`;
+  document.getElementById('photoViewerPrev').style.display = viewerPhotos.length > 1 ? 'block' : 'none';
+  document.getElementById('photoViewerNext').style.display = viewerPhotos.length > 1 ? 'block' : 'none';
+}
+
+function closePhotoViewer(){
+  photoViewer.classList.remove('show');
+  photoViewerImg.src = '';
+  viewerPhotos = [];
+  viewerPhotoIndex = 0;
+}
+
+function movePhotoViewer(delta){
+  if(viewerPhotos.length <= 1) return;
+  viewerPhotoIndex = (viewerPhotoIndex + delta + viewerPhotos.length) % viewerPhotos.length;
+  renderPhotoViewer();
+}
+
+document.getElementById('photoViewerClose').addEventListener('click', closePhotoViewer);
+document.getElementById('photoViewerPrev').addEventListener('click', event => { event.stopPropagation(); movePhotoViewer(-1); });
+document.getElementById('photoViewerNext').addEventListener('click', event => { event.stopPropagation(); movePhotoViewer(1); });
+photoViewer.addEventListener('click', event => {
+  if(event.target === photoViewer) closePhotoViewer();
+});
 
 function showToast(msg){
   toast.textContent = msg;
@@ -384,7 +441,7 @@ function openProfileSheet(item){
   const sharedTags = getSharedTags(other);
   const allTags = Array.isArray(other.tags) ? other.tags.slice(0, 6) : [];
   const photoHtml = photos.length
-    ? photos.map((url, index) => `<img class="profile-photo" src="${escapeHtml(thumbs[index] || url)}" alt="${escapeHtml(other.nickname || '照片')}" loading="lazy">`).join('')
+    ? photos.map((url, index) => `<img class="profile-photo" src="${escapeHtml(thumbs[index] || url)}" data-photo-index="${index}" alt="${escapeHtml(other.nickname || '照片')} ${index + 1}" loading="lazy">`).join('')
     : '<div class="profile-photo"></div><div class="profile-photo"></div>';
   const meta = [
     other.age ? `${other.age} 歲` : '',
@@ -433,6 +490,9 @@ function openProfileSheet(item){
   profileSheet.querySelector('#deleteChatBtn').addEventListener('click', () => deleteConversation(item));
   profileSheet.querySelector('#reportUserBtn').addEventListener('click', () => reportUser(item));
   profileSheet.querySelector('#blockUserBtn').addEventListener('click', () => blockUser(item));
+  profileSheet.querySelectorAll('.profile-photo[data-photo-index]').forEach(img => {
+    img.addEventListener('click', () => openPhotoViewer(photos, parseInt(img.dataset.photoIndex, 10) || 0));
+  });
 }
 
 function closeProfileSheet(){
@@ -571,7 +631,6 @@ async function loadInbox(){
       const otherUid = getOtherUid(match);
       if(!otherUid) continue;
       const hiddenBy = Array.isArray(match.hiddenBy) ? match.hiddenBy : [];
-      if(hiddenBy.includes(currentUser.uid)) continue;
       const blocked = Array.isArray(currentData.blocked) ? currentData.blocked : [];
       if(blocked.includes(otherUid)) continue;
       const userSnap = await getDoc(doc(db, 'users', otherUid));
@@ -588,11 +647,15 @@ async function loadInbox(){
         match,
         otherUid,
         other,
-        unread
+        unread,
+        hidden: hiddenBy.includes(currentUser.uid)
       });
     }
 
     items.sort((a,b) => {
+      const ah = a.hidden ? 1 : 0;
+      const bh = b.hidden ? 1 : 0;
+      if(ah !== bh) return ah - bh;
       const at = a.match.lastMessageAt?.toMillis ? a.match.lastMessageAt.toMillis() : 0;
       const bt = b.match.lastMessageAt?.toMillis ? b.match.lastMessageAt.toMillis() : 0;
       return bt - at;
@@ -689,8 +752,11 @@ function renderInbox(){
   chatItems.forEach(item => {
     const displayScore = getDisplayScore(item);
     const isEmptyThread = !item.match.lastMessage;
+    const lastText = item.hidden
+      ? '已配對，可以重新開啟聊天'
+      : (item.match.lastMessage || '你們配對成功了，先打聲招呼吧');
     const card = document.createElement('article');
-    card.className = `letter-card${item.unread > 0 ? ' unread' : ''}${isEmptyThread ? ' empty-thread' : ''}`;
+    card.className = `letter-card${item.unread > 0 ? ' unread' : ''}${(isEmptyThread || item.hidden) ? ' empty-thread' : ''}`;
     card.innerHTML = `
       <div class="letter-main">
         ${avatarHtml(item.other)}
@@ -700,7 +766,7 @@ function renderInbox(){
             <div class="time">${escapeHtml(formatTime(item.match.lastMessageAt))}</div>
           </div>
           <div class="score">${displayScore || '--'}% 契合</div>
-          <div class="last">${escapeHtml(item.match.lastMessage || '你們配對成功了，先打聲招呼吧')}</div>
+          <div class="last">${escapeHtml(lastText)}</div>
         </div>
       </div>
       <div class="letter-actions"><button class="delete-chat-btn" type="button">刪除</button></div>
@@ -770,6 +836,18 @@ async function openChat(item){
       </div>
   `;
   chatHead.onclick = () => openProfileSheet(item);
+
+  if(item.hidden){
+    try{
+      await updateDoc(doc(db, 'matches', item.id), {
+        hiddenBy: arrayRemove(currentUser.uid),
+        updatedAt: serverTimestamp()
+      });
+      item.hidden = false;
+    } catch(e){
+      console.error(e);
+    }
+  }
 
   const unreadBeforeOpen = item.unread;
   await clearUnread(item);
@@ -864,7 +942,7 @@ async function sendMessage(){
       lastMessage: text,
       lastMessageAt: serverTimestamp(),
       lastSenderUid: currentUser.uid,
-      hiddenBy: [],
+      hiddenBy: arrayRemove(currentUser.uid),
       [`unreadBy.${currentUser.uid}`]: 0,
       [`unreadBy.${otherUid}`]: increment(1),
       updatedAt: serverTimestamp()
