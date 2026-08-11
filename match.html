@@ -23,7 +23,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .match-list{flex:1;min-height:0;display:flex;}
 .match-card{width:100%;background:white;border:1px solid rgba(184,205,217,0.34);border-radius:20px;overflow:hidden;box-shadow:0 14px 32px rgba(58,42,46,0.06);display:flex;flex-direction:column;min-height:0;}
 .photo-wrap{position:relative;flex:1 1 30%;min-height:150px;background:rgba(184,205,217,0.18);overflow:hidden;}
-.photo{width:100%;height:100%;object-fit:cover;display:block;}
+.photo{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;}
 .photo-placeholder{height:100%;display:flex;align-items:center;justify-content:center;font-size:2.4rem;color:rgba(58,42,46,0.24);}
 .photo-shade{position:absolute;inset:auto 0 0;height:46%;background:linear-gradient(180deg,rgba(58,42,46,0),rgba(58,42,46,0.62));pointer-events:none;}
 .photo-info{position:absolute;left:0.8rem;right:0.8rem;bottom:0.8rem;display:flex;align-items:flex-end;justify-content:space-between;gap:0.7rem;color:white;}
@@ -49,6 +49,8 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;}
 .sheet-title{font-size:1rem;font-weight:900;color:#3A2A2E;}
 .sheet-close{width:32px;height:32px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;cursor:pointer;}
+.detail-photos{display:flex;gap:0.48rem;overflow-x:auto;margin-bottom:0.72rem;padding-bottom:0.08rem;}
+.detail-photo{width:82px;height:108px;border-radius:14px;object-fit:cover;background:rgba(184,205,217,0.14);border:1px solid rgba(184,205,217,0.32);flex-shrink:0;cursor:pointer;}
 .detail-section{border-radius:15px;background:rgba(184,205,217,0.1);padding:0.75rem;margin-bottom:0.65rem;}
 .detail-k{font-size:0.62rem;font-weight:900;color:#7A9BB5;letter-spacing:0.08em;margin-bottom:0.24rem;}
 .detail-v{font-size:0.76rem;line-height:1.58;font-weight:750;color:rgba(58,42,46,0.68);}
@@ -110,6 +112,15 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .success-score{display:inline-flex;align-items:center;justify-content:center;height:34px;border-radius:99px;background:rgba(232,180,188,0.18);color:#6B2D3E;font-size:0.78rem;font-weight:900;padding:0 0.82rem;margin-bottom:0.92rem;}
 .success-actions{display:grid;grid-template-columns:1fr 1fr;gap:0.58rem;}
 .success-actions .btn{width:100%;}
+.photo-viewer{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:260;display:none;align-items:center;justify-content:center;padding:3.2rem 0.85rem 4.2rem;}
+.photo-viewer.show{display:flex;}
+.photo-viewer-img{max-width:100%;max-height:100%;object-fit:contain;border-radius:16px;box-shadow:0 20px 48px rgba(0,0,0,0.24);}
+.photo-viewer-close,.photo-viewer-prev,.photo-viewer-next{position:absolute;border:0;background:rgba(255,255,255,0.14);color:white;backdrop-filter:blur(12px);font-family:inherit;font-weight:900;cursor:pointer;touch-action:manipulation;}
+.photo-viewer-close{top:calc(1rem + env(safe-area-inset-top));right:1rem;width:38px;height:38px;border-radius:50%;font-size:1.2rem;}
+.photo-viewer-prev,.photo-viewer-next{top:50%;transform:translateY(-50%);width:42px;height:54px;border-radius:16px;font-size:1.55rem;}
+.photo-viewer-prev{left:0.75rem;}
+.photo-viewer-next{right:0.75rem;}
+.photo-viewer-count{position:absolute;left:50%;bottom:calc(1.25rem + env(safe-area-inset-bottom));transform:translateX(-50%);height:30px;border-radius:99px;background:rgba(255,255,255,0.14);color:white;font-size:0.72rem;font-weight:900;padding:0 0.75rem;display:flex;align-items:center;backdrop-filter:blur(12px);}
 </style>
 </head>
 <body>
@@ -169,6 +180,13 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
   </nav>
   <div class="detail-sheet" id="detailSheet"></div>
   <div class="success-sheet" id="successSheet"></div>
+  <div class="photo-viewer" id="photoViewer">
+    <button class="photo-viewer-close" id="photoViewerClose" type="button">×</button>
+    <button class="photo-viewer-prev" id="photoViewerPrev" type="button">‹</button>
+    <img class="photo-viewer-img" id="photoViewerImg" alt="照片放大預覽">
+    <button class="photo-viewer-next" id="photoViewerNext" type="button">›</button>
+    <div class="photo-viewer-count" id="photoViewerCount">1 / 1</div>
+  </div>
   <div class="filter-sheet" id="filterSheet">
     <div class="filter-panel">
       <div class="filter-head">
@@ -238,6 +256,9 @@ const loadingState = document.getElementById('loadingState');
 const emptyState = document.getElementById('emptyState');
 const detailSheet = document.getElementById('detailSheet');
 const successSheet = document.getElementById('successSheet');
+const photoViewer = document.getElementById('photoViewer');
+const photoViewerImg = document.getElementById('photoViewerImg');
+const photoViewerCount = document.getElementById('photoViewerCount');
 const filterSheet = document.getElementById('filterSheet');
 const filterBtn = document.getElementById('filterBtn');
 const filterClose = document.getElementById('filterClose');
@@ -250,6 +271,44 @@ const ageRangeFill = document.getElementById('ageRangeFill');
 const cityFilterTags = document.getElementById('cityFilterTags');
 const ageFilterChip = document.getElementById('ageFilterChip');
 const cityFilterChip = document.getElementById('cityFilterChip');
+let viewerPhotos = [];
+let viewerPhotoIndex = 0;
+
+function openPhotoViewer(photos, index=0){
+  viewerPhotos = Array.isArray(photos) ? photos.filter(Boolean) : [];
+  if(!viewerPhotos.length) return;
+  viewerPhotoIndex = Math.max(0, Math.min(index, viewerPhotos.length - 1));
+  renderPhotoViewer();
+  photoViewer.classList.add('show');
+}
+
+function renderPhotoViewer(){
+  if(!viewerPhotos.length) return;
+  photoViewerImg.src = viewerPhotos[viewerPhotoIndex];
+  photoViewerCount.textContent = `${viewerPhotoIndex + 1} / ${viewerPhotos.length}`;
+  document.getElementById('photoViewerPrev').style.display = viewerPhotos.length > 1 ? 'block' : 'none';
+  document.getElementById('photoViewerNext').style.display = viewerPhotos.length > 1 ? 'block' : 'none';
+}
+
+function closePhotoViewer(){
+  photoViewer.classList.remove('show');
+  photoViewerImg.src = '';
+  viewerPhotos = [];
+  viewerPhotoIndex = 0;
+}
+
+function movePhotoViewer(delta){
+  if(viewerPhotos.length <= 1) return;
+  viewerPhotoIndex = (viewerPhotoIndex + delta + viewerPhotos.length) % viewerPhotos.length;
+  renderPhotoViewer();
+}
+
+document.getElementById('photoViewerClose').addEventListener('click', closePhotoViewer);
+document.getElementById('photoViewerPrev').addEventListener('click', event => { event.stopPropagation(); movePhotoViewer(-1); });
+document.getElementById('photoViewerNext').addEventListener('click', event => { event.stopPropagation(); movePhotoViewer(1); });
+photoViewer.addEventListener('click', event => {
+  if(event.target === photoViewer) closePhotoViewer();
+});
 
 function showToast(msg){
   toast.textContent = msg;
@@ -506,12 +565,21 @@ function renderMatchCard(item){
   article.querySelector('.detail-link').addEventListener('click', () => {
     openDetailSheet(item, bestReason);
   });
+  const mainPhotoEl = article.querySelector('.photo');
+  if(mainPhotoEl){
+    mainPhotoEl.addEventListener('click', () => {
+      const currentFull = mainPhotoEl.dataset.full || mainPhotoEl.src;
+      const currentIndex = Math.max(0, photos.findIndex(url => url === currentFull));
+      openPhotoViewer(photos, currentIndex);
+    });
+  }
   article.querySelectorAll('.thumb').forEach(thumb => {
     thumb.addEventListener('click', () => {
       const nextPhoto = thumb.dataset.photo;
       const mainPhoto = article.querySelector('.photo');
       if(!nextPhoto || !mainPhoto) return;
       mainPhoto.src = nextPhoto;
+      mainPhoto.dataset.full = nextPhoto;
       article.querySelectorAll('.thumb').forEach(item => item.classList.remove('active'));
       thumb.classList.add('active');
     });
@@ -623,6 +691,11 @@ async function recordMatchAction(item, action, card=null){
 function openDetailSheet(item, bestReason){
   const data = item.data;
   const viewerScore = item.match.scoreForA;
+  const photos = Array.isArray(data.photos) ? data.photos.filter(Boolean).slice(0, 6) : [];
+  const thumbs = Array.isArray(data.photoThumbs) ? data.photoThumbs.filter(Boolean).slice(0, 6) : photos;
+  const photoHtml = photos.length
+    ? `<div class="detail-photos">${photos.map((url, index) => `<img class="detail-photo" src="${escapeHtml(thumbs[index] || url)}" data-photo-index="${index}" alt="${escapeHtml(data.nickname || '照片')} ${index + 1}" loading="lazy">`).join('')}</div>`
+    : '';
   const ageCity = [data.age ? `${data.age} 歲` : '', data.city || ''].filter(Boolean).join('，');
   const commonTags = Array.isArray(currentData.tags) && Array.isArray(data.tags)
     ? data.tags.filter(tag => currentData.tags.includes(tag)).slice(0, 6)
@@ -634,6 +707,7 @@ function openDetailSheet(item, bestReason){
         <div class="sheet-title">${escapeHtml(data.nickname || 'Pengoo 用戶')}的詳細資料</div>
         <button class="sheet-close" type="button">×</button>
       </div>
+      ${photoHtml}
       <div class="detail-section">
         <div class="detail-k">個人資料</div>
         <div class="detail-v">${escapeHtml([ageCity, data.job, getPurposeLabel(data.purpose), data.height ? `${data.height} cm` : ''].filter(Boolean).join('｜'))}</div>
@@ -655,6 +729,9 @@ function openDetailSheet(item, bestReason){
 
   detailSheet.classList.add('show');
   detailSheet.querySelector('.sheet-close').addEventListener('click', closeDetailSheet);
+  detailSheet.querySelectorAll('.detail-photo').forEach(img => {
+    img.addEventListener('click', () => openPhotoViewer(photos, parseInt(img.dataset.photoIndex, 10) || 0));
+  });
 }
 
 function closeDetailSheet(){
