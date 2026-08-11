@@ -29,6 +29,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#F5F0EE;font-family:
 </main>
 <script>
 (function(){
+  const DISABLE_IFRAME_SHELL = true;
+  if(DISABLE_IFRAME_SHELL){
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab') || 'home';
+    const pages = { home:'home.html', match:'match.html', chat:'chat.html', my:'my.html' };
+    window.location.replace(pages[tab] || pages.home);
+    return;
+  }
+
   const pages = {
     home:'home.html',
     match:'match.html',
