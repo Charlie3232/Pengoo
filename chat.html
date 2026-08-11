@@ -52,9 +52,6 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .letter-card.empty-thread::before{background:#6B2D3E;}
 .letter-card.empty-thread .name,
 .letter-card.empty-thread .last{color:#111;font-weight:900;}
-.letter-actions{display:flex;justify-content:flex-end;margin-top:0.58rem;}
-.delete-chat-btn{height:28px;border-radius:99px;border:1px solid rgba(184,205,217,0.42);background:rgba(255,255,255,0.72);color:rgba(58,42,46,0.48);font-family:inherit;font-size:0.66rem;font-weight:900;padding:0 0.62rem;cursor:pointer;}
-.delete-chat-btn:active{transform:scale(0.96);}
 .unread-badge{position:absolute;right:0.82rem;bottom:0.78rem;min-width:22px;height:22px;border-radius:99px;background:#111;color:white;font-size:0.68rem;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 0.38rem;box-shadow:0 8px 18px rgba(17,17,17,0.18);}
 .empty-card{height:100%;display:flex;flex-direction:column;justify-content:center;background:white;border:1px solid rgba(184,205,217,0.32);border-radius:22px;padding:1.35rem 1.1rem;text-align:center;box-shadow:0 12px 28px rgba(58,42,46,0.045);}
 .message-empty{background:white;border:1px solid rgba(184,205,217,0.3);border-radius:18px;padding:1rem;text-align:center;color:rgba(58,42,46,0.55);font-size:0.76rem;font-weight:780;line-height:1.65;box-shadow:0 8px 20px rgba(58,42,46,0.035);}
@@ -406,8 +403,21 @@ function getPairId(uidA, uidB){
   return [uidA, uidB].sort().join('_');
 }
 
+function timeToMillis(value){
+  if(!value) return 0;
+  if(value.toMillis) return value.toMillis();
+  if(value.toDate) return value.toDate().getTime();
+  if(typeof value === 'object' && typeof value.seconds === 'number'){
+    return value.seconds * 1000 + Math.floor((value.nanoseconds || 0) / 1000000);
+  }
+  const date = new Date(value);
+  const millis = date.getTime();
+  return Number.isNaN(millis) ? 0 : millis;
+}
+
 function formatTime(value){
-  const date = value?.toDate ? value.toDate() : value ? new Date(value) : null;
+  const millis = timeToMillis(value);
+  const date = millis ? new Date(millis) : null;
   if(!date || Number.isNaN(date.getTime())) return '';
   const now = new Date();
   const sameDay = date.toDateString() === now.toDateString();
@@ -415,7 +425,8 @@ function formatTime(value){
 }
 
 function formatMessageTime(value){
-  const date = value?.toDate ? value.toDate() : value ? new Date(value) : null;
+  const millis = timeToMillis(value);
+  const date = millis ? new Date(millis) : null;
   if(!date || Number.isNaN(date.getTime())) return '剛剛';
   return `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
 }
@@ -425,11 +436,17 @@ function getInboxCacheKey(){
 }
 
 function matchToCache(match={}){
+  const clearedAtBy = {};
+  Object.entries(match.clearedAtBy || {}).forEach(([uid, value]) => {
+    clearedAtBy[uid] = timeToMillis(value);
+  });
+
   return {
     ...match,
-    lastMessageAt: match.lastMessageAt?.toMillis ? match.lastMessageAt.toMillis() : (match.lastMessageAt || null),
-    createdAt: match.createdAt?.toMillis ? match.createdAt.toMillis() : (match.createdAt || null),
-    updatedAt: match.updatedAt?.toMillis ? match.updatedAt.toMillis() : (match.updatedAt || null)
+    clearedAtBy,
+    lastMessageAt: timeToMillis(match.lastMessageAt) || null,
+    createdAt: timeToMillis(match.createdAt) || null,
+    updatedAt: timeToMillis(match.updatedAt) || null
   };
 }
 
@@ -510,7 +527,7 @@ function openProfileSheet(item){
   const sharedTags = getSharedTags(other);
   const allTags = Array.isArray(other.tags) ? other.tags.slice(0, 6) : [];
   const photoHtml = photos.length
-    ? photos.map((url, index) => `<img class="profile-photo" src="${escapeHtml(thumbs[index] || url)}" data-photo-index="${index}" alt="${escapeHtml(other.nickname || '照片')} ${index + 1}" loading="lazy">`).join('')
+    ? photos.map((url, index) => `<img class="profile-photo" src="${escapeHtml(thumbs[index] || url)}" data-full="${escapeHtml(url)}" data-photo-index="${index}" alt="${escapeHtml(other.nickname || '照片')} ${index + 1}" loading="lazy" decoding="async">`).join('')
     : '<div class="profile-photo"></div><div class="profile-photo"></div>';
   const meta = [
     other.age ? `${other.age} 歲` : '',
@@ -610,11 +627,12 @@ async function blockUser(item){
 
 async function deleteConversation(item){
   const name = item.other?.nickname || '這位用戶';
-  if(!confirm(`要刪除和 ${name} 的對話嗎？\n這只會從你的月老信箱移除，對方不會被刪除。`)) return;
+  if(!confirm(`要刪除和 ${name} 的對話嗎？\n會清空你這邊看到的訊息紀錄，對方不會被刪除。`)) return;
 
   try{
     await updateDoc(doc(db, 'matches', item.id), {
       hiddenBy: arrayUnion(currentUser.uid),
+      [`clearedAtBy.${currentUser.uid}`]: serverTimestamp(),
       [`unreadBy.${currentUser.uid}`]: 0,
       updatedAt: serverTimestamp()
     });
@@ -638,6 +656,14 @@ async function deleteConversation(item){
 
     item.hidden = true;
     item.unread = 0;
+    item.match = {
+      ...item.match,
+      hiddenBy: [...new Set([...(Array.isArray(item.match.hiddenBy) ? item.match.hiddenBy : []), currentUser.uid])],
+      clearedAtBy: {
+        ...(item.match.clearedAtBy || {}),
+        [currentUser.uid]: Date.now()
+      }
+    };
     renderInbox();
     showToast('已從信箱刪除');
   } catch(e){
@@ -874,14 +900,9 @@ function renderInbox(){
           <div class="last">${escapeHtml(item.match.lastMessage || '')}</div>
         </div>
       </div>
-      <div class="letter-actions"><button class="delete-chat-btn" type="button">刪除</button></div>
       ${item.unread > 0 ? `<div class="unread-badge">${item.unread > 99 ? '99+' : item.unread}</div>` : ''}
     `;
     card.addEventListener('click', () => openChat(item));
-    card.querySelector('.delete-chat-btn').addEventListener('click', event => {
-      event.stopPropagation();
-      deleteConversation(item);
-    });
     chatList.appendChild(card);
   });
 
@@ -941,18 +962,6 @@ async function openChat(item){
   `;
   chatHead.onclick = () => openProfileSheet(item);
 
-  if(item.hidden){
-    try{
-      await updateDoc(doc(db, 'matches', item.id), {
-        hiddenBy: arrayRemove(currentUser.uid),
-        updatedAt: serverTimestamp()
-      });
-      item.hidden = false;
-    } catch(e){
-      console.error(e);
-    }
-  }
-
   const unreadBeforeOpen = item.unread;
   await clearUnread(item);
   listenMessages(item, unreadBeforeOpen);
@@ -981,6 +990,8 @@ function listenMessages(item, unreadBeforeOpen=0){
   if(unsubscribeMessages) unsubscribeMessages();
   messagesEl.innerHTML = '';
 
+  const clearedValue = item.match?.clearedAtBy?.[currentUser.uid] || null;
+  const clearedAt = timeToMillis(clearedValue);
   const messagesRef = collection(db, 'matches', item.id, 'messages');
   const q = query(messagesRef, orderBy('createdAt', 'asc'));
   unsubscribeMessages = onSnapshot(q, snap => {
@@ -988,7 +999,10 @@ function listenMessages(item, unreadBeforeOpen=0){
     const messages = [];
 
     snap.forEach(messageDoc => {
-      messages.push(messageDoc.data());
+      const data = messageDoc.data();
+      const createdAt = timeToMillis(data.createdAt);
+      if(clearedAt && createdAt && createdAt <= clearedAt) return;
+      messages.push(data);
     });
 
     const incomingTotal = messages.filter(msg => msg.senderUid !== currentUser.uid).length;
@@ -1016,7 +1030,7 @@ function listenMessages(item, unreadBeforeOpen=0){
       messagesEl.appendChild(group);
     });
 
-    if(!snap.size){
+    if(!messages.length){
       renderIcebreaker(item);
     }
 
@@ -1051,6 +1065,14 @@ async function sendMessage(){
       [`unreadBy.${otherUid}`]: increment(1),
       updatedAt: serverTimestamp()
     });
+
+    activeChat.hidden = false;
+    activeChat.match.hiddenBy = (Array.isArray(activeChat.match.hiddenBy) ? activeChat.match.hiddenBy : []).filter(uid => uid !== currentUser.uid);
+    activeChat.match.lastMessage = text;
+    activeChat.match.lastSenderUid = currentUser.uid;
+    activeChat.match.lastMessageAt = Date.now();
+    chatItems = chatItems.map(item => item.id === activeChat.id ? activeChat : item);
+    saveInboxCache();
 
     await updateDoc(doc(db, 'users', otherUid), {
       unreadCount: increment(1),
