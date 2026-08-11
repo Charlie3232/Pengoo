@@ -84,6 +84,7 @@ let shellReady = false;
 let currentUser = null;
 let authStatus = 'checking';
 let loginRedirectTimer = null;
+let hasSeenSignedIn = false;
 
 function recentLoginHandoff(){
   try{
@@ -96,6 +97,18 @@ function recentLoginHandoff(){
 
 function clearLoginHandoff(){
   try{ sessionStorage.removeItem('pengoo_login_handoff_at'); } catch(e){}
+}
+
+function explicitLogoutRequested(){
+  try{
+    return sessionStorage.getItem('pengoo_logout_requested') === '1';
+  } catch(e){
+    return false;
+  }
+}
+
+function clearExplicitLogout(){
+  try{ sessionStorage.removeItem('pengoo_logout_requested'); } catch(e){}
 }
 
 function initialPage(){
@@ -112,7 +125,16 @@ fallbackBtn.addEventListener('click', () => stableGo(activePage || initialPage()
 
 function ensureFrame(page, url=''){
   if(!pages[page]) page = 'home';
-  if(frames[page]) return frames[page];
+  if(frames[page]){
+    if(url){
+      try{
+        const current = new URL(frames[page].src, location.href).href;
+        const next = new URL(url, location.href).href;
+        if(current !== next) frames[page].src = url;
+      } catch(e){}
+    }
+    return frames[page];
+  }
 
   const frame = document.createElement('iframe');
   frame.className = 'frame';
@@ -124,6 +146,16 @@ function ensureFrame(page, url=''){
     try{
       const framePath = frame.contentWindow.location.pathname.split('/').pop();
       if(framePath === 'index.html'){
+        const retries = Number(frame.dataset.authRetries || 0);
+        if(retries < 2 && authStatus !== 'signed_out'){
+          frame.dataset.authRetries = String(retries + 1);
+          frame.src = pages[page];
+          return;
+        }
+        if(authStatus === 'signed_in'){
+          frame.src = pages[page];
+          return;
+        }
         fallback.classList.add('show');
       }
     } catch(e){}
@@ -151,25 +183,13 @@ function go(page, url=''){
   updateUrl(page);
 }
 
-function warmFrames(){
-  const queue = ['home','match','chat','my'].filter(page => page !== activePage);
-  const loadNext = () => {
-    const page = queue.shift();
-    if(!page) return;
-    ensureFrame(page);
-    setTimeout(loadNext, 900);
-  };
-  const runWhenIdle = window.requestIdleCallback || (callback => setTimeout(callback, 1600));
-  runWhenIdle(loadNext, { timeout:2600 });
-}
-
 window.PengooAppShell = {
   go,
   stableGo,
   sessionExpired(){
-    if(currentUser || auth.currentUser || authStatus === 'checking' || recentLoginHandoff()) return;
+    if(currentUser || auth.currentUser || authStatus === 'checking' || recentLoginHandoff() || hasSeenSignedIn) return;
     window.setTimeout(() => {
-      if(!currentUser && !auth.currentUser && authStatus !== 'checking') location.href = 'index.html';
+      if(!currentUser && !auth.currentUser && authStatus !== 'checking' && !hasSeenSignedIn) location.href = 'index.html';
     }, 900);
   },
   get authStatus(){ return authStatus; },
@@ -182,6 +202,16 @@ onAuthStateChanged(auth, async user => {
   user = user || auth.currentUser;
   currentUser = user;
   if(!user){
+    if(explicitLogoutRequested()){
+      clearExplicitLogout();
+      location.href = 'index.html';
+      return;
+    }
+    if(hasSeenSignedIn || shellReady){
+      authStatus = 'checking';
+      boot.classList.add('hide');
+      return;
+    }
     authStatus = 'checking';
     bootText.textContent = '企鵝月老正在確認登入';
     clearTimeout(loginRedirectTimer);
@@ -200,7 +230,9 @@ onAuthStateChanged(auth, async user => {
   try{
     clearTimeout(loginRedirectTimer);
     authStatus = 'signed_in';
+    hasSeenSignedIn = true;
     clearLoginHandoff();
+    clearExplicitLogout();
     bootText.textContent = '企鵝月老正在牽線';
     const snap = await getDoc(doc(db, 'users', user.uid));
     if(!snap.exists()){
@@ -220,7 +252,6 @@ onAuthStateChanged(auth, async user => {
     shellReady = true;
     setTimeout(() => {
       go(initialPage());
-      setTimeout(warmFrames, 1300);
     }, 350);
   } catch(e){
     console.error(e);
