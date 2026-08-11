@@ -10,114 +10,187 @@
 <link rel="preconnect" href="https://storage.googleapis.com" crossorigin>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{width:100%;height:100%;overflow:hidden;background:#F5F0EE;font-family:'Nunito','Noto Sans TC',system-ui,sans-serif;color:#3A2A2E;}
-.shell{width:100%;max-width:390px;height:100dvh;margin:0 auto;background:#F5F0EE;position:relative;overflow:hidden;}
-.frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#F5F0EE;opacity:0;pointer-events:none;transform:translateX(14px) scale(.995);transition:opacity .18s ease,transform .18s ease;touch-action:pan-y;}
+html,body{width:100%;height:100%;overflow:hidden;background:#F5F0EE;font-family:'Nunito','Noto Sans TC',system-ui,sans-serif;color:#3A2A2E;overscroll-behavior:none;}
+.shell{width:100%;max-width:390px;height:100vh;height:100dvh;margin:0 auto;background:#F5F0EE;position:relative;overflow:hidden;}
+.frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#F5F0EE;opacity:0;pointer-events:none;transform:translateX(12px) scale(.996);transition:opacity .18s ease,transform .18s ease;touch-action:pan-y;}
 .frame.active{opacity:1;pointer-events:auto;transform:translateX(0) scale(1);}
-.boot{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F5F0EE;transition:opacity .2s ease;}
+.boot{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F5F0EE;transition:opacity .22s ease;}
 .boot.hide{opacity:0;pointer-events:none;}
 .logo{font-size:2.2rem;font-weight:900;color:#6B2D3E;margin-bottom:.45rem;}
 .sub{font-size:.78rem;font-weight:800;color:rgba(58,42,46,.48);}
+.dots{display:flex;gap:6px;margin-top:1rem;}
+.dots span{width:7px;height:7px;border-radius:50%;background:#E8B4BC;animation:dot 1s ease-in-out infinite;}
+.dots span:nth-child(2){animation-delay:.16s;}
+.dots span:nth-child(3){animation-delay:.32s;}
+@keyframes dot{0%,100%{opacity:.35;transform:translateY(0)}50%{opacity:1;transform:translateY(-5px)}}
+.fallback{display:none;position:absolute;left:1rem;right:1rem;bottom:calc(1.1rem + env(safe-area-inset-bottom));z-index:24;background:white;border:1px solid rgba(184,205,217,.4);border-radius:18px;padding:.9rem;box-shadow:0 14px 32px rgba(58,42,46,.08);}
+.fallback.show{display:block;}
+.fallback-title{font-size:.9rem;font-weight:900;margin-bottom:.35rem;}
+.fallback-text{font-size:.74rem;line-height:1.6;color:rgba(58,42,46,.58);font-weight:740;margin-bottom:.7rem;}
+.fallback-btn{width:100%;height:42px;border:0;border-radius:13px;background:#6B2D3E;color:white;font-size:.8rem;font-weight:900;}
 </style>
 </head>
 <body>
 <main class="shell" id="shell">
   <div class="boot" id="boot">
     <div class="logo">Pengoo</div>
-    <div class="sub">企鵝月老正在牽線</div>
+    <div class="sub" id="bootText">企鵝月老正在確認登入</div>
+    <div class="dots"><span></span><span></span><span></span></div>
+  </div>
+  <div class="fallback" id="fallback">
+    <div class="fallback-title">切換模式遇到問題</div>
+    <div class="fallback-text">如果手機瀏覽器阻擋常駐分頁，先用穩定模式開啟，不影響功能。</div>
+    <button class="fallback-btn" id="fallbackBtn" type="button">改用穩定模式</button>
   </div>
 </main>
-<script>
-(function(){
-  const DISABLE_IFRAME_SHELL = true;
-  if(DISABLE_IFRAME_SHELL){
-    const params = new URLSearchParams(location.search);
-    const tab = params.get('tab') || 'home';
-    const pages = { home:'home.html', match:'match.html', chat:'chat.html', my:'my.html' };
-    window.location.replace(pages[tab] || pages.home);
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBE3TBpedUJoDu5r9pJqC4yTzSscbGRqZ0",
+  authDomain: "pengoo-3c14a.firebaseapp.com",
+  databaseURL: "https://pengoo-3c14a-default-rtdb.firebaseio.com",
+  projectId: "pengoo-3c14a",
+  storageBucket: "pengoo-3c14a.firebasestorage.app",
+  messagingSenderId: "76943284602",
+  appId: "1:76943284602:web:612cd5a7e802e42da25ec3",
+  measurementId: "G-Q2YZCTVNTN"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+setPersistence(auth, browserLocalPersistence).catch(e => console.warn('App shell persistence skipped:', e));
+
+const pages = {
+  home:'home.html',
+  match:'match.html',
+  chat:'chat.html',
+  my:'my.html'
+};
+const shell = document.getElementById('shell');
+const boot = document.getElementById('boot');
+const bootText = document.getElementById('bootText');
+const fallback = document.getElementById('fallback');
+const fallbackBtn = document.getElementById('fallbackBtn');
+const frames = {};
+let activePage = '';
+let shellReady = false;
+let currentUser = null;
+
+function initialPage(){
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab');
+  return pages[tab] ? tab : 'home';
+}
+
+function stableGo(page='home'){
+  location.href = pages[page] || pages.home;
+}
+
+fallbackBtn.addEventListener('click', () => stableGo(activePage || initialPage()));
+
+function ensureFrame(page, url=''){
+  if(!pages[page]) page = 'home';
+  if(frames[page]) return frames[page];
+
+  const frame = document.createElement('iframe');
+  frame.className = 'frame';
+  frame.title = `Pengoo ${page}`;
+  frame.dataset.page = page;
+  frame.setAttribute('scrolling', 'yes');
+  frame.src = url || pages[page];
+  frame.addEventListener('load', () => {
+    try{
+      const framePath = frame.contentWindow.location.pathname.split('/').pop();
+      if(framePath === 'index.html'){
+        fallback.classList.add('show');
+      }
+    } catch(e){}
+    boot.classList.add('hide');
+  });
+  shell.appendChild(frame);
+  frames[page] = frame;
+  return frame;
+}
+
+function updateUrl(page){
+  history.replaceState({ tab:page }, '', `${location.pathname}?tab=${encodeURIComponent(page)}`);
+}
+
+function go(page, url=''){
+  if(!shellReady){
+    stableGo(page);
+    return;
+  }
+  if(!pages[page]) page = 'home';
+  const frame = ensureFrame(page, url);
+  Object.values(frames).forEach(item => item.classList.remove('active'));
+  frame.classList.add('active');
+  activePage = page;
+  updateUrl(page);
+}
+
+function warmFrames(){
+  const queue = ['home','match','chat','my'].filter(page => page !== activePage);
+  const loadNext = () => {
+    const page = queue.shift();
+    if(!page) return;
+    ensureFrame(page);
+    setTimeout(loadNext, 900);
+  };
+  const runWhenIdle = window.requestIdleCallback || (callback => setTimeout(callback, 1600));
+  runWhenIdle(loadNext, { timeout:2600 });
+}
+
+window.PengooAppShell = {
+  go,
+  stableGo,
+  sessionExpired(){
+    if(currentUser) return;
+    location.href = 'index.html';
+  },
+  get user(){ return currentUser; },
+  get activePage(){ return activePage; }
+};
+
+onAuthStateChanged(auth, async user => {
+  currentUser = user;
+  if(!user){
+    location.href = 'index.html';
     return;
   }
 
-  const pages = {
-    home:'home.html',
-    match:'match.html',
-    chat:'chat.html',
-    my:'my.html'
-  };
-  const shell = document.getElementById('shell');
-  const boot = document.getElementById('boot');
-  const frames = {};
-  let activePage = '';
-
-  function getInitialPage(){
-    const params = new URLSearchParams(location.search);
-    const tab = params.get('tab');
-    return pages[tab] ? tab : 'home';
-  }
-
-  function frameUrl(page, url){
-    if(url) return url;
-    return pages[page] || pages.home;
-  }
-
-  function ensureFrame(page, url){
-    if(frames[page]) return frames[page];
-    const frame = document.createElement('iframe');
-    frame.className = 'frame';
-    frame.title = `Pengoo ${page}`;
-    frame.dataset.page = page;
-    frame.setAttribute('scrolling', 'yes');
-    frame.src = frameUrl(page, url);
-    frame.addEventListener('load', () => {
-      boot.classList.add('hide');
-    }, { once:true });
-    shell.appendChild(frame);
-    frames[page] = frame;
-    return frame;
-  }
-
-  function updateUrl(page){
-    const next = `${location.pathname}?tab=${encodeURIComponent(page)}`;
-    history.replaceState({ tab:page }, '', next);
-  }
-
-  function go(page, url){
-    if(!pages[page]) page = 'home';
-    const frame = ensureFrame(page, url);
-    if(url && frame.src && !frame.src.endsWith(url)){
-      try{
-        const current = new URL(frame.src, location.href);
-        const next = new URL(url, location.href);
-        if(current.href !== next.href && next.search){
-          frame.src = url;
-        }
-      } catch(e){}
+  try{
+    bootText.textContent = '企鵝月老正在牽線';
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if(!snap.exists()){
+      location.href = 'profile.html';
+      return;
     }
-    Object.values(frames).forEach(item => item.classList.remove('active'));
-    frame.classList.add('active');
-    activePage = page;
-    updateUrl(page);
+    const data = snap.data();
+    if(data.deleted || data.adminDeleted){
+      location.href = 'profile.html';
+      return;
+    }
+    if(!(data.pendingReview || data.selfieApproved || data.quizComplete || data.rejected)){
+      location.href = 'profile.html';
+      return;
+    }
+
+    shellReady = true;
+    setTimeout(() => {
+      go(initialPage());
+      setTimeout(warmFrames, 1300);
+    }, 350);
+  } catch(e){
+    console.error(e);
+    stableGo('home');
   }
-
-  window.PengooAppShell = { go, get activePage(){ return activePage; } };
-  go(getInitialPage());
-
-  function warmFrames(){
-    const queue = ['home','match','chat','my'].filter(page => page !== activePage);
-    const loadNext = () => {
-      const page = queue.shift();
-      if(!page) return;
-      ensureFrame(page);
-      window.setTimeout(loadNext, 850);
-    };
-    const runWhenIdle = window.requestIdleCallback || (callback => window.setTimeout(callback, 1600));
-    runWhenIdle(loadNext, { timeout:2600 });
-  }
-
-  window.addEventListener('load', () => {
-    window.setTimeout(warmFrames, 1400);
-  });
-})();
+});
 </script>
 <script src="app-transition.js"></script>
 </body>
