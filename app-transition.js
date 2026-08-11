@@ -67,6 +67,19 @@
 
   window.PengooTransition = { go };
 
+  function prefetch(url){
+    if(!url || document.querySelector(`link[rel="prefetch"][href="${url}"]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = url;
+    link.as = 'document';
+    document.head.appendChild(link);
+  }
+
+  window.addEventListener('load', () => {
+    ['home.html','match.html','chat.html','my.html'].forEach(prefetch);
+  });
+
   window.addEventListener('pageshow', () => {
     ensureCurtain();
     document.body.classList.remove('app-leaving');
