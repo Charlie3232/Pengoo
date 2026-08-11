@@ -63,7 +63,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-setPersistence(auth, browserLocalPersistence).catch(e => console.warn('App shell persistence skipped:', e));
+const persistenceReady = setPersistence(auth, browserLocalPersistence).catch(e => {
+  console.warn('App shell persistence skipped:', e);
+});
 
 const pages = {
   home:'home.html',
@@ -80,6 +82,21 @@ const frames = {};
 let activePage = '';
 let shellReady = false;
 let currentUser = null;
+let authStatus = 'checking';
+let loginRedirectTimer = null;
+
+function recentLoginHandoff(){
+  try{
+    const at = Number(sessionStorage.getItem('pengoo_login_handoff_at') || 0);
+    return at && Date.now() - at < 12000;
+  } catch(e){
+    return false;
+  }
+}
+
+function clearLoginHandoff(){
+  try{ sessionStorage.removeItem('pengoo_login_handoff_at'); } catch(e){}
+}
 
 function initialPage(){
   const params = new URLSearchParams(location.search);
@@ -150,21 +167,40 @@ window.PengooAppShell = {
   go,
   stableGo,
   sessionExpired(){
-    if(currentUser) return;
-    location.href = 'index.html';
+    if(currentUser || auth.currentUser || authStatus === 'checking' || recentLoginHandoff()) return;
+    window.setTimeout(() => {
+      if(!currentUser && !auth.currentUser && authStatus !== 'checking') location.href = 'index.html';
+    }, 900);
   },
+  get authStatus(){ return authStatus; },
   get user(){ return currentUser; },
   get activePage(){ return activePage; }
 };
 
 onAuthStateChanged(auth, async user => {
+  await persistenceReady;
+  user = user || auth.currentUser;
   currentUser = user;
   if(!user){
-    location.href = 'index.html';
+    authStatus = 'checking';
+    bootText.textContent = '企鵝月老正在確認登入';
+    clearTimeout(loginRedirectTimer);
+    loginRedirectTimer = setTimeout(() => {
+      if(auth.currentUser) return;
+      authStatus = 'signed_out';
+      if(!recentLoginHandoff()) location.href = 'index.html';
+      else {
+        fallback.classList.add('show');
+        bootText.textContent = '登入狀態同步比較慢，請稍等一下';
+      }
+    }, recentLoginHandoff() ? 4200 : 1800);
     return;
   }
 
   try{
+    clearTimeout(loginRedirectTimer);
+    authStatus = 'signed_in';
+    clearLoginHandoff();
     bootText.textContent = '企鵝月老正在牽線';
     const snap = await getDoc(doc(db, 'users', user.uid));
     if(!snap.exists()){
