@@ -259,7 +259,15 @@ const db = getFirestore(app);
 function handleShellMissingAuth(){
   if(window.parent && window.parent !== window && window.parent.PengooAppShell){
     setTimeout(() => {
-      if(!auth.currentUser) window.parent.PengooAppShell.sessionExpired();
+      if(!auth.currentUser && window.parent.PengooAppShell.authStatus === 'signed_in'){
+        const retryKey = 'pengoo_shell_auth_retry_' + location.pathname;
+        if(!sessionStorage.getItem(retryKey)){
+          sessionStorage.setItem(retryKey, '1');
+          location.reload();
+          return;
+        }
+      }
+      if(!auth.currentUser && window.parent.PengooAppShell.authStatus !== 'checking') window.parent.PengooAppShell.sessionExpired();
     }, 1200);
     return true;
   }
