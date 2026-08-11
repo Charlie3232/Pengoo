@@ -17,10 +17,21 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .notify-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .notify-btn.active{background:#6B2D3E;color:white;border-color:#6B2D3E;}
 .back-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#6B2D3E;font-size:1.15rem;font-weight:900;display:none;align-items:center;justify-content:center;cursor:pointer;}
-.body{flex:1;min-height:0;padding:0 1.15rem 5.7rem;overflow:hidden;}
+.body{flex:1;min-height:0;padding:0 1.15rem 6.25rem;overflow:hidden;}
 .view{height:100%;display:none;}
 .view.active{display:block;}
-.letter-stack{height:100%;overflow-y:auto;display:grid;align-content:start;justify-items:start;gap:0.76rem;padding-bottom:0.8rem;}
+.inbox-shell{height:100%;display:flex;flex-direction:column;min-height:0;}
+.match-rail{display:flex;gap:0.68rem;overflow-x:auto;padding:0.1rem 0 0.78rem;margin:0 -0.12rem 0.18rem;flex-shrink:0;scrollbar-width:none;}
+.match-rail::-webkit-scrollbar{display:none;}
+.match-bubble{width:58px;flex:0 0 58px;border:0;background:transparent;font-family:inherit;color:#3A2A2E;cursor:pointer;touch-action:manipulation;text-align:center;}
+.match-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#B8CDD9,#E8B4BC);display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;font-weight:900;overflow:hidden;margin:0 auto 0.24rem;border:2px solid white;box-shadow:0 8px 18px rgba(58,42,46,0.08);position:relative;}
+.match-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.match-bubble.unread .match-avatar{border-color:#111;box-shadow:0 10px 22px rgba(17,17,17,0.14);}
+.match-bubble.hidden .match-avatar{opacity:0.72;}
+.match-name{font-size:0.62rem;font-weight:900;color:rgba(58,42,46,0.58);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.match-bubble.unread .match-name{color:#111;}
+.match-dot{position:absolute;right:-1px;top:-1px;min-width:17px;height:17px;border-radius:99px;background:#111;color:white;font-size:0.54rem;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 0.2rem;}
+.letter-stack{flex:1;min-height:0;overflow-y:auto;display:grid;align-content:start;justify-items:start;gap:0.76rem;padding-bottom:1.1rem;}
 .letter-card{position:relative;width:calc(100% - 18px);background:white;border:1px solid rgba(184,205,217,0.3);border-radius:18px;padding:0.82rem 0.86rem 0.82rem 0.95rem;box-shadow:0 8px 20px rgba(58,42,46,0.035);overflow:hidden;cursor:pointer;}
 .letter-card:nth-child(even){justify-self:end;}
 .letter-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:rgba(184,205,217,0.42);}
@@ -46,6 +57,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .delete-chat-btn:active{transform:scale(0.96);}
 .unread-badge{position:absolute;right:0.82rem;bottom:0.78rem;min-width:22px;height:22px;border-radius:99px;background:#111;color:white;font-size:0.68rem;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 0.38rem;box-shadow:0 8px 18px rgba(17,17,17,0.18);}
 .empty-card{height:100%;display:flex;flex-direction:column;justify-content:center;background:white;border:1px solid rgba(184,205,217,0.32);border-radius:22px;padding:1.35rem 1.1rem;text-align:center;box-shadow:0 12px 28px rgba(58,42,46,0.045);}
+.message-empty{background:white;border:1px solid rgba(184,205,217,0.3);border-radius:18px;padding:1rem;text-align:center;color:rgba(58,42,46,0.55);font-size:0.76rem;font-weight:780;line-height:1.65;box-shadow:0 8px 20px rgba(58,42,46,0.035);}
 .empty-mark{width:82px;height:82px;border-radius:28px;background:linear-gradient(135deg,rgba(232,180,188,0.28),rgba(184,205,217,0.28));display:flex;align-items:center;justify-content:center;margin:0 auto 0.9rem;font-size:2rem;color:#6B2D3E;}
 .empty-title{font-size:1.08rem;font-weight:900;color:#3A2A2E;margin-bottom:0.45rem;}
 .empty-text{font-size:0.76rem;line-height:1.7;color:rgba(58,42,46,0.56);font-weight:700;margin-bottom:1rem;}
@@ -58,7 +70,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .chat-head .avatar{width:42px;height:42px;}
 .chat-name{font-size:0.92rem;font-weight:900;color:#3A2A2E;}
 .chat-sub{font-size:0.66rem;font-weight:850;color:#6B2D3E;margin-top:0.12rem;}
-.messages{flex:1;min-height:0;display:flex;flex-direction:column;gap:0.55rem;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:5.25rem;scroll-padding-bottom:5.25rem;}
+.messages{flex:1;min-height:0;display:flex;flex-direction:column;gap:0.55rem;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:6.35rem;scroll-padding-bottom:6.35rem;}
 .ice-card{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:20px;padding:0.86rem;box-shadow:0 10px 24px rgba(58,42,46,0.05);margin-bottom:0.12rem;}
 .thread{display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.68rem;}
 .thread .avatar{width:46px;height:46px;border-radius:16px;}
@@ -82,7 +94,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .msg-meta{font-size:0.58rem;font-weight:850;color:rgba(58,42,46,0.34);padding:0 0.18rem;}
 .unread-line{display:flex;align-items:center;gap:0.55rem;margin:0.15rem 0;color:#7A9BB5;font-size:0.64rem;font-weight:900;}
 .unread-line::before,.unread-line::after{content:'';height:1px;background:rgba(184,205,217,0.42);flex:1;}
-.input-row{position:fixed;left:50%;bottom:4.85rem;transform:translateX(-50%);width:100%;max-width:390px;padding:0.55rem 1.15rem 0.65rem;background:linear-gradient(180deg,rgba(245,240,238,0),#F5F0EE 30%,#F5F0EE);display:none;gap:0.55rem;z-index:32;}
+.input-row{position:fixed;left:50%;bottom:4.95rem;transform:translateX(-50%);width:100%;max-width:390px;padding:0.6rem 1.15rem 0.8rem;background:linear-gradient(180deg,rgba(245,240,238,0),#F5F0EE 28%,#F5F0EE);display:none;gap:0.55rem;z-index:32;}
 .input-row.active{display:flex;}
 .input{height:44px;border-radius:14px;border:1.5px solid rgba(184,205,217,0.45);background:white;flex:1;padding:0 0.82rem;font-size:0.8rem;color:#3A2A2E;font-weight:750;}
 .input.sending{opacity:0.72;}
@@ -157,7 +169,10 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 
   <main class="body">
     <section class="view active" id="viewInbox">
-      <div class="letter-stack" id="chatList"></div>
+      <div class="inbox-shell">
+        <div class="match-rail" id="matchRail"></div>
+        <div class="letter-stack" id="chatList"></div>
+      </div>
     </section>
 
     <section class="view" id="viewEmpty">
@@ -230,6 +245,7 @@ let pendingOpenMatchId = new URLSearchParams(location.search).get('match') || ''
 const pageTitle = document.getElementById('pageTitle');
 const backBtn = document.getElementById('backBtn');
 const chatList = document.getElementById('chatList');
+const matchRail = document.getElementById('matchRail');
 const chatHead = document.getElementById('chatHead');
 const messagesEl = document.getElementById('messages');
 const inputRow = document.getElementById('inputRow');
@@ -425,6 +441,12 @@ function avatarHtml(userData, fallback='P'){
   return `<div class="avatar">${escapeHtml((userData?.nickname || fallback).slice(0,1))}</div>`;
 }
 
+function railAvatarHtml(userData, fallback='P'){
+  const photo = getProfilePhoto(userData);
+  if(photo) return `<img src="${escapeHtml(photo)}" alt="${escapeHtml(userData?.nickname || '頭像')}" loading="lazy">`;
+  return escapeHtml((userData?.nickname || fallback).slice(0,1));
+}
+
 function getPurposeLabel(purpose){
   const labels = {
     serious: '認真交往',
@@ -567,7 +589,8 @@ async function deleteConversation(item){
       showView('viewInbox');
     }
 
-    chatItems = chatItems.filter(chat => chat.id !== item.id);
+    item.hidden = true;
+    item.unread = 0;
     renderInbox();
     showToast('已從信箱刪除');
   } catch(e){
@@ -748,15 +771,32 @@ function renderInbox(){
     return;
   }
 
-  chatList.innerHTML = '';
+  showView('viewInbox');
+  matchRail.innerHTML = '';
   chatItems.forEach(item => {
+    const bubble = document.createElement('button');
+    bubble.type = 'button';
+    bubble.className = `match-bubble${item.unread > 0 ? ' unread' : ''}${item.hidden ? ' hidden' : ''}`;
+    bubble.innerHTML = `
+      <div class="match-avatar">
+        ${railAvatarHtml(item.other)}
+        ${item.unread > 0 ? `<div class="match-dot">${item.unread > 99 ? '99+' : item.unread}</div>` : ''}
+      </div>
+      <div class="match-name">${escapeHtml(item.other.nickname || 'Pengoo')}</div>
+    `;
+    bubble.addEventListener('click', () => openChat(item));
+    matchRail.appendChild(bubble);
+  });
+
+  const messageItems = chatItems.filter(item => (!item.hidden || item.unread > 0) && item.match.lastMessage);
+  chatList.innerHTML = '';
+  if(!messageItems.length){
+    chatList.innerHTML = '<div class="message-empty">上方是目前已配對的人。點一個圈圈就可以開始聊天，新的訊息會出現在這裡。</div>';
+  }
+  messageItems.forEach(item => {
     const displayScore = getDisplayScore(item);
-    const isEmptyThread = !item.match.lastMessage;
-    const lastText = item.hidden
-      ? '已配對，可以重新開啟聊天'
-      : (item.match.lastMessage || '你們配對成功了，先打聲招呼吧');
     const card = document.createElement('article');
-    card.className = `letter-card${item.unread > 0 ? ' unread' : ''}${(isEmptyThread || item.hidden) ? ' empty-thread' : ''}`;
+    card.className = `letter-card${item.unread > 0 ? ' unread' : ''}`;
     card.innerHTML = `
       <div class="letter-main">
         ${avatarHtml(item.other)}
@@ -766,7 +806,7 @@ function renderInbox(){
             <div class="time">${escapeHtml(formatTime(item.match.lastMessageAt))}</div>
           </div>
           <div class="score">${displayScore || '--'}% 契合</div>
-          <div class="last">${escapeHtml(lastText)}</div>
+          <div class="last">${escapeHtml(item.match.lastMessage || '')}</div>
         </div>
       </div>
       <div class="letter-actions"><button class="delete-chat-btn" type="button">刪除</button></div>
@@ -803,8 +843,6 @@ function listenInboxNotifications(){
       if(change.type !== 'modified') continue;
       const match = change.doc.data();
       if(!Array.isArray(match.users) || !match.users.includes(currentUser.uid)) continue;
-      const hiddenBy = Array.isArray(match.hiddenBy) ? match.hiddenBy : [];
-      if(hiddenBy.includes(currentUser.uid)) continue;
       if(match.lastSenderUid === currentUser.uid) continue;
       if((match.unreadBy?.[currentUser.uid] || 0) <= 0) continue;
       if(activeChat?.id === change.doc.id) continue;
