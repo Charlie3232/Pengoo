@@ -58,7 +58,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .section-head .section-title{margin:0;}
 .sheet{display:none;position:fixed;inset:0;background:rgba(58,42,46,0.32);z-index:260;align-items:flex-end;justify-content:center;}
 .sheet.show{display:flex;}
-.sheet-panel{width:100%;max-width:390px;max-height:88vh;background:white;border-radius:22px 22px 0 0;padding:0.95rem 1.05rem calc(1.1rem + env(safe-area-inset-bottom));overflow-y:auto;}
+.sheet-panel{width:100%;max-width:390px;max-height:calc(100dvh - 1.2rem);background:white;border-radius:22px 22px 0 0;padding:0.95rem 1.05rem calc(1.1rem + env(safe-area-inset-bottom));overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.78rem;}
 .sheet-title{font-size:1rem;font-weight:900;}
 .sheet-close{width:32px;height:32px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;cursor:pointer;}
@@ -255,6 +255,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+function handleShellMissingAuth(){
+  if(window.parent && window.parent !== window && window.parent.PengooAppShell){
+    setTimeout(() => {
+      if(!auth.currentUser) window.parent.PengooAppShell.sessionExpired();
+    }, 1200);
+    return true;
+  }
+  return false;
+}
 const storage = getStorage(app);
 
 let currentUser = null;
@@ -636,6 +646,7 @@ lightbox.addEventListener('click', () => {
 
 onAuthStateChanged(auth, async user => {
   if(!user){
+    if(handleShellMissingAuth()) return;
     window.location.href = 'index.html';
     return;
   }
