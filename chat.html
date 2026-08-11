@@ -69,7 +69,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .chat-head .avatar{width:42px;height:42px;}
 .chat-name{font-size:0.92rem;font-weight:900;color:#3A2A2E;}
 .chat-sub{font-size:0.66rem;font-weight:850;color:#6B2D3E;margin-top:0.12rem;}
-.messages{flex:1;min-height:0;height:0;display:flex;flex-direction:column;gap:0.55rem;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 0 7.25rem;scroll-padding-bottom:7.25rem;touch-action:pan-y;}
+.messages{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:0.55rem;overflow-y:scroll;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 0 7.25rem;scroll-padding-bottom:7.25rem;touch-action:pan-y;position:relative;z-index:1;}
 .ice-card{background:white;border:1px solid rgba(184,205,217,0.34);border-radius:20px;padding:0.86rem;box-shadow:0 10px 24px rgba(58,42,46,0.05);margin-bottom:0.12rem;}
 .thread{display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.68rem;}
 .thread .avatar{width:46px;height:46px;border-radius:16px;}
@@ -112,9 +112,9 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 .notify-card.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
 .notify-title{font-size:0.78rem;font-weight:900;margin-bottom:0.18rem;}
 .notify-text{font-size:0.72rem;line-height:1.45;font-weight:760;color:rgba(255,255,255,0.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.profile-sheet{position:fixed;inset:0;background:rgba(58,42,46,0.32);z-index:220;display:none;align-items:flex-end;justify-content:center;}
+.profile-sheet{position:fixed;inset:0;background:rgba(58,42,46,0.32);z-index:220;display:none;align-items:flex-end;justify-content:center;touch-action:none;}
 .profile-sheet.show{display:flex;}
-.profile-panel{width:100%;max-width:390px;max-height:84vh;background:white;border-radius:22px 22px 0 0;padding:0.95rem 1.05rem calc(1.1rem + env(safe-area-inset-bottom));overflow-y:auto;}
+.profile-panel{width:100%;max-width:390px;max-height:calc(100dvh - 1.2rem);background:white;border-radius:22px 22px 0 0;padding:0.95rem 1.05rem calc(1.1rem + env(safe-area-inset-bottom));overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;}
 .profile-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;}
 .profile-title{font-size:1rem;font-weight:900;color:#3A2A2E;}
 .profile-close{width:32px;height:32px;border-radius:50%;border:1px solid rgba(184,205,217,0.45);background:white;color:#3A5068;font-size:1rem;font-weight:900;}
@@ -231,6 +231,16 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+function handleShellMissingAuth(){
+  if(window.parent && window.parent !== window && window.parent.PengooAppShell){
+    setTimeout(() => {
+      if(!auth.currentUser) window.parent.PengooAppShell.sessionExpired();
+    }, 1200);
+    return true;
+  }
+  return false;
+}
+
 let currentUser = null;
 let currentData = null;
 let chatItems = [];
@@ -265,6 +275,17 @@ const photoViewerImg = document.getElementById('photoViewerImg');
 const photoViewerCount = document.getElementById('photoViewerCount');
 let viewerPhotos = [];
 let viewerPhotoIndex = 0;
+
+function keepPanelScrollable(sheet, panelSelector){
+  if(!sheet) return;
+  sheet.addEventListener('touchmove', event => {
+    if(!sheet.classList.contains('show')) return;
+    if(event.target.closest(panelSelector)) return;
+    event.preventDefault();
+  }, { passive:false });
+}
+
+keepPanelScrollable(profileSheet, '.profile-panel');
 
 function openPhotoViewer(photos, index=0){
   viewerPhotos = Array.isArray(photos) ? photos.filter(Boolean) : [];
@@ -393,6 +414,12 @@ notifyCard.addEventListener('click', () => {
 profileSheet.addEventListener('click', event => {
   if(event.target === profileSheet) closeProfileSheet();
 });
+profileSheet.addEventListener('touchstart', event => {
+  const panel = event.target.closest('.profile-panel');
+  if(!panel) return;
+  if(panel.scrollTop <= 0) panel.scrollTop = 1;
+  if(panel.scrollTop + panel.offsetHeight >= panel.scrollHeight) panel.scrollTop -= 1;
+}, { passive:true });
 backBtn.addEventListener('click', () => {
   if(unsubscribeMessages) unsubscribeMessages();
   activeChat = null;
@@ -683,6 +710,12 @@ function scrollMessagesToBottom(){
       messagesEl.scrollTop = messagesEl.scrollHeight;
     });
   });
+}
+
+function shouldStickToBottom(){
+  if(messagesEl.dataset.forceScroll === '1') return true;
+  const distance = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight;
+  return distance < 120;
 }
 
 function renderIcebreaker(item){
@@ -993,12 +1026,14 @@ async function clearUnread(item){
 function listenMessages(item, unreadBeforeOpen=0){
   if(unsubscribeMessages) unsubscribeMessages();
   messagesEl.innerHTML = '';
+  messagesEl.dataset.forceScroll = '1';
 
   const clearedValue = item.match?.clearedAtBy?.[currentUser.uid] || null;
   const clearedAt = timeToMillis(clearedValue);
   const messagesRef = collection(db, 'matches', item.id, 'messages');
   const q = query(messagesRef, orderBy('createdAt', 'asc'));
   unsubscribeMessages = onSnapshot(q, snap => {
+    const stickToBottom = shouldStickToBottom();
     messagesEl.innerHTML = '';
     const messages = [];
 
@@ -1038,7 +1073,8 @@ function listenMessages(item, unreadBeforeOpen=0){
       renderIcebreaker(item);
     }
 
-    scrollMessagesToBottom();
+    if(stickToBottom) scrollMessagesToBottom();
+    delete messagesEl.dataset.forceScroll;
   });
 }
 
@@ -1054,6 +1090,7 @@ async function sendMessage(){
   sendBtn.textContent = '送...';
 
   try{
+    messagesEl.dataset.forceScroll = '1';
     await addDoc(collection(db, 'matches', activeChat.id, 'messages'), {
       senderUid: currentUser.uid,
       text,
@@ -1101,7 +1138,11 @@ messageInput.addEventListener('keydown', event => {
 });
 
 onAuthStateChanged(auth, async user => {
-  if(!user){ window.location.href = 'index.html'; return; }
+  if(!user){
+    if(handleShellMissingAuth()) return;
+    window.location.href = 'index.html';
+    return;
+  }
 
   try{
     const dev = await resolveDevUser(user, db, doc, getDoc);
