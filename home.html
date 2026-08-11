@@ -289,6 +289,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+function handleShellMissingAuth(){
+  if(window.parent && window.parent !== window && window.parent.PengooAppShell){
+    setTimeout(() => {
+      if(!auth.currentUser) window.parent.PengooAppShell.sessionExpired();
+    }, 1200);
+    return true;
+  }
+  return false;
+}
 let unsubscribeHomeUser = null;
 
 const loadingOverlay = document.getElementById('loadingOverlay');
@@ -515,6 +525,7 @@ onAuthStateChanged(auth, async (user) => {
   const initOverlay = document.getElementById('initOverlay');
 
   if(!user){
+    if(handleShellMissingAuth()) return;
     if(unsubscribeHomeUser) unsubscribeHomeUser();
     unsubscribeHomeUser = null;
     window.location.href='index.html';
