@@ -560,14 +560,14 @@ function renderMatchCard(item){
     data.height ? `${data.height} cm` : ''
   ].filter(Boolean).slice(0, 4);
   const thumbHtml = photos.length
-    ? photos.map((url, index) => `<img class="thumb${index === 0 ? ' active' : ''}" src="${escapeHtml(thumbs[index] || url)}" data-photo="${escapeHtml(url)}" alt="第 ${index + 1} 張照片縮圖" loading="lazy">`).join('')
+    ? photos.map((url, index) => `<img class="thumb${index === 0 ? ' active' : ''}" src="${escapeHtml(thumbs[index] || url)}" data-photo="${escapeHtml(url)}" data-thumb="${escapeHtml(thumbs[index] || url)}" alt="第 ${index + 1} 張照片縮圖" loading="lazy" decoding="async">`).join('')
     : '<div class="thumb"></div><div class="thumb"></div><div class="thumb"></div>';
 
   const article = document.createElement('article');
   article.className = 'match-card';
   article.innerHTML = `
     <div class="photo-wrap">
-      ${firstDisplayPhoto ? `<img class="photo" src="${escapeHtml(firstDisplayPhoto)}" data-full="${escapeHtml(photo)}" alt="${escapeHtml(data.nickname || '配對照片')}" loading="eager">` : '<div class="photo-placeholder">🐧</div>'}
+      ${firstDisplayPhoto ? `<img class="photo" src="${escapeHtml(firstDisplayPhoto)}" data-full="${escapeHtml(photo)}" alt="${escapeHtml(data.nickname || '配對照片')}" loading="eager" decoding="async">` : '<div class="photo-placeholder">🐧</div>'}
       <div class="photo-shade"></div>
       <div class="photo-info">
         <div class="photo-name">
@@ -607,9 +607,10 @@ function renderMatchCard(item){
   article.querySelectorAll('.thumb').forEach(thumb => {
     thumb.addEventListener('click', () => {
       const nextPhoto = thumb.dataset.photo;
+      const nextThumb = thumb.dataset.thumb || nextPhoto;
       const mainPhoto = article.querySelector('.photo');
       if(!nextPhoto || !mainPhoto) return;
-      mainPhoto.src = nextPhoto;
+      mainPhoto.src = nextThumb;
       mainPhoto.dataset.full = nextPhoto;
       article.querySelectorAll('.thumb').forEach(item => item.classList.remove('active'));
       thumb.classList.add('active');
@@ -726,7 +727,7 @@ function openDetailSheet(item, bestReason){
   const photos = Array.isArray(data.photos) ? data.photos.filter(Boolean).slice(0, 6) : [];
   const thumbs = Array.isArray(data.photoThumbs) ? data.photoThumbs.filter(Boolean).slice(0, 6) : photos;
   const photoHtml = photos.length
-    ? `<div class="detail-photos">${photos.map((url, index) => `<img class="detail-photo" src="${escapeHtml(thumbs[index] || url)}" data-photo-index="${index}" alt="${escapeHtml(data.nickname || '照片')} ${index + 1}" loading="lazy">`).join('')}</div>`
+    ? `<div class="detail-photos">${photos.map((url, index) => `<img class="detail-photo" src="${escapeHtml(thumbs[index] || url)}" data-photo-index="${index}" alt="${escapeHtml(data.nickname || '照片')} ${index + 1}" loading="lazy" decoding="async">`).join('')}</div>`
     : '';
   const ageCity = [data.age ? `${data.age} 歲` : '', data.city || ''].filter(Boolean).join('，');
   const commonTags = Array.isArray(currentData.tags) && Array.isArray(data.tags)
