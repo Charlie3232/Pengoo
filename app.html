@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Pengoo</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://storage.googleapis.com" crossorigin>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:#F5F0EE;font-family:'Nunito','Noto Sans TC',system-ui,sans-serif;color:#3A2A2E;}
+.shell{width:100%;max-width:390px;height:100dvh;margin:0 auto;background:#F5F0EE;position:relative;overflow:hidden;}
+.frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#F5F0EE;opacity:0;pointer-events:none;transform:translateX(14px) scale(.995);transition:opacity .18s ease,transform .18s ease;}
+.frame.active{opacity:1;pointer-events:auto;transform:translateX(0) scale(1);}
+.boot{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F5F0EE;transition:opacity .2s ease;}
+.boot.hide{opacity:0;pointer-events:none;}
+.logo{font-size:2.2rem;font-weight:900;color:#6B2D3E;margin-bottom:.45rem;}
+.sub{font-size:.78rem;font-weight:800;color:rgba(58,42,46,.48);}
+</style>
+</head>
+<body>
+<main class="shell" id="shell">
+  <div class="boot" id="boot">
+    <div class="logo">Pengoo</div>
+    <div class="sub">企鵝月老正在牽線</div>
+  </div>
+</main>
+<script>
+(function(){
+  const pages = {
+    home:'home.html',
+    match:'match.html',
+    chat:'chat.html',
+    my:'my.html'
+  };
+  const shell = document.getElementById('shell');
+  const boot = document.getElementById('boot');
+  const frames = {};
+  let activePage = '';
+
+  function getInitialPage(){
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    return pages[tab] ? tab : 'home';
+  }
+
+  function frameUrl(page, url){
+    if(url) return url;
+    return pages[page] || pages.home;
+  }
+
+  function ensureFrame(page, url){
+    if(frames[page]) return frames[page];
+    const frame = document.createElement('iframe');
+    frame.className = 'frame';
+    frame.title = `Pengoo ${page}`;
+    frame.dataset.page = page;
+    frame.src = frameUrl(page, url);
+    frame.addEventListener('load', () => {
+      boot.classList.add('hide');
+    }, { once:true });
+    shell.appendChild(frame);
+    frames[page] = frame;
+    return frame;
+  }
+
+  function updateUrl(page){
+    const next = `${location.pathname}?tab=${encodeURIComponent(page)}`;
+    history.replaceState({ tab:page }, '', next);
+  }
+
+  function go(page, url){
+    if(!pages[page]) page = 'home';
+    const frame = ensureFrame(page, url);
+    if(url && frame.src && !frame.src.endsWith(url)){
+      try{
+        const current = new URL(frame.src, location.href);
+        const next = new URL(url, location.href);
+        if(current.href !== next.href && next.search){
+          frame.src = url;
+        }
+      } catch(e){}
+    }
+    Object.values(frames).forEach(item => item.classList.remove('active'));
+    frame.classList.add('active');
+    activePage = page;
+    updateUrl(page);
+  }
+
+  window.PengooAppShell = { go, get activePage(){ return activePage; } };
+  go(getInitialPage());
+
+  function warmFrames(){
+    const queue = ['home','match','chat','my'].filter(page => page !== activePage);
+    const loadNext = () => {
+      const page = queue.shift();
+      if(!page) return;
+      ensureFrame(page);
+      window.setTimeout(loadNext, 850);
+    };
+    const runWhenIdle = window.requestIdleCallback || (callback => window.setTimeout(callback, 1600));
+    runWhenIdle(loadNext, { timeout:2600 });
+  }
+
+  window.addEventListener('load', () => {
+    window.setTimeout(warmFrames, 1400);
+  });
+})();
+</script>
+<script src="app-transition.js"></script>
+</body>
+</html>
