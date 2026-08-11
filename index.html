@@ -415,6 +415,7 @@ async function routeUser(user){
     if(d.deleted || d.adminDeleted){
       window.location.href = 'profile.html';
     } else if(d.pendingReview || d.selfieApproved || d.quizComplete || d.rejected){
+      try{ sessionStorage.setItem('pengoo_login_handoff_at', String(Date.now())); } catch(e){}
       window.location.href = 'app.html?tab=home';
     } else {
       window.location.href = 'profile.html';
