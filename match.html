@@ -223,7 +223,7 @@ body{font-family:'Nunito','Noto Sans TC',sans-serif;background:#F5F0EE;color:#3A
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 import { calculateMutualMatch, MATCH_SCORE_CONFIG } from './quiz-scoring.js';
 import { resolveDevUser } from './dev-impersonation.js';
 
@@ -273,6 +273,37 @@ const ageFilterChip = document.getElementById('ageFilterChip');
 const cityFilterChip = document.getElementById('cityFilterChip');
 let viewerPhotos = [];
 let viewerPhotoIndex = 0;
+const MATCH_CACHE_TTL = 60000;
+
+function getMatchCacheKey(){
+  return currentUser?.uid ? `pengoo_match_cache_${currentUser.uid}` : '';
+}
+
+function saveMatchCache(){
+  const key = getMatchCacheKey();
+  if(!key) return;
+  try{
+    sessionStorage.setItem(key, JSON.stringify({
+      at: Date.now(),
+      matches: allMatches.slice(0, 40)
+    }));
+  } catch(e){}
+}
+
+function loadMatchCache(){
+  const key = getMatchCacheKey();
+  if(!key) return false;
+  try{
+    const cached = JSON.parse(sessionStorage.getItem(key) || 'null');
+    if(!cached?.matches?.length || Date.now() - cached.at > MATCH_CACHE_TTL) return false;
+    allMatches = cached.matches;
+    updateFilterChips();
+    renderMatches(allMatches.filter(passFilters).slice(0, 30));
+    return true;
+  } catch(e){
+    return false;
+  }
+}
 
 function openPhotoViewer(photos, index=0){
   viewerPhotos = Array.isArray(photos) ? photos.filter(Boolean) : [];
@@ -618,10 +649,11 @@ function getPairId(uidA, uidB){
 
 async function loadExistingActions(){
   actedUids = new Set();
-  const snap = await getDocs(collection(db, 'matchActions'));
+  const q = query(collection(db, 'matchActions'), where('actorUid', '==', currentUser.uid));
+  const snap = await getDocs(q);
   snap.forEach(actionDoc => {
     const data = actionDoc.data();
-    if(data.actorUid === currentUser.uid && data.targetUid){
+    if(data.targetUid){
       actedUids.add(data.targetUid);
     }
   });
@@ -803,13 +835,15 @@ function goNextMatch(message){
 }
 
 async function loadMatches(){
-  loadingState.style.display = 'block';
+  const showedCache = loadMatchCache();
+  loadingState.style.display = showedCache ? 'none' : 'block';
   emptyState.style.display = 'none';
-  matchList.innerHTML = '';
+  if(!showedCache) matchList.innerHTML = '';
 
   try{
     await loadExistingActions();
-    const snap = await getDocs(collection(db, 'users'));
+    const q = query(collection(db, 'users'), where('selfieApproved', '==', true));
+    const snap = await getDocs(q);
     const matches = [];
 
     snap.forEach(userDoc => {
@@ -828,12 +862,13 @@ async function loadMatches(){
 
     matches.sort((a, b) => b.match.scoreForA.rawScore - a.match.scoreForA.rawScore);
     allMatches = matches;
+    saveMatchCache();
     updateFilterChips();
     renderMatches(allMatches.filter(passFilters).slice(0, 30));
   } catch(e){
     console.error(e);
     loadingState.style.display = 'none';
-    showToast('配對載入失敗，請再試一次');
+    if(!showedCache) showToast('配對載入失敗，請再試一次');
   }
 }
 
