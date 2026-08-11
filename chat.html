@@ -214,7 +214,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/fireba
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc,
-  serverTimestamp, increment, query, orderBy, onSnapshot, arrayUnion, arrayRemove
+  serverTimestamp, increment, query, orderBy, onSnapshot, arrayUnion, arrayRemove, where
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 import { resolveDevUser } from './dev-impersonation.js';
 
@@ -241,6 +241,8 @@ let unsubscribeInboxNotifications = null;
 let inboxNotificationReady = false;
 let notifyTimer = null;
 let pendingOpenMatchId = new URLSearchParams(location.search).get('match') || '';
+const REPAIR_SESSION_KEY = 'pengoo_match_repair_done';
+const INBOX_CACHE_TTL = 45000;
 
 const pageTitle = document.getElementById('pageTitle');
 const backBtn = document.getElementById('backBtn');
@@ -405,17 +407,62 @@ function getPairId(uidA, uidB){
 }
 
 function formatTime(value){
-  if(!value?.toDate) return '';
-  const date = value.toDate();
+  const date = value?.toDate ? value.toDate() : value ? new Date(value) : null;
+  if(!date || Number.isNaN(date.getTime())) return '';
   const now = new Date();
   const sameDay = date.toDateString() === now.toDateString();
   return sameDay ? `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}` : '昨天';
 }
 
 function formatMessageTime(value){
-  if(!value?.toDate) return '剛剛';
-  const date = value.toDate();
+  const date = value?.toDate ? value.toDate() : value ? new Date(value) : null;
+  if(!date || Number.isNaN(date.getTime())) return '剛剛';
   return `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+
+function getInboxCacheKey(){
+  return currentUser?.uid ? `pengoo_inbox_cache_${currentUser.uid}` : '';
+}
+
+function matchToCache(match={}){
+  return {
+    ...match,
+    lastMessageAt: match.lastMessageAt?.toMillis ? match.lastMessageAt.toMillis() : (match.lastMessageAt || null),
+    createdAt: match.createdAt?.toMillis ? match.createdAt.toMillis() : (match.createdAt || null),
+    updatedAt: match.updatedAt?.toMillis ? match.updatedAt.toMillis() : (match.updatedAt || null)
+  };
+}
+
+function saveInboxCache(){
+  const key = getInboxCacheKey();
+  if(!key) return;
+  try{
+    sessionStorage.setItem(key, JSON.stringify({
+      at: Date.now(),
+      items: chatItems.map(item => ({
+        id: item.id,
+        match: matchToCache(item.match),
+        otherUid: item.otherUid,
+        other: item.other,
+        unread: item.unread || 0,
+        hidden: !!item.hidden
+      }))
+    }));
+  } catch(e){}
+}
+
+function loadInboxCache(){
+  const key = getInboxCacheKey();
+  if(!key) return false;
+  try{
+    const cached = JSON.parse(sessionStorage.getItem(key) || 'null');
+    if(!cached?.items?.length || Date.now() - cached.at > INBOX_CACHE_TTL) return false;
+    chatItems = cached.items;
+    renderInbox();
+    return true;
+  } catch(e){
+    return false;
+  }
 }
 
 function getDisplayScore(item){
@@ -639,12 +686,20 @@ function renderIcebreaker(item){
 
 async function loadInbox(){
   showView('viewInbox');
-  chatList.innerHTML = '';
+  const showedCache = loadInboxCache();
+  if(!showedCache){
+    chatList.innerHTML = '';
+    matchRail.innerHTML = '';
+  }
   chatItems = [];
 
   try{
-    await repairMissingMatchDocs();
-    const matchesSnap = await getDocs(collection(db, 'matches'));
+    if(!sessionStorage.getItem(REPAIR_SESSION_KEY)){
+      await repairMissingMatchDocs();
+      sessionStorage.setItem(REPAIR_SESSION_KEY, '1');
+    }
+    const matchesQuery = query(collection(db, 'matches'), where('users', 'array-contains', currentUser.uid));
+    const matchesSnap = await getDocs(matchesQuery);
     const items = [];
 
     for(const matchDoc of matchesSnap.docs){
@@ -685,10 +740,11 @@ async function loadInbox(){
     });
 
     chatItems = items;
+    saveInboxCache();
     renderInbox();
   } catch(e){
     console.error(e);
-    showToast('信箱載入失敗，請再試一次');
+    if(!showedCache) showToast('信箱載入失敗，請再試一次');
   }
 }
 
@@ -710,17 +766,26 @@ async function clearStaleUnread(matchId, staleUnread){
 }
 
 async function repairMissingMatchDocs(){
-  const actionsSnap = await getDocs(collection(db, 'matchActions'));
+  const myActionsQuery = query(collection(db, 'matchActions'), where('actorUid', '==', currentUser.uid));
+  const incomingActionsQuery = query(collection(db, 'matchActions'), where('targetUid', '==', currentUser.uid));
+  const [myActionsSnap, incomingActionsSnap] = await Promise.all([
+    getDocs(myActionsQuery),
+    getDocs(incomingActionsQuery)
+  ]);
   const myLikes = [];
   const actionMap = new Map();
 
-  actionsSnap.forEach(actionDoc => {
+  myActionsSnap.forEach(actionDoc => {
     const data = actionDoc.data();
     if(!data.actorUid || !data.targetUid || data.action !== 'like') return;
     actionMap.set(`${data.actorUid}_${data.targetUid}`, data);
-    if(data.actorUid === currentUser.uid){
-      myLikes.push(data);
-    }
+    myLikes.push(data);
+  });
+
+  incomingActionsSnap.forEach(actionDoc => {
+    const data = actionDoc.data();
+    if(!data.actorUid || !data.targetUid || data.action !== 'like') return;
+    actionMap.set(`${data.actorUid}_${data.targetUid}`, data);
   });
 
   for(const myAction of myLikes){
@@ -833,7 +898,8 @@ function listenInboxNotifications(){
   if(unsubscribeInboxNotifications) unsubscribeInboxNotifications();
   inboxNotificationReady = false;
 
-  unsubscribeInboxNotifications = onSnapshot(collection(db, 'matches'), async snap => {
+  const inboxQuery = query(collection(db, 'matches'), where('users', 'array-contains', currentUser.uid));
+  unsubscribeInboxNotifications = onSnapshot(inboxQuery, async snap => {
     if(!inboxNotificationReady){
       inboxNotificationReady = true;
       return;
