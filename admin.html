@@ -521,6 +521,33 @@ window.openLightbox = (url) => {
   document.getElementById('lightbox').classList.add('show');
 };
 
+function isValidPhotoUrl(url){
+  return typeof url === 'string' && url.trim().startsWith('http');
+}
+
+function photoLooksOwnedBy(url, uid){
+  if(!isValidPhotoUrl(url) || !uid) return false;
+  try{
+    return decodeURIComponent(url).includes(uid);
+  } catch(e){
+    return url.includes(uid);
+  }
+}
+
+function getValidReviewPhotos(userData, uid){
+  const photos = Array.isArray(userData.photos) ? userData.photos : [];
+  return photos.filter(url => isValidPhotoUrl(url) && photoLooksOwnedBy(url, uid)).slice(0, 6);
+}
+
+function getApprovalBlockReason(userData, uid){
+  const photos = getValidReviewPhotos(userData, uid);
+  if(photos.length < 3) return '此用戶未上傳滿 3 張有效照片，不能通過審核';
+  if(!isValidPhotoUrl(userData.selfieURL) || !photoLooksOwnedBy(userData.selfieURL, uid)){
+    return '此用戶缺少有效自拍驗證，不能通過審核';
+  }
+  return '';
+}
+
 // ── Tab 切換 ──
 window.switchTab = (tab) => {
   document.querySelectorAll('.admin-tab').forEach((el,i) => el.classList.toggle('active', ['review','tags','reports','quiz'][i]===tab));
@@ -608,8 +635,9 @@ async function renderReviewSnapshot(snap){
       return !data.deleted && !data.adminDeleted;
     });
 
+    const approvedUsers = activeUsers.filter(data => data.selfieApproved === true || data.quizComplete === true);
     document.getElementById('pendingCount').textContent = reviewDocs.length;
-    document.getElementById('totalCount').textContent = activeUsers.length;
+    document.getElementById('totalCount').textContent = approvedUsers.length;
     document.getElementById('pendingBadge').textContent = reviewDocs.length + ' 待審核';
 
     if(reviewDocs.length === 0){
@@ -623,7 +651,9 @@ async function renderReviewSnapshot(snap){
       const uid = d.id;
 
       // ★ 存照片到 Map，onclick 只傳 uid
-      userPhotosMap[uid] = data.photos || [];
+      const validReviewPhotos = getValidReviewPhotos(data, uid);
+      const approvalWarning = getApprovalBlockReason(data, uid);
+      userPhotosMap[uid] = validReviewPhotos;
 
       // ★ 照片用 data-url，完全不嵌入 onclick 字串
       const tagHTML = (data.tags||[]).map(t => `<span class="rc-tag">${t}</span>`).join('');
@@ -635,7 +665,7 @@ async function renderReviewSnapshot(snap){
       // 照片列
       const photosWrap = document.createElement('div');
       photosWrap.className = 'rc-photos';
-      (data.photos||[]).forEach(url => {
+      validReviewPhotos.forEach(url => {
         const ph = document.createElement('div');
         ph.className = 'rc-photo';
         ph.innerHTML = `<img src="${url}" alt=""/>`;
@@ -855,12 +885,19 @@ window.reviewUser = (uid, action) => {
       if(action==='approve'){
         const userSnap = await getDoc(doc(db,'users',uid));
         const userData = userSnap.exists() ? userSnap.data() : {};
-        const reviewedPhotos = Array.isArray(userData.photos) ? userData.photos.filter(Boolean).slice(0, 3) : [];
+        const blockReason = getApprovalBlockReason(userData, uid);
+        if(blockReason){
+          showToast(blockReason, true);
+          return;
+        }
+        const validPhotos = getValidReviewPhotos(userData, uid);
+        const reviewedPhotos = validPhotos.slice(0, 3);
         await updateDoc(doc(db,'users',uid),{
           selfieApproved: true,
           pendingReview: false,
           rejected: false,
           rejectionReasons: {},
+          photos: validPhotos,
           reviewedPhotos,
           photoReviewReason: '',
           approvedAt: serverTimestamp()
@@ -887,17 +924,26 @@ window.batchAction = (action) => {
   const title = action==='approve' ? `批量通過 ${selectedUsers.size} 人？` : `批量拒絕 ${selectedUsers.size} 人？`;
   openPwModal(title, '請輸入管理密碼', async () => {
     const uids = [...selectedUsers];
+    let successCount = 0;
+    let skippedCount = 0;
     for(const uid of uids){
       try{
         if(action==='approve'){
           const userSnap = await getDoc(doc(db,'users',uid));
           const userData = userSnap.exists() ? userSnap.data() : {};
-          const reviewedPhotos = Array.isArray(userData.photos) ? userData.photos.filter(Boolean).slice(0, 3) : [];
+          const blockReason = getApprovalBlockReason(userData, uid);
+          if(blockReason){
+            skippedCount += 1;
+            continue;
+          }
+          const validPhotos = getValidReviewPhotos(userData, uid);
+          const reviewedPhotos = validPhotos.slice(0, 3);
           await updateDoc(doc(db,'users',uid),{
             selfieApproved: true,
             pendingReview: false,
             rejected: false,
             rejectionReasons: {},
+            photos: validPhotos,
             reviewedPhotos,
             photoReviewReason: '',
             approvedAt: serverTimestamp()
@@ -905,12 +951,18 @@ window.batchAction = (action) => {
         } else {
           await updateDoc(doc(db,'users',uid),{ selfieApproved:false, pendingReview:false, rejected:true, rejectedAt:serverTimestamp() });
         }
+        successCount += 1;
         const card = document.getElementById('card-'+uid);
         if(card) card.remove();
       } catch(e){ console.error(e); }
     }
     selectedUsers.clear();
     updateBatchBar();
+    if(action==='approve' && skippedCount > 0){
+      showToast(`已通過 ${successCount} 人，略過 ${skippedCount} 人（照片或自拍不足）`, true);
+      loadReviewList();
+      return;
+    }
     showToast(action==='approve' ? `✓ 已通過 ${uids.length} 人` : `已拒絕 ${uids.length} 人`, action==='reject');
     loadReviewList();
   });
@@ -1118,7 +1170,7 @@ function renderAllUsers(){
 
   let filtered = allUsersCache;
   if(currentFilter === 'pending')  filtered = allUsersCache.filter(d => d.pendingReview && !d.selfieApproved);
-  if(currentFilter === 'approved') filtered = allUsersCache.filter(d => d.selfieApproved);
+  if(currentFilter === 'approved') filtered = allUsersCache.filter(d => d.selfieApproved || d.quizComplete);
   if(currentFilter === 'rejected') filtered = allUsersCache.filter(d => d.rejected);
   if(currentFilter === 'quiz')     filtered = allUsersCache.filter(d => d.quizComplete);
 
