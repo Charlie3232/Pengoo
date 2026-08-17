@@ -1176,8 +1176,36 @@ function getValidPhotoItems(){
   });
 }
 
+function makeUploadStamp(){
+  return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getPhotoItemUrl(item){
+  return typeof item === 'string' ? item : item?.url;
+}
+
+function urlBelongsToCurrentUser(url){
+  if(!currentUser || typeof url !== 'string') return false;
+  try{
+    return decodeURIComponent(url).includes(currentUser.uid);
+  } catch(e){
+    return url.includes(currentUser.uid);
+  }
+}
+
+function getOwnedValidPhotoItems(){
+  return getValidPhotoItems().filter(item => urlBelongsToCurrentUser(getPhotoItemUrl(item)));
+}
+
+function withUploadTimeout(promise, ms, message){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
+  ]);
+}
+
 function syncPhotoCount(){
-  photosUploaded = getValidPhotoItems().length;
+  photosUploaded = getOwnedValidPhotoItems().length;
 }
 
 window.triggerPhotoUpload = (slot)=>{
@@ -1212,17 +1240,17 @@ document.getElementById('photoInput').addEventListener('change', async (e)=>{
   document.getElementById('btn11').disabled = true;
 
   try {
-    const optimizedPhoto = await compressImage(file, IMAGE_PRESETS.photo);
-    const thumbPhoto = await compressImage(file, IMAGE_PRESETS.thumb);
+    const optimizedPhoto = await withUploadTimeout(compressImage(file, IMAGE_PRESETS.photo), 25000, 'photo compress timeout');
+    const thumbPhoto = await withUploadTimeout(compressImage(file, IMAGE_PRESETS.thumb), 25000, 'thumb compress timeout');
 
     // 上傳到 Firebase Storage
-    const stamp = Date.now();
+    const stamp = makeUploadStamp();
     const pRef = ref(storage, `photos/${currentUser.uid}_${currentSlot}_${stamp}.jpg`);
-    await uploadBytes(pRef, optimizedPhoto, imageUploadMeta(file, optimizedPhoto));
-    const downloadURL = await getDownloadURL(pRef);
+    await withUploadTimeout(uploadBytes(pRef, optimizedPhoto, imageUploadMeta(file, optimizedPhoto)), 45000, 'photo upload timeout');
+    const downloadURL = await withUploadTimeout(getDownloadURL(pRef), 15000, 'photo url timeout');
     const tRef = ref(storage, `thumbs/${currentUser.uid}_${currentSlot}_${stamp}.jpg`);
-    await uploadBytes(tRef, thumbPhoto, imageUploadMeta(file, thumbPhoto));
-    const thumbURL = await getDownloadURL(tRef);
+    await withUploadTimeout(uploadBytes(tRef, thumbPhoto, imageUploadMeta(file, thumbPhoto)), 45000, 'thumb upload timeout');
+    const thumbURL = await withUploadTimeout(getDownloadURL(tRef), 15000, 'thumb url timeout');
 
     // 上傳成功，解鎖格子
     isUploading = false;
@@ -1259,7 +1287,7 @@ document.getElementById('btn11').onclick = ()=>{
     updatePhotoCounter();
     return;
   }
-  if(getValidPhotoItems().length < 3){
+  if(getOwnedValidPhotoItems().length < 3){
     showToast('請至少上傳 3 張照片');
     updatePhotoCounter();
     return;
@@ -1317,7 +1345,7 @@ document.getElementById('btn12').onclick = async ()=>{
     showToast('請等待照片上傳完成');
     return;
   }
-  const validPhotoItems = getValidPhotoItems();
+  const validPhotoItems = getOwnedValidPhotoItems();
   if(validPhotoItems.length < 3){
     showToast('請至少上傳 3 張照片');
     saveProfileProgress(12, 'submit_blocked_missing_photos', { photos: validPhotoItems.length });
@@ -1334,12 +1362,12 @@ document.getElementById('btn12').onclick = async ()=>{
   showLoading('正在上傳自拍...');
   try{
     // 上傳自拍
-    const selfieRef = ref(storage,`selfies/${currentUser.uid}_${Date.now()}.jpg`);
+    const selfieRef = ref(storage,`selfies/${currentUser.uid}_${makeUploadStamp()}.jpg`);
     showLoading('正在壓縮自拍...');
-    const optimizedSelfie = await compressImage(selfieFile, IMAGE_PRESETS.selfie);
+    const optimizedSelfie = await withUploadTimeout(compressImage(selfieFile, IMAGE_PRESETS.selfie), 25000, 'selfie compress timeout');
     showLoading('正在上傳自拍...');
-    await uploadBytes(selfieRef, optimizedSelfie, imageUploadMeta(selfieFile, optimizedSelfie));
-    const selfieURL = await getDownloadURL(selfieRef);
+    await withUploadTimeout(uploadBytes(selfieRef, optimizedSelfie, imageUploadMeta(selfieFile, optimizedSelfie)), 45000, 'selfie upload timeout');
+    const selfieURL = await withUploadTimeout(getDownloadURL(selfieRef), 15000, 'selfie url timeout');
     showLoading('正在送出審核...');
 
     // 照片已經上傳完畢，直接取得 URLs
@@ -1348,7 +1376,7 @@ document.getElementById('btn12').onclick = async ()=>{
 
     // 更新 Firestore
     // 先檢查文件是否存在，決定要不要寫 createdAt
-    const existingDoc = await getDoc(doc(db,'users',currentUser.uid));
+    const existingDoc = await withUploadTimeout(getDoc(doc(db,'users',currentUser.uid)), 15000, 'profile read timeout');
     const baseData = {
       uid: currentUser.uid,
       email: currentUser.email||'',
@@ -1376,7 +1404,7 @@ document.getElementById('btn12').onclick = async ()=>{
     if(!existingDoc.exists()){
       baseData.createdAt = serverTimestamp();
     }
-    await setDoc(doc(db,'users',currentUser.uid), baseData, { merge: true });
+    await withUploadTimeout(setDoc(doc(db,'users',currentUser.uid), baseData, { merge: true }), 20000, 'profile save timeout');
     await saveProfileProgress(12, 'submitted_review', { photos: photoURLs.length });
 
     hideLoading();
